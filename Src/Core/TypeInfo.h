@@ -2,10 +2,10 @@
 #ifndef CORE_TYPE_INFO_H
 #define CORE_TYPE_INFO_H
 
-#include "core/common.h"
-#include "core/assert.h"
-#include "core/ptr.h"
-#include "core/allocator.h"
+#include "Core/Common.h"
+#include "Core/Assert.h"
+#include "Core/Ptr.h"
+#include "Core/Allocator.h"
 
 #include <EASTL/functional.h>
 #include <EASTL/string.h>
@@ -59,11 +59,11 @@ eastl::basic_string<char, Allocator> TypeInfo::ToString(const Allocator& allocat
 }
 
 template < typename T >
-const TypeInfo& type();
+const TypeInfo& Type();
 
 #define TYPE_INFO_DEFINE(NAME)	\
 namespace Meta{	\
-template<> FORCEINLINE const Meta::TypeInfo& type<NAME>()	\
+template<> FORCEINLINE const Meta::TypeInfo& Type<NAME>()	\
 {	\
 	static Meta::TypeInfo l_value{__COUNTER__, sizeof(NAME), #NAME};	\
 	return l_value;	\

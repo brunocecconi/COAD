@@ -2,7 +2,7 @@
 #ifndef CORE_PTR_H
 #define CORE_PTR_H
 
-#include "core/common.h"
+#include "Core/common.h"
 
 #ifdef USE_SAFE_PTR
 

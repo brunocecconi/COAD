@@ -38,6 +38,8 @@
 #endif // CRT_NONE
 
 // Platform
+#undef PLATFORM_WINDOWS
+#undef PLATFORM_LINUX
 #define PLATFORM_ANDROID    0
 #define PLATFORM_BSD        0
 #define PLATFORM_EMSCRIPTEN 0

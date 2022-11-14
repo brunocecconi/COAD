@@ -2,7 +2,7 @@
 #ifndef CORE_LOG_H
 #define CORE_LOG_H
 
-#include "core/base_types.h"
+#include "Core/BaseTypes.h"
 #include <ctime>
 
 #define LOG_DEFINE(NAME)	\

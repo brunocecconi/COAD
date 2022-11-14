@@ -7,23 +7,23 @@
 
 #include <benchmark/benchmark.h>
 
-#include "core/common.h"
+#include "Core/Common.h"
 
 #include <EASTL/allocator_malloc.h>
 
-#include "core/entt.hpp"
-#include "ecs/registry.h"
+#include "Core/entt.hpp"
+#include "ECS/Registry.h"
 
 #if _MSC_VER
 #pragma comment(lib, "shlwapi")
 #endif
 
-void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+void* operator new[](size_t size, const char* , int , unsigned , const char* , int )
 {
 	return mi_malloc(size);
 }
 
-void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+void* operator new[](size_t size, size_t alignment, size_t , const char* , int , unsigned , const char* , int )
 {
 	return mi_aligned_alloc(size, alignment);
 }
@@ -55,7 +55,7 @@ static void EnttCtor10000(benchmark::State& state)
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttCtor10000);
+BENCHMARK(EnttCtor10000)->Iterations(10000);
 
 static void EnttClear10000(benchmark::State& state)
 {
@@ -67,28 +67,28 @@ static void EnttClear10000(benchmark::State& state)
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttClear10000);
+BENCHMARK(EnttClear10000)->Iterations(10000);
 
 static void COADEntityCtor10000(benchmark::State& state)
 {
 	for (auto _ : state)
 	{
-		Ecs::Registry l_reg{10000ull};
+		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000ull};
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(COADEntityCtor10000);
+BENCHMARK(COADEntityCtor10000)->Iterations(10000);
 
 static void COADEntityClear10000(benchmark::State& state)
 {
 	for (auto _ : state)
 	{
-		Ecs::Registry l_reg{10000};
+		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000};
 		l_reg.Clear();
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(COADEntityClear10000);
+BENCHMARK(COADEntityClear10000)->Iterations(10000);
 
 static void EnttCreateEntity1000ForLoop(benchmark::State& state)
 {
@@ -102,7 +102,7 @@ static void EnttCreateEntity1000ForLoop(benchmark::State& state)
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttCreateEntity1000ForLoop);
+BENCHMARK(EnttCreateEntity1000ForLoop)->Iterations(10000);
 
 static void EnttCreateEntity1000ForLoopAddLocationComponent(benchmark::State& state)
 {
@@ -112,19 +112,19 @@ static void EnttCreateEntity1000ForLoopAddLocationComponent(benchmark::State& st
 		for (size_t i = 0; i < 1000; i++)
 		{
 			const auto l_id = l_reg.create();
-			l_reg.emplace<LocationComponent>(l_id, glm::vec3{static_cast<f32>(i)});
+			l_reg.emplace<Ecs::LocationComponent>(l_id, glm::vec3{static_cast<f32>(i)});
 			//l_reg.emplace<RotationComponent>(l_id, glm::vec3{static_cast<f32>(i)*2});
 		}
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttCreateEntity1000ForLoopAddLocationComponent);
+BENCHMARK(EnttCreateEntity1000ForLoopAddLocationComponent)->Iterations(10000);
 
 static void COADEntityCreateEntity1000ForLoop(benchmark::State& state)
 {
 	for (auto _ : state)
 	{
-		Ecs::Registry l_reg{10000ull};
+		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000ull};
 		for (size_t i = 0; i < 1000; i++)
 		{
 			(void)l_reg.Create();
@@ -132,22 +132,22 @@ static void COADEntityCreateEntity1000ForLoop(benchmark::State& state)
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(COADEntityCreateEntity1000ForLoop);
+BENCHMARK(COADEntityCreateEntity1000ForLoop)->Iterations(10000);
 
 static void COADEntityCreateEntity1000ForLoopAddLocationComponent(benchmark::State& state)
 {
 	for (auto _ : state)
 	{
-		Ecs::Registry l_reg{10000ull};
+		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000ull};
 		for (size_t i = 0; i < 1000; i++)
 		{
 			const auto l_id = l_reg.Create();
-			l_reg.Add(l_id, LocationComponent{glm::vec3{static_cast<f32>(i)}});
+			l_reg.Add(l_id, Ecs::LocationComponent{glm::vec3{static_cast<f32>(i)}});
 		}
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(COADEntityCreateEntity1000ForLoopAddLocationComponent);
+BENCHMARK(COADEntityCreateEntity1000ForLoopAddLocationComponent)->Iterations(10000);
 
 BENCHMARK_MAIN();
 

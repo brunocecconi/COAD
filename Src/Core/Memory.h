@@ -2,8 +2,8 @@
 #ifndef CORE_MEMORY_H
 #define CORE_MEMORY_H
 
-#include "core/result.h"
-#include "core/allocator.h"
+#include "Core/result.h"
+#include "Core/allocator.h"
 
 #include <EASTL/type_traits.h>
 #include <EASTL/memory.h>

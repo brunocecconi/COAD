@@ -1,6 +1,6 @@
 
-#include "core/io.h"
-#include "assert.h"
+#include "Core/IO.h"
+#include "Core/Assert.h"
 
 #if _MSC_VER
 #pragma comment(lib, "shlwapi")
@@ -27,37 +27,35 @@ void File::Open(const char* file_path, FlagType flags)
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 
-	Result l_result = eResultOk;
-
 	Path l_path {file_path};
 	ENSURE_LAST_RESULT_NL();
 
 	Path l_full_path = l_path.FullPath();
 	ENSURE_LAST_RESULT_NL();
 
-	if(flags == FlagType::eFtNone)
+	if(flags == eFtNone)
 	{
 		RESULT_ERROR(eResultErrorIoFileInvalidFlags);
 	}
 
 	char l_mode[64] = {};
-	if(flags & FlagType::eFtWrite && !(flags & FlagType::eFtRead))
+	if(flags & eFtWrite && !(flags & eFtRead))
 	{
 		strcat(l_mode, "w");
 	}
-	else if(flags & FlagType::eFtWrite && flags & FlagType::eFtRead)
+	else if(flags & eFtWrite && flags & eFtRead)
 	{
 		strcat(l_mode, "w+");
 	}
-	else if(flags & FlagType::eFtRead && !(flags & FlagType::eFtWrite))
+	else if(flags & eFtRead && !(flags & eFtWrite))
 	{
 		strcat(l_mode, "r");
 	}
-	else if(flags & FlagType::eFtRead && flags & FlagType::eFtWrite)
+	else if(flags & eFtRead && flags & eFtWrite)
 	{
 		strcat(l_mode, "r+");
 	}
-	else if(flags & FlagType::eFtAppend)
+	else if(flags & eFtAppend)
 	{
 		strcat(l_mode, "a");
 	}

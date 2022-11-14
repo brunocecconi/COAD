@@ -2,7 +2,7 @@
 #ifndef CORE_IO_H
 #define CORE_IO_H
 
-#include "core/common.h"
+#include "Core/Common.h"
 
 #include <cstdio>
 #include <EASTL/string.h>

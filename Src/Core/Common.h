@@ -2,14 +2,18 @@
 #ifndef CORE_COMMON_H
 #define CORE_COMMON_H
 
-#include "macros.h"
-#include "result.h"
-#include "core/compiler.h"
-#include "core/platform.h"
-#include "core/types.h"
-#include "core/log.h"
-#include "core/memory.h"
-#include "core/lang.h"
-#include "core/type_traits.h"
+#if _MSC_VER
+#pragma warning (disable : 4201)
+#endif
+
+#include "Macros.h"
+#include "Result.h"
+#include "Core/Compiler.h"
+#include "Core/Platform.h"
+#include "Core/Types.h"
+#include "Core/Log.h"
+#include "Core/Memory.h"
+#include "Core/Lang.h"
+#include "Core/TypeTraits.h"
 
 #endif

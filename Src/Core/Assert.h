@@ -2,7 +2,7 @@
 #ifndef ASSERT_H
 #define ASSERT_H
 
-#include "core/log.h"
+#include "Core/Log.h"
 
 #include <cassert>
 

@@ -9,19 +9,19 @@
 #include <mimalloc.h>
 #include <memory>
 #include <algorithm>
-#include "core/io.h"
-#include "core/assert.h"
-#include "core/thread.h"
-#include "core/allocator.h"
-#include "core/type_info.h"
+#include "Core/IO.h"
+#include "Core/Assert.h"
+#include "Core/Thread.h"
+#include "Core/Allocator.h"
+#include "Core/TypeInfo.h"
 
 #include <thread>
 #include <chrono>
 #include <iostream>
 
-#include "core/log.h"
-#include "ecs/component.h"
-#include "ecs/registry.h"
+#include "Core/Log.h"
+#include "ECS/Component.h"
+#include "ECS/Registry.h"
 
 #include <glm/gtx/string_cast.hpp>
 
@@ -30,37 +30,51 @@ int Vsnprintf8 (char*  pDestination, size_t n, const char*  pFormat, va_list arg
 	return vsnprintf(pDestination, n, pFormat, arguments);
 }
 
+template < typename ... TypeLists >
+struct ecs
+{
+	using ComponentTypes = typename TypeTraits::TlCat<TypeLists..., TypeTraits::TypeListEmpty>::Type;
+};
+
 int main(int argc, char** argv)
 {
+	(void)argc;
+	(void)argv;
 	LOG_SET_VERBOSITY(info);
 
-	printf("%s\n", componentInfo<LocationComponent>().ToString().c_str());
+	using T1 = TypeTraits::TypeList<int, float, bool>;
+	using T2 = TypeTraits::TypeList<char*, void*, short>;
 
-	EcsRegistry l_reg{};
+	ecs<Ecs::TranformComponentTypes>::ComponentTypes::SIZE;
 
-	RESULT_ENFORCE_CALL(const auto l_id = l_reg.create());
-	RESULT_ENFORCE_CALL(const auto l_id2 = l_reg.create());
-	RESULT_ENFORCE_CALL(const auto l_id3 = l_reg.create());
+	//printf("%s\n", componentInfo<LocationComponent>().ToString().c_str());
 
-	l_reg.enable<LocationComponent>(l_id);
+	Ecs::Registry<Ecs::TranformComponentTypes> l_reg{};
+	auto l_id = l_reg.Create();
 
-	l_reg.add(l_id, LocationComponent{glm::vec3{2.f}});
-	l_reg.add(l_id2, RotationComponent{glm::vec3{5.f}});
-	l_reg.add(l_id3, ScaleComponent{glm::vec3{5.f}});
+	//RESULT_ENFORCE_CALL(const auto l_id = l_reg.create());
+	//RESULT_ENFORCE_CALL(const auto l_id2 = l_reg.create());
+	//RESULT_ENFORCE_CALL(const auto l_id3 = l_reg.create());
 
-	RESULT_ENFORCE_CALL(
-		auto l_comp = l_reg.get<RotationComponent>(l_id2));
+	//l_reg.enable<LocationComponent>(l_id);
 
-	RotationComponent l_r2{};
-	RotationComponent* l_r {};
+	//l_reg.add(l_id, LocationComponent{glm::vec3{2.f}});
+	//l_reg.add(l_id2, RotationComponent{glm::vec3{5.f}});
+	//l_reg.add(l_id3, ScaleComponent{glm::vec3{5.f}});
 
-	PTRA(l_comp);
-	PTRC(l_comp)->value.x = 3.f;
+	//RESULT_ENFORCE_CALL(
+	//	auto l_comp = l_reg.get<RotationComponent>(l_id2));
 
-	RESULT_ENFORCE_CALL(l_reg.destroy(l_id2));
+	//RotationComponent l_r2{};
+	//RotationComponent* l_r {};
 
-	const auto l_id4 = l_reg.create();
-	ASSERT(!l_reg.isEnabled<RotationComponent>(l_id4));
+	//PTRA(l_comp);
+	//PTRC(l_comp)->value.x = 3.f;
+
+	//RESULT_ENFORCE_CALL(l_reg.destroy(l_id2));
+
+	//const auto l_id4 = l_reg.create();
+	//ASSERT(!l_reg.isEnabled<RotationComponent>(l_id4));
 	
 	return 0;
 }

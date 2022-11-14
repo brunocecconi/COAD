@@ -2,8 +2,8 @@
 #ifndef CORE_ALLOCATOR_H
 #define CORE_ALLOCATOR_H
 
-#include "core/platform.h"
-#include "core/types.h"
+#include "Core/Platform.h"
+#include "Core/Types.h"
 
 #include <vector>
 

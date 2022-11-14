@@ -2,8 +2,8 @@
 #ifndef CORE_LANG_H
 #define CORE_LANG_H
 
-#include "core/platform.h"
-#include "core/type_info.h"
+#include "Core/Platform.h"
+#include "Core/TypeInfo.h"
 
 #include <EASTL/vector.h>
 #include <EASTL/set.h>

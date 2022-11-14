@@ -1,19 +1,4 @@
 
-filter "system:windows"
-	systemversion "latest"
-	defines { "PLATFORM_WINDOWS" }
-	include "./Windows.lua"
-	
-filter "system:linux"
-	systemversion "latest"
-	defines { "PLATFORM_LINUX" }
-	include "./Linux.lua"
-	
-filter "system:macosx"
-	systemversion "latest"
-	defines { "PLATFORM_MACOS" }
-	include "./Macosx.lua"
-	
 filter "system:prospero"
 	systemversion "latest"
 	defines { "PLATFORM_PROSPERO" }
@@ -24,25 +9,35 @@ filter "system:xboxsx"
 	defines { "PLATFORM_XBOXSX" }
 	include "./Xboxsx.lua"
 	
-filder "platform:Windows"
+filter "platforms:Windows"
 	system "windows"
 	architecture "x64"
+	defines { "PLATFORM_WINDOWS" }
+	include "./Windows.lua"
 	
-filder "platform:Linux"
+filter "platforms:Linux"
 	system "linux"
 	architecture "x64"
+	defines { "PLATFORM_LINUX" }
+	include "./Linux.lua"
 	
-filder "platform:Mac"
+filter "platforms:Mac"
 	system "macosx"
 	architecture "x64"
+	defines { "PLATFORM_MACOS" }
+	include "./Macosx.lua"
 	
-filder "platform:Prospero"
-	system "prospero"
+filter "platforms:Prospero"
+	system "bsd"
 	architecture "x64"
+	defines { "PLATFORM_PROSPERO" }
+	include "./Prospero.lua"
 	
-filder "platform:XboxSX"
-	system "xboxsx"
+filter "platforms:XboxSeriesX"
+	system "windows"
 	architecture "x64"
+	defines { "PLATFORM_XBOXSX" }
+	include "./Xboxsx.lua"
 
 filter "configurations:Debug"
 	defines { "DEBUG" }

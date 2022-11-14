@@ -2,8 +2,8 @@
 #ifndef CORE_REFLECTION_H
 #define CORE_REFLECTION_H
 
-#include "core/types.h"
-#include "core/lang.h"
+#include "Core/types.h"
+#include "Core/lang.h"
 
 #include <EASTL/string.h>
 #include <EASTL/type_traits.h>

@@ -2,7 +2,7 @@
 #ifndef CORE_THREAD_H
 #define CORE_THREAD_H
 
-#include "core/common.h"
+#include "Core/Common.h"
 
 namespace Threading
 {

@@ -1,5 +1,5 @@
 
-#include "core/allocator.h"
+#include "Core/allocator.h"
 
 #define PRINT_ALLOCATIONS 0
 
@@ -13,9 +13,11 @@ Mimalloc::Mimalloc(const Mimalloc& other)
 {
 	#if EASTL_NAME_ENABLED
 		mpName = other.mpName;
+#else
+	(void)other;
 	#endif
 }
-Mimalloc::Mimalloc(const Mimalloc& other, const char* EASTL_NAME(name))
+Mimalloc::Mimalloc(const Mimalloc&, const char* EASTL_NAME(name))
 {
 	#if EASTL_NAME_ENABLED
 		mpName = name ? name : "MimallocAlocator";
@@ -25,6 +27,8 @@ Mimalloc& Mimalloc::operator=(const Mimalloc& other)
 {
 	#if EASTL_NAME_ENABLED
 		mpName = other.mpName;
+#else
+	(void)other;
 	#endif
 	return *this;
 }
@@ -53,6 +57,8 @@ void Mimalloc::deallocate(void* p, sz n)
 {
 #if PRINT_ALLOCATIONS
 	printf("%s: %p: deallocated '%llu' bytes\n", get_name(), p, n);
+#else
+	(void)n;
 #endif
 	mi_free(p);
 }

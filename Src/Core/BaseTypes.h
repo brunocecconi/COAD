@@ -2,7 +2,7 @@
 #ifndef CORE_BASE_TYPES_H
 #define CORE_BASE_TYPES_H
 
-#include "core/platform.h"
+#include "Core/Platform.h"
 
 #include <climits>
 #include <cfloat>

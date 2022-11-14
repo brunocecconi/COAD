@@ -2,11 +2,11 @@
 #ifndef RESULT_H
 #define RESULT_H
 
-#include "core/platform.h"
+#include "Core/Platform.h"
 
 #define RESULT_IS_OK				eResultOk == g_result
 #define RESULT_IS_NOT_OK			eResultOk != g_result
-#define RESULT_LAST					lastResult()
+#define RESULT_LAST					LastResult()
 #define RESULT_SET(VALUE)			RESULT_LAST = VALUE
 #define RESULT_OK()					RESULT_SET(eResultOk)
 #define RESULT_ERROR(VALUE, ...)	RESULT_SET(VALUE); return __VA_ARGS__
@@ -30,10 +30,10 @@ if(RESULT_LAST != eResultOk) { printf(CONSOLE_COLOR_LIGHT_YELLOW CONSOLE_COLOR_B
 	resultString(RESULT_LAST), resultInfo(RESULT_LAST)); return __VA_ARGS__; }
 
 #define ENFORCE_RESULT_NL(RESULT)	\
-if((lastResult()=RESULT) != eResultOk) { abort(); }
+if((LastResult()=RESULT) != eResultOk) { abort(); }
 
 #define ENFORCE_RESULT(RESULT)	\
-if((lastResult()=RESULT) != eResultOk) { printf(LOG_COLOR_LIGHT_RED LOG_COLOR_BOLD	\
+if((LastResult()=RESULT) != eResultOk) { printf(LOG_COLOR_LIGHT_RED LOG_COLOR_BOLD	\
 	"ENFORCE RESULT FAILED '" #RESULT \
 	"' at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" LOG_COLOR_DEFAULT, __FILE__, __LINE__, \
 	resultString(RESULT), resultInfo(RESULT)); abort(); }
@@ -219,9 +219,9 @@ enum Result
 	eResultErrorEcsNoEntityAvailable
 };
 
-static Result& lastResult()
+inline Result& LastResult()
 {
-	static Result l_value = eResultOk;
+	static Result l_value;
 	return l_value;
 }
 

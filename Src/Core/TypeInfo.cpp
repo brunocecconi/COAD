@@ -1,5 +1,5 @@
 
-#include "core/type_info.h"
+#include "Core/TypeInfo.h"
 
 namespace Meta
 {

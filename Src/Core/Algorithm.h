@@ -2,7 +2,7 @@
 #ifndef CORE_ALGORITHM_H
 #define CORE_ALGORITHM_H
 
-#include "core/types.h"
+#include "Core/types.h"
 
 template < typename ForwardIterator >
 u64 maxElementIndex(ForwardIterator first, ForwardIterator last)

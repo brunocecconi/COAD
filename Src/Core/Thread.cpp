@@ -1,7 +1,7 @@
 
-#include "core/thread.h"
-#include "core/allocator.h"
-#include "core/assert.h"
+#include "Core/Thread.h"
+#include "Core/Allocator.h"
+#include "Core/Assert.h"
 
 namespace Threading
 {

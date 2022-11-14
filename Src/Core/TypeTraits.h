@@ -14,6 +14,8 @@ struct TypeList
 	static constexpr u64 SIZE = sizeof...(Types);
 };
 
+using TypeListEmpty = TypeList<>;
+
 template < typename T1, typename T2>
 struct TlCat;
 
@@ -35,30 +37,17 @@ struct TlToTuple<TypeList<Types...>>
 	using Type = eastl::tuple<Types...>;
 };
 
-template < typename ... TypeList>
-struct ecs
+template < template<typename> typename T, typename Y >
+struct TlToTupleTransfer
 {
-	typename TlToTuple<typename TlCat<TypeList...>::Type>::Type tuple;
+	using Type = eastl::tuple<T<Y>>;
 };
 
-	void asd()
-	{
-		using T1 = TypeList<int, float, char*>;
-		using T2 = TypeList<float, void*>;
-		ecs<T1, T2> e{};
-
-		static_assert(eastl::is_same_v<eastl::remove_reference_t<decltype(eastl::get<0>(e.tuple))>, int>);
-		static_assert(eastl::is_same_v<eastl::remove_reference_t<decltype(eastl::get<1>(e.tuple))>, float>);
-		static_assert(eastl::is_same_v<eastl::remove_reference_t<decltype(eastl::get<2>(e.tuple))>, char*>);
-		static_assert(eastl::is_same_v<eastl::remove_reference_t<decltype(eastl::get<3>(e.tuple))>, float>);
-		static_assert(eastl::is_same_v<eastl::remove_reference_t<decltype(eastl::get<4>(e.tuple))>, void*>);
-
-		eastl::get<0>(e.tuple);
-		eastl::get<1>(e.tuple);
-		eastl::get<2>(e.tuple);
-		eastl::get<3>(e.tuple);
-		eastl::get<4>(e.tuple);
-	}
+template < template<typename> typename T, typename ... Types >
+struct TlToTupleTransfer<T, TypeList<Types...>>
+{
+	using Type = eastl::tuple<T<Types>...>;
+};
 
 namespace Detail
 {
@@ -105,7 +94,7 @@ struct TypeRepeat
 };
 
 template < u64 Index, typename T, typename Tuple >
-static constexpr u64 findTupleTypeLogic()
+static constexpr u64 FindTupleTypeLogic()
 {
 	if constexpr (Index < eastl::tuple_size<Tuple>::value)
 	{
@@ -115,19 +104,19 @@ static constexpr u64 findTupleTypeLogic()
 		}
 		else
 		{
-			return findTupleTypeLogic<Index + 1, T, Tuple>();
+			return FindTupleTypeLogic<Index + 1, T, Tuple>();
 		}
 	}
 	else
 	{
-		return -1;
+		return U64_MAX;
 	}
 }
 
 template < typename T, typename Tuple >
-static constexpr u64 findTupleType()
+static constexpr u64 FindTupleType()
 {
-	return findTupleTypeLogic<0, T, Tuple>();
+	return FindTupleTypeLogic<0, T, Tuple>();
 }
 
 }
