@@ -14,6 +14,7 @@
 #include "Core/Thread.h"
 #include "Core/Allocator.h"
 #include "Core/TypeInfo.h"
+#include "Core/IO.h"
 
 #include <thread>
 #include <chrono>
@@ -36,31 +37,31 @@ struct ecs
 	using ComponentTypes = typename TypeTraits::TlCat<TypeLists..., TypeTraits::TypeListEmpty>::Type;
 };
 
+
 int main(int argc, char** argv)
 {
+	Result** result = nullptr;
+
+	Io::File f{"./test.txt", Io::File::eFtWrite RESULT_ARG_PASS};
+	RESULT_ENSURE_CALL(f.Write(3.14f RESULT_ARG_PASS), -1);
+
 	(void)argc;
 	(void)argv;
 	LOG_SET_VERBOSITY(info);
 
-	using T1 = TypeTraits::TypeList<int, float, bool>;
-	using T2 = TypeTraits::TypeList<char*, void*, short>;
-
-	ecs<Ecs::TranformComponentTypes>::ComponentTypes::SIZE;
-
-	//printf("%s\n", componentInfo<LocationComponent>().ToString().c_str());
-
 	Ecs::Registry<Ecs::TranformComponentTypes> l_reg{};
-	auto l_id = l_reg.Create();
 
-	//RESULT_ENFORCE_CALL(const auto l_id = l_reg.create());
-	//RESULT_ENFORCE_CALL(const auto l_id2 = l_reg.create());
-	//RESULT_ENFORCE_CALL(const auto l_id3 = l_reg.create());
+	RESULT_ENFORCE_CALL(const auto l_id = l_reg.Create());
+	RESULT_ENFORCE_CALL(const auto l_id2 = l_reg.Create());
+	RESULT_ENFORCE_CALL(const auto l_id3 = l_reg.Create());
 
-	//l_reg.enable<LocationComponent>(l_id);
+	l_reg.Enable<Ecs::LocationComponent>(l_id);
 
-	//l_reg.add(l_id, LocationComponent{glm::vec3{2.f}});
-	//l_reg.add(l_id2, RotationComponent{glm::vec3{5.f}});
-	//l_reg.add(l_id3, ScaleComponent{glm::vec3{5.f}});
+	l_reg.Add(l_id, Ecs::LocationComponent{glm::vec3{2.f}});
+	l_reg.Add(l_id2, Ecs::RotationComponent{glm::vec3{5.f}});
+	l_reg.Add(l_id3, Ecs::ScaleComponent{glm::vec3{5.f}});
+
+
 
 	//RESULT_ENFORCE_CALL(
 	//	auto l_comp = l_reg.get<RotationComponent>(l_id2));

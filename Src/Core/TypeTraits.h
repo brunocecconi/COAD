@@ -4,6 +4,7 @@
 
 #include <EASTL/type_traits.h>
 #include <EASTL/tuple.h>
+#include <EASTL/array.h>
 
 namespace TypeTraits
 {
@@ -49,9 +50,6 @@ struct TlToTupleTransfer<T, TypeList<Types...>>
 	using Type = eastl::tuple<T<Types>...>;
 };
 
-namespace Detail
-{
-
 template < typename NewType, typename AnotherType >
 struct TlPushFront
 {
@@ -76,16 +74,17 @@ struct TlPushBack<NewType, TypeList<Types...>>
 	using Type = TypeList<Types..., NewType>;
 };
 
-}
+template < typename T, u64 Size >
+struct TlCreateTypeList
+{
+	using Type = TlPushFront<T, typename TlCreateTypeList<T, Size-1>::Type>;
+};
 
-template < typename NewType, typename TypeList >
-using TlPushFront = typename Detail::TlPushFront<NewType, TypeList>::Type;
-
-template < typename NewType, typename TypeList >
-using TlPushBack = typename Detail::TlPushBack<NewType, TypeList>::Type;
-
-template < typename NewType, typename TypeList >
-using TlPushBack = typename Detail::TlPushBack<NewType, TypeList>::Type;
+template < typename T >
+struct TlCreateTypeList<T, 0>
+{
+	using Type = TypeList<>;
+};
 
 template < typename, typename T >
 struct TypeRepeat
@@ -93,8 +92,29 @@ struct TypeRepeat
 	using Type = T;
 };
 
+template < typename Tuple >
+constexpr auto TupleToArray(Tuple&& tuple)
+{
+	constexpr auto l_array = []<typename... Args>(Args&&... x) { return eastl::array{std::forward<Args>(x) ... }; };
+	return eastl::apply(l_array, std::forward<Tuple>(tuple));
+}
+
+template <typename T, typename Tuple>
+struct TlHasType;
+
+template <typename T>
+struct TlHasType<T, eastl::tuple<>> : std::false_type {};
+
+template <typename T, typename U, typename... Ts>
+struct TlHasType<T, eastl::tuple<U, Ts...>> : TlHasType<T, eastl::tuple<Ts...>> {};
+
+template <typename T, typename... Ts>
+struct TlHasType<T, eastl::tuple<T, Ts...>> : eastl::true_type {};
+
+namespace Detail
+{
 template < u64 Index, typename T, typename Tuple >
-static constexpr u64 FindTupleTypeLogic()
+static constexpr u64 FindTupleType()
 {
 	if constexpr (Index < eastl::tuple_size<Tuple>::value)
 	{
@@ -104,19 +124,17 @@ static constexpr u64 FindTupleTypeLogic()
 		}
 		else
 		{
-			return FindTupleTypeLogic<Index + 1, T, Tuple>();
+			return FindTupleType<Index + 1, T, Tuple>();
 		}
 	}
-	else
-	{
-		return U64_MAX;
-	}
+}
 }
 
 template < typename T, typename Tuple >
 static constexpr u64 FindTupleType()
 {
-	return FindTupleTypeLogic<0, T, Tuple>();
+	static_assert(TlHasType<T, Tuple>::value, "Type does not contain in tuple.");
+	return Detail::FindTupleType<0, T, Tuple>();
 }
 
 }

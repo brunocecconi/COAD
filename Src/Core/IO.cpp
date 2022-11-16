@@ -9,9 +9,9 @@
 namespace Io
 {
 
-File::File(const char* file_path, FlagType flags)
+File::File(const char* file_path, const FlagType flags RESULT_ARG)
 {
-	RESULT_ENSURE_CALL_NL(Open(file_path, flags));
+	RESULT_ENSURE_CALL_NL(Open(file_path, flags RESULT_ARG_PASS));
 }
 
 File::~File()
@@ -20,7 +20,7 @@ File::~File()
 	handle_ = nullptr;
 }
 
-void File::Open(const char* file_path, FlagType flags)
+void File::Open(const char* file_path, const FlagType flags RESULT_ARG)
 {
 	if(!(handle_ && file_path))
 	{
@@ -68,7 +68,7 @@ void File::Open(const char* file_path, FlagType flags)
 	RESULT_OK();
 }
 
-void File::Read(void* data, const u64 size) const
+void File::Read(void* data, const u64 size RESULT_ARG) const
 {
 	if(!(handle_ && data))
 	{
@@ -85,7 +85,7 @@ void File::Read(void* data, const u64 size) const
 	RESULT_OK();
 }
 
-void File::Write(const void* data, const u64 size) const
+void File::Write(const void* data, const u64 size RESULT_ARG) const
 {
 	if(!(handle_ && data))
 	{
@@ -102,7 +102,7 @@ void File::Write(const void* data, const u64 size) const
 	RESULT_OK();
 }
 
-void File::Seek(const u64 value, const SeekType origin) const
+void File::Seek(const u64 value, const SeekType origin RESULT_ARG) const
 {
 	if(!handle_)
 	{
@@ -117,7 +117,7 @@ void File::Seek(const u64 value, const SeekType origin) const
 	RESULT_OK();
 }
 
-void File::Tell(u64* value) const
+void File::Tell(u64* value RESULT_ARG) const
 {
 	if(!(handle_ && value))
 	{
@@ -127,7 +127,7 @@ void File::Tell(u64* value) const
 	RESULT_OK();
 }
 
-void File::Flush() const
+void File::Flush(RESULT_ARG_SINGLE) const
 {
 	if(!handle_)
 	{
@@ -142,7 +142,7 @@ void File::Flush() const
 	RESULT_OK();
 }
 
-void File::Close()
+void File::Close(RESULT_ARG_SINGLE)
 {
 	if(!handle_)
 	{
@@ -157,7 +157,7 @@ void File::Close()
 	RESULT_OK();
 }
 
-Path::Path(const char* file_path)
+Path::Path(const char* file_path RESULT_ARG)
 {
 	if(!file_path)
 	{
@@ -177,20 +177,20 @@ Path::~Path()
 {
 }
 
-bool Path::Exists() const
+bool Path::Exists(RESULT_ARG_SINGLE) const
 {
 	const Path& l_path = FullPath();
 	return PathFileExistsA(l_path.value_) == TRUE;
 }
 
-Path Path::FullPath() const
+Path Path::FullPath(RESULT_ARG_SINGLE) const
 {
 	Path l_path;
 	GetFullPathNameA(value_, MAX, l_path.value_, nullptr);
 	return l_path;
 }
 
-Path Path::RelativePath(const char* to) const
+Path Path::RelativePath(const char* to RESULT_ARG) const
 {
 	Path l_path{};
 	if(!to)
@@ -206,26 +206,26 @@ Path Path::RelativePath(const char* to) const
 	return l_path;
 }
 
-eastl::string Path::Extension()
+eastl::string Path::Extension(RESULT_ARG_SINGLE)
 {
 	return eastl::string{NAME_VAL("Path")};
 }
 
-void Path::RemoveExtension()
+void Path::RemoveExtension(RESULT_ARG_SINGLE)
 {
 }
 
-bool Path::IsFile() const
-{
-	return false;
-}
-
-bool Path::IsDirectory() const
+bool Path::IsFile(RESULT_ARG_SINGLE) const
 {
 	return false;
 }
 
-const char* Path::data() const
+bool Path::IsDirectory(RESULT_ARG_SINGLE) const
+{
+	return false;
+}
+
+const char* Path::data(RESULT_ARG_SINGLE) const
 {
 	return value_;
 }

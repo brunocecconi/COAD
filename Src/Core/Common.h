@@ -6,8 +6,8 @@
 #pragma warning (disable : 4201)
 #endif
 
-#include "Macros.h"
-#include "Result.h"
+#include "Core/Macros.h"
+#include "Core/Result.h"
 #include "Core/Compiler.h"
 #include "Core/Platform.h"
 #include "Core/Types.h"

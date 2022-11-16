@@ -13,7 +13,7 @@ using NativeThreadHandleType = HANDLE;
 using NativeMutexHandleType = HANDLE;
 #endif
 
-using ThreadFunctionType = Result(*)(NativeThreadParamsType);
+using ThreadFunctionType = u32(*)(NativeThreadParamsType);
 
 namespace NativeThreadCiFlags
 {
@@ -52,30 +52,30 @@ public:
 	};
 
 public:
-	Thread();
-	EXPLICIT Thread(const Ci& ci);
-	EXPLICIT Thread(ThreadFunctionType function);
+	Thread(RESULT_ARG_SINGLE);
+	EXPLICIT Thread(const Ci& ci RESULT_ARG_OPT);
+	EXPLICIT Thread(ThreadFunctionType function RESULT_ARG_OPT);
 
 	template < typename TypeArgs >
-	EXPLICIT Thread(ThreadFunctionType function, TypeArgs& args);
+	EXPLICIT Thread(ThreadFunctionType function, TypeArgs& args RESULT_ARG_OPT);
 
 	~Thread();
 
 public:
-	MAYBEUNUSED void Create(const Ci& ci);
-	MAYBEUNUSED void Sleep(u32 ms) const;
-	MAYBEUNUSED void Suspend() const;
-	MAYBEUNUSED void Resume() const;
-	MAYBEUNUSED void Destroy();
+	MAYBEUNUSED void Create(const Ci& ci RESULT_ARG_OPT);
+	MAYBEUNUSED void Sleep(u32 ms RESULT_ARG_OPT) const;
+	MAYBEUNUSED void Suspend(RESULT_ARG_SINGLE_OPT) const;
+	MAYBEUNUSED void Resume(RESULT_ARG_SINGLE_OPT) const;
+	MAYBEUNUSED void Destroy(RESULT_ARG_SINGLE_OPT);
 
 private:
 	Handle handle_{};
 };
 
 template <typename TypeArgs>
-Thread::Thread(const ThreadFunctionType function, TypeArgs& args)
+Thread::Thread(const ThreadFunctionType function, TypeArgs& args RESULT_ARG)
 {
-	create(Ci
+	Create(Ci
 	{
 		function,
 		&args,
@@ -100,16 +100,16 @@ public:
 	};
 
 public:
-	Mutex();
-	EXPLICIT Mutex(const Ci& ci);
-	EXPLICIT Mutex(const char* name);
+	Mutex(RESULT_ARG_SINGLE);
+	EXPLICIT Mutex(const Ci& ci RESULT_ARG_OPT);
+	EXPLICIT Mutex(const char* name RESULT_ARG_OPT);
 	~Mutex();
 
 public:
-	MAYBEUNUSED void create(const Ci& ci);
-	MAYBEUNUSED void lock() const;
-	MAYBEUNUSED void unlock() const;
-	MAYBEUNUSED void destroy();
+	MAYBEUNUSED void Create(const Ci& ci RESULT_ARG_OPT);
+	MAYBEUNUSED void Lock(RESULT_ARG_SINGLE_OPT) const;
+	MAYBEUNUSED void Unlock(RESULT_ARG_SINGLE_OPT) const;
+	MAYBEUNUSED void Destroy(RESULT_ARG_SINGLE_OPT);
 
 private:
 	Handle handle_{};

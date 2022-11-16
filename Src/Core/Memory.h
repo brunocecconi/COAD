@@ -8,56 +8,25 @@
 #include <EASTL/type_traits.h>
 #include <EASTL/memory.h>
 
-template < typename T, typename TAllocator >
-Result allocateArray(TAllocator& allocator, T** ptr, u64 size)
+namespace Memory
 {
-	if(!ptr)
+
+template < u64 Index, u64 Size >
+void CtClearMemory(u8* data)
+{
+	if constexpr(Index < Size)
 	{
-		return eResultErrorNullPtr;
+		data[Index] = 0;
+		CtClearMemory<Index+1, Size>(data);
 	}
-	if(*ptr)
-	{
-		return eResultErrorPtrIsNotNull;
-	}
-	if(size == 0)
-	{
-		return eResultErrorZeroSize;
-	}
-	*ptr = (T*)allocator.allocate(sizeof(T)*size);
-	return *ptr ? eResultOk : eResultErrorMemoryOutOfMemory;
 }
 
-template < typename T, typename TAllocator, typename ... TArgs >
-Result create(TAllocator& allocator, T** ptr, TArgs&&... args)
+template < typename T >
+void ClearMemoryType(T* value)
 {
-	if(!ptr)
-	{
-		return eResultErrorNullPtr;
-	}
-	if(*ptr)
-	{
-		return eResultErrorPtrIsNotNull;
-	}
-	*ptr = (T*)allocator.allocate(sizeof(T));
-	if(*ptr == nullptr)
-	{
-		return eResultErrorMemoryOutOfMemory;
-	}
-	new (*ptr) T{eastl::forward<TArgs>(args)...};
-	return eResultOk;
+	CtClearMemory<0, sizeof(T)>(reinterpret_cast<u8*>(value));
 }
 
-template < typename T, typename TAllocator, typename ... TArgs >
-Result destroy(TAllocator& allocator, T** ptr)
-{
-	if(!(ptr && *ptr))
-	{
-		return eResultErrorNullPtr;
-	}
-	(*ptr)->~T();
-	allocator.deallocate(*ptr, sizeof(T));
-	*ptr = nullptr;
-	return eResultOk;
 }
 
 #endif

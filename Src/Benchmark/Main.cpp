@@ -18,6 +18,9 @@
 #pragma comment(lib, "shlwapi")
 #endif
 
+using AllTransformComponentTypes = Ecs::TranformComponentTypes;
+using AllComponentTypes = AllTransformComponentTypes;//TypeTraits::TlCat<AllTransformComponentTypes, Ecs::Placeholder64ComponentTypes>::Type;
+
 void* operator new[](size_t size, const char* , int , unsigned , const char* , int )
 {
 	return mi_malloc(size);
@@ -55,7 +58,17 @@ static void EnttCtor10000(benchmark::State& state)
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttCtor10000)->Iterations(10000);
+BENCHMARK(EnttCtor10000)->Threads(1);
+
+static void COADEntityCtor10000(benchmark::State& state)
+{
+	for (auto _ : state)
+	{
+		Ecs::Registry<AllComponentTypes> l_reg{10000ull};
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(COADEntityCtor10000)->Threads(1);
 
 static void EnttClear10000(benchmark::State& state)
 {
@@ -67,28 +80,18 @@ static void EnttClear10000(benchmark::State& state)
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttClear10000)->Iterations(10000);
-
-static void COADEntityCtor10000(benchmark::State& state)
-{
-	for (auto _ : state)
-	{
-		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000ull};
-	}
-}
-// Register the function as a benchmark
-BENCHMARK(COADEntityCtor10000)->Iterations(10000);
+BENCHMARK(EnttClear10000)->Threads(1);
 
 static void COADEntityClear10000(benchmark::State& state)
 {
 	for (auto _ : state)
 	{
-		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000};
+		Ecs::Registry<AllComponentTypes> l_reg{10000};
 		l_reg.Clear();
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(COADEntityClear10000)->Iterations(10000);
+BENCHMARK(COADEntityClear10000)->Threads(1);
 
 static void EnttCreateEntity1000ForLoop(benchmark::State& state)
 {
@@ -102,7 +105,21 @@ static void EnttCreateEntity1000ForLoop(benchmark::State& state)
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttCreateEntity1000ForLoop)->Iterations(10000);
+BENCHMARK(EnttCreateEntity1000ForLoop)->Threads(1);
+
+static void COADEntityCreateEntity1000ForLoop(benchmark::State& state)
+{
+	for (auto _ : state)
+	{
+		Ecs::Registry<AllComponentTypes> l_reg{10000ull};
+		for (size_t i = 0; i < 1000; i++)
+		{
+			(void)l_reg.Create();
+		}
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(COADEntityCreateEntity1000ForLoop)->Threads(1);
 
 static void EnttCreateEntity1000ForLoopAddLocationComponent(benchmark::State& state)
 {
@@ -118,27 +135,13 @@ static void EnttCreateEntity1000ForLoopAddLocationComponent(benchmark::State& st
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(EnttCreateEntity1000ForLoopAddLocationComponent)->Iterations(10000);
-
-static void COADEntityCreateEntity1000ForLoop(benchmark::State& state)
-{
-	for (auto _ : state)
-	{
-		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000ull};
-		for (size_t i = 0; i < 1000; i++)
-		{
-			(void)l_reg.Create();
-		}
-	}
-}
-// Register the function as a benchmark
-BENCHMARK(COADEntityCreateEntity1000ForLoop)->Iterations(10000);
+BENCHMARK(EnttCreateEntity1000ForLoopAddLocationComponent)->Threads(1);
 
 static void COADEntityCreateEntity1000ForLoopAddLocationComponent(benchmark::State& state)
 {
 	for (auto _ : state)
 	{
-		Ecs::Registry<Ecs::TranformComponentTypes> l_reg{10000ull};
+		Ecs::Registry<AllComponentTypes> l_reg{10000ull};
 		for (size_t i = 0; i < 1000; i++)
 		{
 			const auto l_id = l_reg.Create();
@@ -147,7 +150,158 @@ static void COADEntityCreateEntity1000ForLoopAddLocationComponent(benchmark::Sta
 	}
 }
 // Register the function as a benchmark
-BENCHMARK(COADEntityCreateEntity1000ForLoopAddLocationComponent)->Iterations(10000);
+BENCHMARK(COADEntityCreateEntity1000ForLoopAddLocationComponent)->Threads(1);
+
+static void EnttDestroyEntity1000ForLoop(benchmark::State& state)
+{
+	for (auto _ : state)
+	{
+		entt::registry l_reg{10000ull};
+		for (size_t i = 0; i < 1000; i++)
+		{
+			(void)l_reg.create();
+		}
+		for (size_t i = 0; i < 1000; i++)
+		{
+			l_reg.destroy((entt::registry::entity_type)i);
+		}
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(EnttDestroyEntity1000ForLoop)->Threads(1);
+
+static void COADDestroyEntity1000ForLoop(benchmark::State& state)
+{
+	for (auto _ : state)
+	{
+		Ecs::Registry<AllComponentTypes> l_reg{10000ull};
+		for (size_t i = 0; i < 1000; i++)
+		{
+			(void)l_reg.Create();
+		}
+		for (size_t i = 0; i < 1000; i++)
+		{
+			l_reg.Destroy(i);
+		}
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(COADDestroyEntity1000ForLoop)->Threads(1);
+
+static void EnttRemoveComponent1000ForLoop(benchmark::State& state)
+{
+	for (auto _ : state)
+	{
+		entt::registry l_reg{10000ull};
+
+		for (size_t i = 0; i < 1000; i++)
+		{
+			l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<f32>(i)});
+		}
+		for (size_t i = 0; i < 1000; i++)
+		{
+			l_reg.remove<Ecs::LocationComponent>((entt::registry::entity_type)i);
+		}
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(EnttRemoveComponent1000ForLoop)->Threads(1);
+
+static void COADRemoveComponent1000ForLoop(benchmark::State& state)
+{
+	for (auto _ : state)
+	{
+		Ecs::Registry<AllComponentTypes> l_reg{10000ull};
+		for (size_t i = 0; i < 1000; i++)
+		{
+			l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<f32>(i)}});
+		}
+		for (size_t i = 0; i < 1000; i++)
+		{
+			l_reg.Remove<Ecs::LocationComponent>(i);
+		}
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(COADRemoveComponent1000ForLoop)->Threads(1);
+
+#pragma optimize( "", off )
+void nop(){}
+#pragma optimize( "", on )
+
+static void EnttGetEntity10000ForLoop(benchmark::State& state)
+{
+	entt::registry l_reg{10000ull};
+	for (size_t i = 0; i < 10000; i++)
+	{
+		l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<f32>(i)});
+	}
+	for (auto _ : state)
+	{
+		for (size_t i = 0; i < 10000; i++)
+		{
+			nop();
+			(void)l_reg.get<Ecs::LocationComponent>((entt::registry::entity_type)i);
+		}
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(EnttGetEntity10000ForLoop)->Threads(1);
+
+static void COADGetEntity10000ForLoop(benchmark::State& state)
+{
+	Ecs::Registry<AllComponentTypes> l_reg{10000ull};
+	for (size_t i = 0; i < 10000; i++)
+	{
+		l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<f32>(i)}});
+	}
+	for (auto _ : state)
+	{
+		for (size_t i = 0; i < 10000; i++)
+		{
+			nop();
+			(void)l_reg.Get<Ecs::LocationComponent>(i);
+		}
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(COADGetEntity10000ForLoop)->Threads(1);
+
+static void EnttEach10000(benchmark::State& state)
+{
+	entt::registry l_reg{10000ull};
+	for (size_t i = 0; i < 10000; i++)
+	{
+		l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<f32>(i)});
+	}
+	for (auto _ : state)
+	{
+		l_reg.each([&](auto& d)
+		{
+			(void)l_reg.get<Ecs::LocationComponent>(d);
+		});
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(EnttEach10000)->Threads(1);
+
+static void COADEach10000(benchmark::State& state)
+{
+	Ecs::Registry<AllComponentTypes> l_reg{10000ull};
+	for (size_t i = 0; i < 10000; i++)
+	{
+		l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<f32>(i)}});
+	}
+	for (auto _ : state)
+	{
+		l_reg.Each<Ecs::LocationComponent>([](auto& d)
+		{
+			d.value.x=3.14f;
+		});
+	}
+}
+// Register the function as a benchmark
+BENCHMARK(COADEach10000)->Threads(1);
 
 BENCHMARK_MAIN();
 

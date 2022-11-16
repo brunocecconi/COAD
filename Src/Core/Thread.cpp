@@ -11,11 +11,11 @@ struct NativeThreadParams
 	ThreadFunctionType function;
 	NativeThreadParamsType params;
 
-	static void create(NativeThreadParams** thread_params, const Thread::Ci& ci);
-	static void destroy(NativeThreadParams** thread_params);
+	static void Create(NativeThreadParams** thread_params, const Thread::Ci& ci RESULT_ARG_OPT);
+	static void Destroy(NativeThreadParams** thread_params RESULT_ARG_OPT);
 };
 
-void NativeThreadParams::create(NativeThreadParams** thread_params, const Thread::Ci& ci)
+void NativeThreadParams::Create(NativeThreadParams** thread_params, const Thread::Ci& ci RESULT_ARG)
 {
 	if (!thread_params)
 	{
@@ -38,7 +38,7 @@ void NativeThreadParams::create(NativeThreadParams** thread_params, const Thread
 	RESULT_OK();
 }
 
-void NativeThreadParams::destroy(NativeThreadParams** thread_params)
+void NativeThreadParams::Destroy(NativeThreadParams** thread_params RESULT_ARG)
 {
 	if (!(thread_params && *thread_params))
 	{
@@ -53,28 +53,28 @@ void NativeThreadParams::destroy(NativeThreadParams** thread_params)
 }
 
 #if PLATFORM_WINDOWS
-static DWORD nativeThreadFunctionCall(void* params)
+static DWORD NativeThreadFunctionCall(void* params)
 {
 	const auto l_params = static_cast<NativeThreadParams*>(params);
-	return static_cast<DWORD>(l_params->function(l_params->params));
+	return l_params->function(l_params->params);
 }
 
-static DWORD getCreationFlags(const NativeThreadCiFlags::Type flags)
+static DWORD GetCreationFlags(const NativeThreadCiFlags::Type flags)
 {
 	return ((flags & NativeThreadCiFlags::eCreateSuspended) ? CREATE_SUSPENDED : 0);
 }
 #endif
 
-Thread::Thread()
+Thread::Thread(RESULT_ARG_SINGLE)
 {
 }
 
-Thread::Thread(const Ci& ci)
+Thread::Thread(const Ci& ci RESULT_ARG)
 {
 	Create(eastl::move(ci));
 }
 
-Thread::Thread(const ThreadFunctionType function)
+Thread::Thread(const ThreadFunctionType function RESULT_ARG)
 {
 	Create(Ci{function, nullptr, 0ull, NativeThreadCiFlags::eNone});
 }
@@ -84,7 +84,7 @@ Thread::~Thread()
 	Destroy();
 }
 
-void Thread::Create(const Ci& ci)
+void Thread::Create(const Ci& ci RESULT_ARG)
 {
 	if (!handle_.ptr)
 	{
@@ -96,10 +96,10 @@ void Thread::Create(const Ci& ci)
 	}
 
 	NativeThreadParams* l_thread_params{};
-	RESULT_ENSURE_CALL_NL(NativeThreadParams::create(&l_thread_params, ci));
+	RESULT_ENSURE_CALL_NL(NativeThreadParams::Create(&l_thread_params, ci));
 
 #if PLATFORM_WINDOWS
-	handle_.ptr = CreateThread(nullptr, 0, nativeThreadFunctionCall, l_thread_params, getCreationFlags(ci.flags), nullptr);
+	handle_.ptr = CreateThread(nullptr, 0, NativeThreadFunctionCall, l_thread_params, GetCreationFlags(ci.flags), nullptr);
 #else
 #error Not supported yet.
 #endif
@@ -113,7 +113,7 @@ void Thread::Create(const Ci& ci)
 	RESULT_OK();
 }
 
-void Thread::Sleep(const u32 ms) const
+void Thread::Sleep(const u32 ms RESULT_ARG) const
 {
 	if(WaitForSingleObject(handle_.ptr, ms) != WAIT_TIMEOUT)
 	{
@@ -122,7 +122,7 @@ void Thread::Sleep(const u32 ms) const
 	RESULT_OK();
 }
 
-void Thread::Suspend() const
+void Thread::Suspend(RESULT_ARG_SINGLE) const
 {
 	if (!handle_.ptr)
 	{
@@ -142,7 +142,7 @@ void Thread::Suspend() const
 #endif
 }
 
-void Thread::Resume() const
+void Thread::Resume(RESULT_ARG_SINGLE) const
 {
 	if (!handle_.ptr)
 	{
@@ -163,7 +163,7 @@ void Thread::Resume() const
 #endif
 }
 
-void Thread::Destroy()
+void Thread::Destroy(RESULT_ARG_SINGLE)
 {
 	if (!handle_.ptr)
 	{
@@ -181,7 +181,7 @@ void Thread::Destroy()
 #error Not supported yet.
 #endif
 
-	RESULT_ENSURE_CALL_NL(NativeThreadParams::destroy(reinterpret_cast<NativeThreadParams**>(&handle_.params)));
+	RESULT_ENSURE_CALL_NL(NativeThreadParams::Destroy(reinterpret_cast<NativeThreadParams**>(&handle_.params)));
 
 	handle_.ptr = nullptr;
 	handle_.params = nullptr;
@@ -189,28 +189,28 @@ void Thread::Destroy()
 	RESULT_OK();
 }
 
-Mutex::Mutex()
+Mutex::Mutex(RESULT_ARG_SINGLE)
 {
 }
 
-Mutex::Mutex(const Ci& ci)
+Mutex::Mutex(const Ci& ci RESULT_ARG)
 {
-	create(ci);
+	Create(ci);
 }
 
-Mutex::Mutex(const char* name)
+Mutex::Mutex(const char* name RESULT_ARG)
 {
-	create(Ci{name});
+	Create(Ci{name});
 }
 
 Mutex::~Mutex()
 {
-	destroy();
+	Destroy();
 }
 
-void Mutex::create(const Ci& ci)
+void Mutex::Create(const Ci& ci RESULT_ARG)
 {
-	destroy();
+	Destroy();
 
 #if PLATFORM_WINDOWS
 	handle_.ptr = CreateMutexA(nullptr, 0, ci.name);	
@@ -226,7 +226,7 @@ void Mutex::create(const Ci& ci)
 	RESULT_OK();
 }
 
-void Mutex::lock() const
+void Mutex::Lock(RESULT_ARG_SINGLE) const
 {
 	if(!handle_.ptr)
 	{
@@ -243,7 +243,7 @@ void Mutex::lock() const
 	RESULT_OK();
 }
 
-void Mutex::unlock() const
+void Mutex::Unlock(RESULT_ARG_SINGLE) const
 {
 	if(!handle_.ptr)
 	{
@@ -262,7 +262,7 @@ void Mutex::unlock() const
 #endif
 }
 
-void Mutex::destroy()
+void Mutex::Destroy(RESULT_ARG_SINGLE)
 {
 	if(!handle_.ptr)
 	{

@@ -33,7 +33,7 @@ using EntityId = ENTITY_ID_TYPE;
  * @brief Ecs class.
  *
 */
-template < typename ... TypeLists >
+template < typename TypeList >
 class Registry final
 {
 
@@ -41,196 +41,108 @@ public:
 	template < typename Component >
 	struct ComponentArray final
 	{
-		friend class EntityRegistry;
+		static_assert(alignof(Component) >= sizeof(iptr), "Invalid min component size to be able to be wrapped by free list.");
 
-		ComponentArray(u64 capacity)
+		friend class Registry;
+
+		struct CursorFreeList
 		{
-			data_ = static_cast<Component*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(Component)));
-			data_cursor_ = data_;
-			eindex_ = static_cast<u64*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(u64)));
-			eastl::uninitialized_fill_n(eindex_, capacity, INVALID_COMPONENT_ID);
-			eindex_end_ = eindex_ + capacity;
-		}
+			CursorFreeList* next{};
+		};
+
+		EXPLICIT ComponentArray(u64 capacity);
 
 	public:
 		static constexpr u64 INVALID_COMPONENT_ID = U64_MAX;
 
-		ComponentArray(ComponentArray&& other) NOEXCEPT
-			: data_{other.data_}, data_cursor_{ other.data_cursor_ }, eindex_{ other.eindex_ }, eindex_end_{other.eindex_end_}
-		{
-			other.data_ = other.data_cursor_ = nullptr;
-			other.eindex_ = eindex_end_ = nullptr;
-		}
+		ComponentArray(ComponentArray&& other) NOEXCEPT = delete;
 		ComponentArray(const ComponentArray&) = delete;
-		ComponentArray& operator=(ComponentArray&&) NOEXCEPT = default;
+		ComponentArray& operator=(ComponentArray&&) NOEXCEPT = delete;
 		ComponentArray& operator=(const ComponentArray&) = delete;
-		~ComponentArray()
-		{
-			EASTLAllocatorType("Ecs").deallocate(data_, 0);
-			data_ = data_cursor_ = nullptr;
-
-			EASTLAllocatorType("Ecs").deallocate(eindex_, 0);
-			eindex_ = eindex_end_ = nullptr;
-		}
+		~ComponentArray();
 
 	public:
-		void Add(EntityId id, Component&& component)
+		void Add(EntityId id, Component&& component RESULT_ARG_OPT);
+		void Remove(EntityId id RESULT_ARG_OPT);
+		void Each(void (*function)(Component&))
 		{
-			ENSURE_LAST_RESULT_NL();
-			if (Contains(id))
+			eastl::for_each(eindex_, eindex_end_, [&](u64& e)
 			{
-				RESULT_ERROR(eResultErrorEcsComponentDataAddedMoreThanOnce);
-			}
-			eindex_[id] = data_cursor_ - data_;
-			(*data_cursor_++) = eastl::move(component);
-			RESULT_OK();
+				if(e != INVALID_COMPONENT_ID)
+				{
+					function(data_[e]);
+				}
+			});
 		}
 
-		void Remove(EntityId id)
-		{
-			ENSURE_LAST_RESULT_NL();
-			if (!Contains(id))
-			{
-				RESULT_ERROR(eResultErrorEcsComponentDataNotAdded);
-			}
-			const auto l_index_removed_entity = eindex_[id];
-			reinterpret_cast<Component*>(data_ + l_index_removed_entity)->~Component();
-			eindex_[id] = INVALID_COMPONENT_ID;
-			RESULT_OK();
-		}
-
-		NODISCARD Component* Get(EntityId id) const
-		{
-			if (!Contains(id))
-			{
-				return nullptr;
-			}
-			return reinterpret_cast<Component*>(data_ + eindex_[id]);
-		}
-
-		NODISCARD bool Contains(EntityId id) const
-		{
-			return eindex_[id] != INVALID_COMPONENT_ID;
-		}
+		NODISCARD Component* Get(EntityId id);
+		NODISCARD bool Contains(EntityId id) const;
 
 	private:
-		Component* data_{}, *data_cursor_{};
+		CursorFreeList *cursor_fl_{};
+		Component* data_{}, *dcursor_{};
 		u64* eindex_{}, *eindex_end_{};
 	};
 
 private:
 	template < typename Component >
-	struct ComponentArrayElement
+	class ComponentArrayElement
 	{
+	public:
 		using ComponentArrayType = ComponentArray<Component>;
 
 		bool constructed;
-		eastl::aligned_storage_t<sizeof ComponentArrayType> memory;
+		ALIGNAS(64) eastl::aligned_storage_t<sizeof ComponentArrayType> memory;
 
-		void ConstructIfAllowed(u64 capacity)
-		{
-			if(!constructed)
-			{
-				constructed = true;
-				new (memory.mCharData) ComponentArrayType{capacity};
-			}
-		}
+	public:
+		ComponentArrayElement();
 
-		void DestroyIfAllowed()
-		{
-			if(constructed)
-			{
-				constructed = false;
-				reinterpret_cast<ComponentArrayType*>(memory.mCharData)->~ComponentArrayType();
-			}
-		}
-
-		ComponentArrayType* Get()
-		{
-			return reinterpret_cast<ComponentArrayType*>(memory.mCharData);
-		}
+	public:
+		void ConstructIfAllowed(u64 capacity);
+		void DestroyIfAllowed();
+		ComponentArrayType* Get();
 	};
 
-	using ComponentTypes = typename TypeTraits::TlCat<TypeLists..., TypeTraits::TypeListEmpty>::Type;
+	using ComponentTypes = TypeList;
 	using ComponentMapTuple = typename TypeTraits::TlToTupleTransfer<ComponentArrayElement, ComponentTypes>::Type;
 
 	template < typename Component >
-	static constexpr u64 GetComponentId()
-	{
-		return TypeTraits::FindTupleType<ComponentArrayElement<Component>, ComponentMapTuple>();
-	}
+	static constexpr u64 GetComponentId();
 
 	template < typename Component >
-	ComponentArrayElement<Component>& GetComponentArrayElement()
-	{
-		return eastl::get<GetComponentId<Component>()>(components_map_);
-	}
+	ComponentArrayElement<Component>& GetComponentArrayElement();
 
 	template < u64 Index >
-	void ConstructComponentsMap()
-	{
-		if constexpr(Index < ComponentTypes::SIZE)
-		{
-			new (eastl::get<Index>(components_map_).memory.mCharData) eastl::tuple_element_t<Index, ComponentMapTuple>{};
-			DestroyComponentsMap<Index+1>();
-		}
-	}
+	void ConstructComponentsMap();
 
 	template < u64 Index >
-	void DestroyComponentsMap()
-	{
-		if constexpr(Index < ComponentTypes::SIZE)
-		{
-			eastl::get<Index>(components_map_).DestroyIfAllowed();
-			DestroyComponentsMap<Index+1>();
-		}
-	}
+	void MoveComponentsMap(ComponentMapTuple&& map);
+
+	template < u64 Index >
+	void DestroyComponentsMap();
 
 	template < typename Component >
 	class ComponentPtr final
 	{
-		friend class EntityRegistry;
+		friend class Registry;
 
-		ComponentPtr(const Registry* registry, Ptr<Component> component)
-			: registry_{ const_cast<Registry*>(registry) }, component_{ eastl::move(component) }
-		{
-
-		}
+		ComponentPtr(Registry* registry, Ptr<Component> component);
 
 	public:
 		using UnderlyngType = Component;
 
-		ComponentPtr(ComponentPtr&&) NOEXCEPT = default;
-		ComponentPtr(const ComponentPtr&) = default;
-		ComponentPtr& operator=(ComponentPtr&&) NOEXCEPT = default;
-		ComponentPtr& operator=(const ComponentPtr&) = default;
-		~ComponentPtr() = default;
+		ComponentPtr(ComponentPtr&&) NOEXCEPT;
+		ComponentPtr(const ComponentPtr&);
+		ComponentPtr& operator=(ComponentPtr&&) NOEXCEPT;
+		ComponentPtr& operator=(const ComponentPtr&);
+		~ComponentPtr();
 
 	public:
-		auto& operator->()
-		{
-			return component_;
-		}
-
-		auto& operator->() const
-		{
-			return component_;
-		}
-
-		operator Component* ()
-		{
-			return component_;
-		}
-
-		operator Component* () const
-		{
-			return component_;
-		}
-
-		operator bool() const
-		{
-			return component_;
-		}
+		auto& operator->();
+		auto& operator->() const;
+		EXPLICIT operator Component* ();
+		EXPLICIT operator Component* () const;
+		EXPLICIT operator bool() const;
 
 	private:
 		Registry* registry_;
@@ -242,235 +154,518 @@ private:
 	static constexpr EntityId INVALID_ENTITY_ID = U64_MAX;
 
 public:
-	EXPLICIT Registry(u64 capacity = 10000ull)
-	{
-		signatures_ = static_cast<SignatureType*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(SignatureType)));
-		ebegin_ = static_cast<EntityId*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(EntityId)));
-		eend_ = ebegin_ + capacity;
-		ecursor_ = ebegin_;
-		ConstructComponentsMap<0>();
-		//eastl::uninitialized_default_fill_n(components_map_, 64);
-	}
-	Registry(Registry&& other) NOEXCEPT
-		: ebegin_{other.ebegin_}, eend_{other.eend_}, ecursor_{other.ecursor_},
-		signatures_{other.signatures_}
-		{
-			memcpy(components_map_, other.components_map_, sizeof components_map_);
-		other.ecursor_ = other.eend_ = other.ebegin_ = nullptr;
-		other.signatures_ = nullptr;
-	}
+	EXPLICIT Registry(u64 capacity = 10000ull RESULT_ARG_OPT);
+
+	Registry(Registry&& other) NOEXCEPT;
 	Registry(const Registry&) = delete;
-	Registry& operator=(Registry&& other) NOEXCEPT
-	{
-		memcpy(components_map_, other.components_map_, sizeof components_map_);
-
-		signatures_ = other.signatures_;
-		ebegin_ = other.ebegin_;
-		eend_ = other.eend_;
-		ecursor_ = other.ecursor_;
-
-		other.signatures_ = nullptr;
-		other.ecursor_ = other.eend_ = other.ebegin_ = nullptr;
-		return *this;
-	}
+	Registry& operator=(Registry&& other) NOEXCEPT;
 	Registry& operator=(const Registry&) = delete;
-	~Registry()
-	{
-		DestroyComponentsMap<0>();
-
-		EASTLAllocatorType("Ecs").deallocate(ebegin_, 0);
-		ebegin_ = eend_ = ecursor_ = nullptr;
-
-		EASTLAllocatorType("Ecs").deallocate(signatures_, 0);
-		signatures_= nullptr;
-	}
+	~Registry();
 
 public:
-	EntityId Create()
-	{
-		ENSURE_LAST_RESULT_NL(INVALID_ENTITY_ID);
-		if (!Contains(ecursor_))
-		{
-			RESULT_ERROR(eResultErrorEcsNoEntityAvailable, INVALID_ENTITY_ID);
-		}
-		RESULT_OK();
-		if (!(*ecursor_ >= 0ull && *ecursor_ < Capacity()))
-		{
-			*ecursor_ = ecursor_ - ebegin_;
-		}
-		const auto l_id = *ecursor_++;
-		new (signatures_ + l_id) SignatureType{  };
-		return l_id;
-	}
+	EntityId Create(RESULT_ARG_SINGLE_OPT);
 
-	void Destroy(EntityId id)
-	{
-		ENSURE_LAST_RESULT_NL();
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId);
-		}
-		*--ecursor_ = id;
-		signatures_[id].reset();
-		RESULT_OK();
-	}
+	void Destroy(EntityId id RESULT_ARG_OPT);
 
 public:
-	template < typename ... Components, typename... Booleans >
-	void SetEnabled(const EntityId id, Booleans... values)
-	{
-		ENSURE_LAST_RESULT_NL();
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId);
-		}
-		(setEnabledInternal<Components>(id, values), ...);
-		RESULT_OK();
-	}
+	template <typename ... Components>
+	void Enable(EntityId id RESULT_ARG_OPT);
 
 	template <typename ... Components>
-	void Enable(const EntityId id)
-	{
-		ENSURE_LAST_RESULT_NL();
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId);
-		}
-		(SetEnabledInternal<Components>(id, true), ...);
-		RESULT_OK();
-	}
-
-	template <typename ... Components>
-	void Disable(const EntityId id)
-	{
-		ENSURE_LAST_RESULT_NL();
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId);
-		}
-		(SetEnabledInternal<Components>(id, false), ...);
-		RESULT_OK();
-	}
+	void Disable(EntityId id RESULT_ARG_OPT);
 
 	template <typename Component>
-	bool IsEnabled(const EntityId id) const
-	{
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId, false);
-		}
-		RESULT_OK();
-		return signatures_[id].test(GetComponentId<Component>(), false);
-	}
+	NODISCARD bool IsEnabled(EntityId id RESULT_ARG_OPT) const;
 
 public:
-	template <typename ... Components>
-	void Add(const EntityId id, Components&&... components)
-	{
-		ENSURE_LAST_RESULT_NL();
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId);
-		}
-		(AddInternal<Components>(id, eastl::forward<Components>(components)), ...);
-		RESULT_OK();
-	}
-
-	template <typename ... Components>
-	void Remove(EntityId id)
-	{
-		ENSURE_LAST_RESULT_NL();
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId);
-		}
-		RESULT_OK();
-	}
+	template <typename Component>
+	void Add(EntityId id, Component&& component RESULT_ARG_OPT);
 
 	template <typename Component>
-	ComponentPtr<Component> Get(const EntityId id) const
+	void Remove(EntityId id RESULT_ARG_OPT);
+
+	template <typename Component>
+	ComponentPtr<Component> Get(EntityId id RESULT_ARG_OPT);
+
+	template <typename Component>
+	void Each(void (*function)(Component&) RESULT_ARG_OPT)
 	{
-		ENSURE_LAST_RESULT_NL(ComponentPtr<Component>{this, nullptr});
-		if (!IsEnabled<Component>(id))
+		auto l_comp = GetComponentArrayElement<Component>().Get();
+		const auto l_data = l_comp->data_;
+		auto l_eindex = l_comp->eindex_;
+		const auto l_eindex_end = l_comp->eindex_end_;
+
+		while(l_eindex < l_eindex_end)
 		{
-			RESULT_ERROR(eResultErrorEcsComponentNotEnabled, ComponentPtr<Component>{this, nullptr});
+			if(*l_eindex != ComponentArray<Component>::INVALID_COMPONENT_ID)
+			{
+				function(*(l_data + *l_eindex));
+			}
+			++l_eindex;
 		}
-		RESULT_OK();
-		return ComponentPtr<Component>{this, PTR(GetComponentArrayElement<Component>().Get()->Get<Component>(id))};
 	}
 
 public:
-	NODISCARD u64 Capacity() const
-	{
-		return eend_ - ebegin_;
-	}
-
-	NODISCARD bool Contains(const EntityId* ptr) const
-	{
-		return ptr >= ebegin_ && ptr < eend_;
-	}
-
-	void Clear()
-	{
-		//entities_.clear();
-
-		EASTLAllocatorType("Ecs").deallocate(ebegin_, 0);
-		ebegin_= eend_ = ecursor_ = nullptr;
-
-		EASTLAllocatorType("Ecs").deallocate(signatures_, 0);
-		signatures_= nullptr;
-
-		DestroyComponentsMap<0>();
-	}
+	NODISCARD u64 Capacity(RESULT_ARG_SINGLE_OPT) const;
+	NODISCARD bool Contains(const EntityId* ptr RESULT_ARG_OPT) const;
+	void Clear(RESULT_ARG_SINGLE_OPT);
 
 private:
 	template <typename Component>
-	void SetEnabledInternal(const EntityId id, const bool value)
-	{
-		ENSURE_LAST_RESULT_NL();
-		constexpr u64 l_id = GetComponentId<Component>();
-		if(signatures_[id].test(l_id))
-		{
-			RESULT_ERROR(eResultErrorEcsComponentAlreadyEnabled);
-		}
-		signatures_[id].set(l_id, value);
-		if(value)
-		{
-			GetComponentArrayElement<Component>().ConstructIfAllowed(Capacity());
-		}
-		RESULT_OK();
-	}
-
-	template <typename Component>
-	void AddInternal(const EntityId id, Component&& component)
-	{
-		ENSURE_LAST_RESULT_NL();
-		if (id >= Capacity())
-		{
-			RESULT_ERROR(eResultErrorEcsInvalidEntityId);
-		}
-
-		constexpr u64 l_id = GetComponentId<Component>();
-		auto& l_component_element = GetComponentArrayElement<Component>();
-
-		// Enable component inline
-		if(!signatures_[id].test(l_id))
-		{
-			signatures_[id].set(l_id);
-			l_component_element.ConstructIfAllowed(Capacity());
-		}
-
-		// Add component
-		l_component_element.Get()->Add(id, eastl::forward<Component>(component));
-
-		RESULT_OK();
-	}
+	void SetEnabledInternal(EntityId id, bool value RESULT_ARG_OPT);
 
 private:
 	EntityId* ebegin_{}, *eend_{}, *ecursor_{};
 	SignatureType* signatures_{};
 	ComponentMapTuple components_map_;
 };
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentArray<Component>::ComponentArray(const u64 capacity)
+{
+	data_ = static_cast<Component*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(Component)));
+	dcursor_ = data_;
+	eindex_ = static_cast<u64*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(u64)));
+	eastl::uninitialized_fill_n(eindex_, capacity, INVALID_COMPONENT_ID);
+	eindex_end_ = eindex_ + capacity;
+}
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentArray<Component>::~ComponentArray()
+{
+	EASTLAllocatorType("Ecs").deallocate(data_, 0);
+	data_ = dcursor_ = nullptr;
+
+	EASTLAllocatorType("Ecs").deallocate(eindex_, 0);
+	eindex_ = eindex_end_ = nullptr;
+}
+
+template <typename TypeList>
+template <typename Component>
+void Registry<TypeList>::ComponentArray<Component>::Add(const EntityId id, Component&& component RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	if (Contains(id))
+	{
+		RESULT_ERROR(eResultErrorEcsComponentDataAddedMoreThanOnce);
+	}
+
+	Component *l_target_data;
+	if(!cursor_fl_)
+	{
+		l_target_data = reinterpret_cast<Component*>(dcursor_++);
+	}
+	else
+	{
+		l_target_data = reinterpret_cast<Component*>(cursor_fl_);
+		cursor_fl_ = cursor_fl_->next;
+	}
+
+	
+
+	eindex_[id] = l_target_data - data_;
+	*l_target_data = eastl::move(component);
+	RESULT_OK();
+}
+
+template <typename TypeList>
+template <typename Component>
+void Registry<TypeList>::ComponentArray<Component>::Remove(const EntityId id RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	if (!Contains(id))
+	{
+		RESULT_ERROR(eResultErrorEcsComponentDataNotAdded);
+	}
+	const auto l_index_removed_entity = eindex_[id];
+	data_[l_index_removed_entity].~Component();
+	eindex_[id] = INVALID_COMPONENT_ID;
+
+	// Add to cursor free list
+	auto l_new_cursor = reinterpret_cast<CursorFreeList*>(data_ + l_index_removed_entity);
+	l_new_cursor->next = cursor_fl_;
+	cursor_fl_ = l_new_cursor;
+
+	RESULT_OK();
+}
+
+template <typename TypeList>
+template <typename Component>
+Component* Registry<TypeList>::ComponentArray<Component>::Get(const EntityId id)
+{
+	if (!Contains(id))
+	{
+		return nullptr;
+	}
+	return reinterpret_cast<Component*>(data_ + eindex_[id]);
+}
+
+template <typename TypeList>
+template <typename Component>
+bool Registry<TypeList>::ComponentArray<Component>::Contains(const EntityId id) const
+{
+	return eindex_[id] != INVALID_COMPONENT_ID;
+}
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentArrayElement<Component>::ComponentArrayElement() : constructed { false }
+{
+	Memory::ClearMemoryType(&memory);
+}
+
+template <typename TypeList>
+template <typename Component>
+void Registry<TypeList>::ComponentArrayElement<Component>::ConstructIfAllowed(u64 capacity)
+{
+	if(!constructed)
+	{
+		constructed = true;
+		new (memory.mCharData) ComponentArrayType{capacity};
+	}
+}
+
+template <typename TypeList>
+template <typename Component>
+void Registry<TypeList>::ComponentArrayElement<Component>::DestroyIfAllowed()
+{
+	if(constructed)
+	{
+		constructed = false;
+		reinterpret_cast<ComponentArrayType*>(memory.mCharData)->~ComponentArrayType();
+	}
+}
+
+template <typename TypeList>
+template <typename Component>
+typename Registry<TypeList>::template ComponentArrayElement<Component>::ComponentArrayType* Registry<TypeList>::
+ComponentArrayElement<Component>::Get()
+{
+	return reinterpret_cast<ComponentArrayType*>(memory.mCharData);
+}
+
+template <typename TypeList>
+template <typename Component>
+constexpr u64 Registry<TypeList>::GetComponentId()
+{
+	return TypeTraits::FindTupleType<ComponentArrayElement<Component>, ComponentMapTuple>();
+}
+
+template <typename TypeList>
+template <typename Component>
+typename Registry<TypeList>::template ComponentArrayElement<Component>& Registry<TypeList>::GetComponentArrayElement()
+{
+	return eastl::get<GetComponentId<Component>()>(components_map_);
+}
+
+template <typename TypeList>
+template <u64 Index>
+void Registry<TypeList>::ConstructComponentsMap()
+{
+	if constexpr(Index < ComponentTypes::SIZE)
+	{
+		using Type = eastl::tuple_element_t<Index, ComponentMapTuple>;
+		new (eastl::addressof(eastl::get<Index>(components_map_))) Type{};
+		ConstructComponentsMap<Index+1>();
+	}
+}
+
+template <typename TypeList>
+template <u64 Index>
+void Registry<TypeList>::MoveComponentsMap(ComponentMapTuple&& map)
+{
+	if constexpr(Index < ComponentTypes::SIZE)
+	{
+		eastl::get<Index>(components_map_) = eastl::move(eastl::get<Index>(map));
+		MoveComponentsMap<Index+1>();
+	}
+}
+
+template <typename TypeList>
+template <u64 Index>
+void Registry<TypeList>::DestroyComponentsMap()
+{
+	if constexpr(Index < ComponentTypes::SIZE)
+	{
+		eastl::get<Index>(components_map_).DestroyIfAllowed();
+		DestroyComponentsMap<Index+1>();
+	}
+}
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentPtr<Component>::ComponentPtr(Registry* registry, Ptr<Component> component)
+	: registry_{ registry }, component_{ eastl::move(component) }
+{
+
+}
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentPtr<Component>::ComponentPtr(ComponentPtr&&) noexcept = default;
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentPtr<Component>::ComponentPtr(const ComponentPtr&) = default;
+template <typename TypeList>
+template <typename Component>
+typename Registry<TypeList>::template ComponentPtr<Component>& Registry<TypeList>::ComponentPtr<Component>::operator
+=(ComponentPtr&&) noexcept = default;
+template <typename TypeList>
+template <typename Component>
+typename Registry<TypeList>::template ComponentPtr<Component>& Registry<TypeList>::ComponentPtr<Component>::operator
+=(const ComponentPtr&) = default;
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentPtr<Component>::~ComponentPtr() = default;
+
+template <typename TypeList>
+template <typename Component>
+auto& Registry<TypeList>::ComponentPtr<Component>::operator->()
+{
+	return component_;
+}
+
+template <typename TypeList>
+template <typename Component>
+auto& Registry<TypeList>::ComponentPtr<Component>::operator->() const
+{
+	return component_;
+}
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentPtr<Component>::operator Component*()
+{
+	return component_;
+}
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentPtr<Component>::operator Component*() const
+{
+	return component_;
+}
+
+template <typename TypeList>
+template <typename Component>
+Registry<TypeList>::ComponentPtr<Component>::operator bool() const
+{
+	return component_;
+}
+
+template <typename TypeList>
+Registry<TypeList>::Registry(const u64 capacity RESULT_ARG)
+{
+	signatures_ = static_cast<SignatureType*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(SignatureType)));
+	ebegin_ = static_cast<EntityId*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(EntityId)));
+	eend_ = ebegin_ + capacity;
+	ecursor_ = ebegin_;
+	ConstructComponentsMap<0>();
+}
+
+template <typename TypeList>
+Registry<TypeList>::Registry(Registry&& other) noexcept: ebegin_{other.ebegin_}, eend_{other.eend_}, ecursor_{other.ecursor_},
+                                                             signatures_{other.signatures_}
+{
+	MoveComponentsMap<0>(eastl::move(other.components_map_));
+	other.ecursor_ = other.eend_ = other.ebegin_ = nullptr;
+	other.signatures_ = nullptr;
+}
+
+template <typename TypeList>
+Registry<TypeList>& Registry<TypeList>::operator=(Registry&& other) noexcept
+{
+	MoveComponentsMap<0>(eastl::move(other.components_map_));
+
+	signatures_ = other.signatures_;
+	ebegin_ = other.ebegin_;
+	eend_ = other.eend_;
+	ecursor_ = other.ecursor_;
+
+	other.signatures_ = nullptr;
+	other.ecursor_ = other.eend_ = other.ebegin_ = nullptr;
+	return *this;
+}
+
+template <typename TypeList>
+Registry<TypeList>::~Registry()
+{
+	DestroyComponentsMap<0>();
+
+	EASTLAllocatorType("Ecs").deallocate(ebegin_, 0);
+	ebegin_ = eend_ = ecursor_ = nullptr;
+
+	EASTLAllocatorType("Ecs").deallocate(signatures_, 0);
+	signatures_= nullptr;
+}
+
+template <typename TypeList>
+EntityId Registry<TypeList>::Create(RESULT_ARG_SINGLE)
+{
+	ENSURE_LAST_RESULT_NL(INVALID_ENTITY_ID);
+	if (!Contains(ecursor_))
+	{
+		RESULT_ERROR(eResultErrorEcsNoEntityAvailable, INVALID_ENTITY_ID);
+	}
+	if (*ecursor_ >= Capacity())
+	{
+		*ecursor_ = ecursor_ - ebegin_;
+	}
+	const auto l_id = *ecursor_++;
+	new (signatures_ + l_id) SignatureType{  };
+	RESULT_OK();
+	return l_id;
+}
+
+template <typename TypeList>
+void Registry<TypeList>::Destroy(EntityId id RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	if (id >= Capacity())
+	{
+		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+	}
+	*--ecursor_ = id;
+	signatures_[id].reset();
+	RESULT_OK();
+}
+
+template <typename TypeList>
+template <typename ... Components>
+void Registry<TypeList>::Enable(const EntityId id RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	if (id >= Capacity())
+	{
+		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+	}
+	(SetEnabledInternal<Components>(id, true), ...);
+	RESULT_OK();
+}
+
+template <typename TypeList>
+template <typename ... Components>
+void Registry<TypeList>::Disable(const EntityId id RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	if (id >= Capacity())
+	{
+		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+	}
+	(SetEnabledInternal<Components>(id, false), ...);
+	RESULT_OK();
+}
+
+template <typename TypeList>
+template <typename Component>
+bool Registry<TypeList>::IsEnabled(const EntityId id RESULT_ARG) const
+{
+	if (id >= Capacity())
+	{
+		RESULT_ERROR(eResultErrorEcsInvalidEntityId, false);
+	}
+	RESULT_OK();
+	return signatures_[id].test(GetComponentId<Component>());
+}
+
+template <typename TypeList>
+template <typename Component>
+void Registry<TypeList>::Add(const EntityId id, Component&& component RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	if (id >= Capacity())
+	{
+		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+	}
+
+	constexpr u64 l_id = GetComponentId<Component>();
+	auto& l_component_element = GetComponentArrayElement<Component>();
+
+	// Enable component inline
+	if(!signatures_[id].test(l_id))
+	{
+		signatures_[id].set(l_id);
+		l_component_element.ConstructIfAllowed(Capacity());
+	}
+
+	// Add component
+	l_component_element.Get()->Add(id, eastl::forward<Component>(component));
+	RESULT_OK();
+}
+
+template <typename TypeList>
+template <typename Component>
+void Registry<TypeList>::Remove(const EntityId id RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	if (id >= Capacity())
+	{
+		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+	}
+	constexpr u64 l_id = GetComponentId<Component>();
+	signatures_[id].set(l_id, false);
+	GetComponentArrayElement<Component>().Get()->Remove(id);
+	RESULT_OK();
+}
+
+template <typename TypeList>
+template <typename Component>
+typename Registry<TypeList>::template ComponentPtr<Component> Registry<TypeList>::Get(const EntityId id RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL(ComponentPtr<Component>{this, nullptr});
+	if (!IsEnabled<Component>(id))
+	{
+		RESULT_ERROR(eResultErrorEcsComponentNotEnabled, ComponentPtr<Component>{this, nullptr});
+	}
+	RESULT_OK();
+	return ComponentPtr<Component>{this, PTR(GetComponentArrayElement<Component>().Get()->Get(id))};
+}
+
+template <typename TypeList>
+u64 Registry<TypeList>::Capacity(RESULT_ARG_SINGLE) const
+{
+	return eend_ - ebegin_;
+}
+
+template <typename TypeList>
+bool Registry<TypeList>::Contains(const EntityId* ptr RESULT_ARG) const
+{
+	return ptr >= ebegin_ && ptr < eend_;
+}
+
+template <typename TypeList>
+void Registry<TypeList>::Clear(RESULT_ARG_SINGLE)
+{
+	//entities_.clear();
+
+	EASTLAllocatorType("Ecs").deallocate(ebegin_, 0);
+	ebegin_= eend_ = ecursor_ = nullptr;
+
+	EASTLAllocatorType("Ecs").deallocate(signatures_, 0);
+	signatures_= nullptr;
+
+	DestroyComponentsMap<0>();
+}
+
+template <typename TypeList>
+template <typename Component>
+void Registry<TypeList>::SetEnabledInternal(const EntityId id, const bool value RESULT_ARG)
+{
+	ENSURE_LAST_RESULT_NL();
+	constexpr u64 l_id = GetComponentId<Component>();
+	if(signatures_[id].test(l_id))
+	{
+		RESULT_ERROR(eResultErrorEcsComponentAlreadyEnabled);
+	}
+	signatures_[id].set(l_id, value);
+	if(value)
+	{
+		GetComponentArrayElement<Component>().ConstructIfAllowed(Capacity());
+	}
+	RESULT_OK();
+}
 
 }
 

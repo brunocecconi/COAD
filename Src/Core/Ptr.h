@@ -175,6 +175,11 @@ Ptr<T>::Ptr(T* value, const char* function, const char* file, const u32 line)
 	, line_{ line }
 #endif
 {
+#ifdef NDEBUG
+	(void)function;
+	(void)file;
+	(void)line;
+#endif
 }
 
 template <typename T>
@@ -186,6 +191,11 @@ Ptr<T>::Ptr(const Ptr& value, const char* function, const char* file, const u32 
 	, line_{ line }
 #endif
 {
+#ifdef NDEBUG
+	(void)function;
+	(void)file;
+	(void)line;
+#endif
 }
 
 template <typename T>

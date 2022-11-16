@@ -27,25 +27,25 @@ class Path
 	CLASS_BODY(Path)
 
 public:
-	EXPLICIT Path(const char* file_path = "");
+	EXPLICIT Path(const char* file_path = "" RESULT_ARG_OPT);
 	~Path();
 
 public:
 	static constexpr u32 MAX = PLATFORM_FS_MAX_PATH;
 
 public:
-	NODISCARD bool Exists() const;
-	NODISCARD Path FullPath() const;
-	NODISCARD Path RelativePath(const char* to) const;
-	NODISCARD eastl::string Extension();
-	void RemoveExtension();
+	NODISCARD bool Exists(RESULT_ARG_SINGLE_OPT) const;
+	NODISCARD Path FullPath(RESULT_ARG_SINGLE_OPT) const;
+	NODISCARD Path RelativePath(const char* to RESULT_ARG_OPT) const;
+	NODISCARD eastl::string Extension(RESULT_ARG_SINGLE_OPT);
+	void RemoveExtension(RESULT_ARG_SINGLE_OPT);
 
 public:
-	bool IsFile() const;
-	bool IsDirectory() const;
+	bool IsFile(RESULT_ARG_SINGLE_OPT) const;
+	bool IsDirectory(RESULT_ARG_SINGLE_OPT) const;
 
 public:
-	const char* data() const;
+	const char* data(RESULT_ARG_SINGLE_OPT) const;
 
 private:
 	char value_[MAX] = {};
@@ -76,42 +76,42 @@ public:
 	};
 
 public:
-	File(const char* file_path, FlagType flags);
+	File(const char* file_path, FlagType flags RESULT_ARG_OPT);
 	~File();
 
 public:
-	void Open(const char* file_path, FlagType flags);
-	void Read(void* data, u64 size) const;
-	void Write(const void* data, u64 size) const;
-	void Seek(u64 value, SeekType origin) const;
-	void Tell(u64* value) const;
-	void Flush() const;
-	void Close();
+	void Open(const char* file_path, FlagType flags RESULT_ARG_OPT);
+	void Read(void* data, u64 size RESULT_ARG_OPT) const;
+	void Write(const void* data, u64 size RESULT_ARG_OPT) const;
+	void Seek(u64 value, SeekType origin RESULT_ARG_OPT) const;
+	void Tell(u64* value RESULT_ARG_OPT) const;
+	void Flush(RESULT_ARG_SINGLE_OPT) const;
+	void Close(RESULT_ARG_SINGLE_OPT);
 
 public:
 	template < typename T >
-	void Read(T& value)
+	void Read(T& value RESULT_ARG_OPT)
 	{
 		if constexpr (eastl::is_fundamental_v<T> || eastl::is_pod_v<T>)
 		{
-			RESULT_ENSURE_CALL_NL(read((void*)&value, sizeof(T)));;
+			RESULT_ENSURE_CALL_NL(Read((void*)&value, sizeof(T) RESULT_ARG_PASS));;
 		}
 		else
 		{
-			RESULT_ENSURE_CALL_NL(value.read(*this));
+			RESULT_ENSURE_CALL_NL(value.Read(*this));
 		}
 	}
 
 	template < typename T >
-	void write(const T& value)
+	void Write(const T& value RESULT_ARG_OPT)
 	{
 		if constexpr (eastl::is_fundamental_v<T> || eastl::is_pod_v<T>)
 		{
-			RESULT_ENSURE_CALL_NL(write((void*)&value, sizeof(T)));
+			RESULT_ENSURE_CALL_NL(Write((void*)&value, sizeof(T) RESULT_ARG_PASS));
 		}
 		else
 		{
-			RESULT_ENSURE_CALL_NL(value.write(*this));
+			RESULT_ENSURE_CALL_NL(value.Write(*this));
 		}
 	}
 

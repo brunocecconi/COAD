@@ -6,11 +6,19 @@ workspace "COAD"
 	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
 	startproject "COAD-Cmd"
 	
-include "./Scripts/External.lua"
-include "./Scripts/Config.lua"	
-include "./Scripts/Deps.lua"
+include "./Scripts/Premake/External.lua"
+include "./Scripts/Premake/Config.lua"	
+include "./Scripts/Premake/Deps.lua"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}/"
+
+project "COAD-Premake"
+	location "./Int/"
+	kind "Utility"
+	files { "./Scripts/Premake/**.lua", "./Premake5.lua" }
+	
+	filter {"platforms:Windows"}
+		prebuildcommands { "pushd \"%{wks.location}\"", "Setup.bat", "popd" }
 
 project "COAD"
 	location "./Int/"
@@ -23,9 +31,9 @@ project "COAD"
 	vectorextensions "SSE2"
 	warnings "Extra"
 	floatingpoint "Fast"
-	flags { "MultiProcessorCompile", "FatalWarnings", "NoManifest", "RelativeLinks" }
+	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "USE_SAFE_PTR", "_CRT_SECURE_NO_WARNINGS" }
+	defines { "USE_SAFE_PTR", "_CRT_SECURE_NO_WARNINGS", "USE_EXPLICIT=1", "USE_RESULT=1" }
 
 	includedirs
 	{
@@ -60,7 +68,7 @@ project "COAD-Cmd"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "USE_SAFE_PTR", "_CRT_SECURE_NO_WARNINGS" }
+	defines { "USE_SAFE_PTR", "_CRT_SECURE_NO_WARNINGS", "USE_EXPLICIT=1", "USE_RESULT=1" }
 	
 	files { "Src/Cmd/Main.cpp" }
 

@@ -2,7 +2,7 @@
 #ifndef CORE_COMPILER_H
 #define CORE_COMPILER_H
 
-#ifdef USE_EXPLICIT
+#if USE_EXPLICIT
 #define EXPLICIT			explicit
 #else
 #define EXPLICIT
@@ -14,6 +14,7 @@
 #define NORETURN			[[noreturn]]
 #define NODISCARD			[[nodiscard]]
 #define MAYBEUNUSED			[[maybe_unused]]
+#define ALIGNAS(VALUE)		alignas(VALUE)
 
 #if _MSC_VER
 #define FORCE_INLINE		__forceinline
