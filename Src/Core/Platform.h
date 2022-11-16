@@ -1,4 +1,12 @@
 
+/** @file Platform.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
@@ -458,7 +466,6 @@
 //#define API	__declspec(dllimport)
 //#endif
 
-#ifdef PLATFORM_WINDOWS
 #define	CONSOLE_COLOR_BLACK			"\033[30m"
 #define	CONSOLE_COLOR_RED			"\033[31m"
 #define	CONSOLE_COLOR_GREEN			"\033[32m"
@@ -478,7 +485,6 @@
 #define	CONSOLE_COLOR_BOLD			"\033[1m"
 #define	CONSOLE_COLOR_UNDERLINE		"\033[4m"
 #define	CONSOLE_COLOR_DEFAULT		"\033[0m"
-#endif	
 
 #endif
 

@@ -1,4 +1,12 @@
 
+/** \file Thread.cpp
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #include "Core/Thread.h"
 #include "Core/Allocator.h"
 #include "Core/Assert.h"
@@ -113,7 +121,7 @@ void Thread::Create(const Ci& ci RESULT_ARG)
 	RESULT_OK();
 }
 
-void Thread::Sleep(const u32 ms RESULT_ARG) const
+void Thread::Sleep(const Uint32 ms RESULT_ARG) const
 {
 	if(WaitForSingleObject(handle_.ptr, ms) != WAIT_TIMEOUT)
 	{

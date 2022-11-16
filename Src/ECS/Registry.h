@@ -1,4 +1,12 @@
 
+/** @file Registry.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef ECS_REGISTRY_H
 #define ECS_REGISTRY_H
 
@@ -17,7 +25,7 @@
 LOG_DEFINE(ecs)
 
 #ifndef ENTITY_ID_TYPE
-#define ENTITY_ID_TYPE	u64
+#define ENTITY_ID_TYPE	Uint64
 #endif
 
 #if _MSC_VER
@@ -30,18 +38,58 @@ namespace Ecs
 using EntityId = ENTITY_ID_TYPE;
 
 /**
- * @brief Ecs class.
+ * @brief Registry class.
  *
-*/
+ * The core class used to manipulation in ecs manner.
+ *
+ * Features:
+ * 1. Compact, used with a type list that it generates a tuple.
+ * 2. Signature is based on order of type list.
+ *   Ex: signature of TypeList<Component1, Component2> is the same of TypeList<Component2, Component1>,
+ *	 that will be accessed by the same indices because it is a tuple that will be used. But the user can't know that,
+ *	 the api is supported by use of typename.
+ * 3. Contiguous in memory.
+ * 4. Fixed length of entities and components memory. It cannot grow.
+ *
+ * Data:
+ * 1. Array of entity ids.
+ * 2. Array of signatures.
+ * 3. Tuple of array of components.
+ *
+ */
 template < typename TypeList >
 class Registry final
 {
-
 public:
+	using ComponentTypes = TypeList;
+	using SignatureType = eastl::bitset<ComponentTypes::SIZE>;
+	static constexpr EntityId INVALID_ENTITY_ID = eastl::numeric_limits<Uint64>::max();
+
+private:
+	/**
+	 * @brief Component array class.
+	 *
+	 * This class is private to use internally in @ref Registry.
+	 *
+	 * Data:
+	 * 1. Array of components.
+	 * 2. Array of entity indices.
+	 * 3. Free list for removed components.
+	 *
+	 * Behavior:
+	 * 1. @ref Add
+	 * 2. @ref Remove
+	 * 3. @ref Get
+	 * 4. @ref Contains
+	 * 5. @ref Each
+	 *
+	 * @tparam Component Target component type.
+	 *
+	*/
 	template < typename Component >
-	struct ComponentArray final
+	class ComponentArray final
 	{
-		static_assert(alignof(Component) >= sizeof(iptr), "Invalid min component size to be able to be wrapped by free list.");
+		static_assert(alignof(Component) >= sizeof(IntPtr), "Invalid min component size to be able to be wrapped by free list.");
 
 		friend class Registry;
 
@@ -50,23 +98,14 @@ public:
 			CursorFreeList* next{};
 		};
 
-		EXPLICIT ComponentArray(u64 capacity);
+		EXPLICIT ComponentArray(Uint64 capacity);
 
-	public:
-		static constexpr u64 INVALID_COMPONENT_ID = U64_MAX;
-
-		ComponentArray(ComponentArray&& other) NOEXCEPT = delete;
-		ComponentArray(const ComponentArray&) = delete;
-		ComponentArray& operator=(ComponentArray&&) NOEXCEPT = delete;
-		ComponentArray& operator=(const ComponentArray&) = delete;
-		~ComponentArray();
-
-	public:
+	private:
 		void Add(EntityId id, Component&& component RESULT_ARG_OPT);
 		void Remove(EntityId id RESULT_ARG_OPT);
 		void Each(void (*function)(Component&))
 		{
-			eastl::for_each(eindex_, eindex_end_, [&](u64& e)
+			eastl::for_each(eindex_, eindex_end_, [&](Uint64& e)
 			{
 				if(e != INVALID_COMPONENT_ID)
 				{
@@ -78,13 +117,21 @@ public:
 		NODISCARD Component* Get(EntityId id);
 		NODISCARD bool Contains(EntityId id) const;
 
+	public:
+		static constexpr Uint64 INVALID_COMPONENT_ID = eastl::numeric_limits<Uint64>::max();
+
+		ComponentArray(ComponentArray&& other) NOEXCEPT = delete;
+		ComponentArray(const ComponentArray&) = delete;
+		ComponentArray& operator=(ComponentArray&&) NOEXCEPT = delete;
+		ComponentArray& operator=(const ComponentArray&) = delete;
+		~ComponentArray();
+
 	private:
 		CursorFreeList *cursor_fl_{};
 		Component* data_{}, *dcursor_{};
-		u64* eindex_{}, *eindex_end_{};
+		Uint64* eindex_{}, *eindex_end_{};
 	};
 
-private:
 	template < typename Component >
 	class ComponentArrayElement
 	{
@@ -98,27 +145,26 @@ private:
 		ComponentArrayElement();
 
 	public:
-		void ConstructIfAllowed(u64 capacity);
+		void ConstructIfAllowed(Uint64 capacity);
 		void DestroyIfAllowed();
 		ComponentArrayType* Get();
 	};
 
-	using ComponentTypes = TypeList;
 	using ComponentMapTuple = typename TypeTraits::TlToTupleTransfer<ComponentArrayElement, ComponentTypes>::Type;
 
 	template < typename Component >
-	static constexpr u64 GetComponentId();
+	static constexpr Uint64 GetComponentId();
 
 	template < typename Component >
 	ComponentArrayElement<Component>& GetComponentArrayElement();
 
-	template < u64 Index >
+	template < Uint64 Index >
 	void ConstructComponentsMap();
 
-	template < u64 Index >
+	template < Uint64 Index >
 	void MoveComponentsMap(ComponentMapTuple&& map);
 
-	template < u64 Index >
+	template < Uint64 Index >
 	void DestroyComponentsMap();
 
 	template < typename Component >
@@ -149,12 +195,8 @@ private:
 		Ptr<Component> component_;
 	};
 
-	using SignatureType = eastl::bitset<ComponentTypes::SIZE>;
-
-	static constexpr EntityId INVALID_ENTITY_ID = U64_MAX;
-
 public:
-	EXPLICIT Registry(u64 capacity = 10000ull RESULT_ARG_OPT);
+	EXPLICIT Registry(Uint64 capacity = 10000ull RESULT_ARG_OPT);
 
 	Registry(Registry&& other) NOEXCEPT;
 	Registry(const Registry&) = delete;
@@ -206,7 +248,7 @@ public:
 	}
 
 public:
-	NODISCARD u64 Capacity(RESULT_ARG_SINGLE_OPT) const;
+	NODISCARD Uint64 Capacity(RESULT_ARG_SINGLE_OPT) const;
 	NODISCARD bool Contains(const EntityId* ptr RESULT_ARG_OPT) const;
 	void Clear(RESULT_ARG_SINGLE_OPT);
 
@@ -215,18 +257,18 @@ private:
 	void SetEnabledInternal(EntityId id, bool value RESULT_ARG_OPT);
 
 private:
-	EntityId* ebegin_{}, *eend_{}, *ecursor_{};
-	SignatureType* signatures_{};
+	EntityId *ebegin_{}, *eend_{}, *ecursor_{};
+	SignatureType *signatures_{};
 	ComponentMapTuple components_map_;
 };
 
 template <typename TypeList>
 template <typename Component>
-Registry<TypeList>::ComponentArray<Component>::ComponentArray(const u64 capacity)
+Registry<TypeList>::ComponentArray<Component>::ComponentArray(const Uint64 capacity)
 {
 	data_ = static_cast<Component*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(Component)));
 	dcursor_ = data_;
-	eindex_ = static_cast<u64*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(u64)));
+	eindex_ = static_cast<Uint64*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(Uint64)));
 	eastl::uninitialized_fill_n(eindex_, capacity, INVALID_COMPONENT_ID);
 	eindex_end_ = eindex_ + capacity;
 }
@@ -235,10 +277,13 @@ template <typename TypeList>
 template <typename Component>
 Registry<TypeList>::ComponentArray<Component>::~ComponentArray()
 {
-	EASTLAllocatorType("Ecs").deallocate(data_, 0);
-	data_ = dcursor_ = nullptr;
+	const auto l_size = eindex_end_ - eindex_;
 
-	EASTLAllocatorType("Ecs").deallocate(eindex_, 0);
+	EASTLAllocatorType("Ecs").deallocate(data_, l_size*sizeof(Component));
+	data_ = dcursor_ = nullptr;
+	cursor_fl_ = nullptr;
+
+	EASTLAllocatorType("Ecs").deallocate(eindex_, sizeof(Uint64));
 	eindex_ = eindex_end_ = nullptr;
 }
 
@@ -318,7 +363,7 @@ Registry<TypeList>::ComponentArrayElement<Component>::ComponentArrayElement() : 
 
 template <typename TypeList>
 template <typename Component>
-void Registry<TypeList>::ComponentArrayElement<Component>::ConstructIfAllowed(u64 capacity)
+void Registry<TypeList>::ComponentArrayElement<Component>::ConstructIfAllowed(Uint64 capacity)
 {
 	if(!constructed)
 	{
@@ -348,7 +393,7 @@ ComponentArrayElement<Component>::Get()
 
 template <typename TypeList>
 template <typename Component>
-constexpr u64 Registry<TypeList>::GetComponentId()
+constexpr Uint64 Registry<TypeList>::GetComponentId()
 {
 	return TypeTraits::FindTupleType<ComponentArrayElement<Component>, ComponentMapTuple>();
 }
@@ -361,7 +406,7 @@ typename Registry<TypeList>::template ComponentArrayElement<Component>& Registry
 }
 
 template <typename TypeList>
-template <u64 Index>
+template <Uint64 Index>
 void Registry<TypeList>::ConstructComponentsMap()
 {
 	if constexpr(Index < ComponentTypes::SIZE)
@@ -373,7 +418,7 @@ void Registry<TypeList>::ConstructComponentsMap()
 }
 
 template <typename TypeList>
-template <u64 Index>
+template <Uint64 Index>
 void Registry<TypeList>::MoveComponentsMap(ComponentMapTuple&& map)
 {
 	if constexpr(Index < ComponentTypes::SIZE)
@@ -384,7 +429,7 @@ void Registry<TypeList>::MoveComponentsMap(ComponentMapTuple&& map)
 }
 
 template <typename TypeList>
-template <u64 Index>
+template <Uint64 Index>
 void Registry<TypeList>::DestroyComponentsMap()
 {
 	if constexpr(Index < ComponentTypes::SIZE)
@@ -456,8 +501,10 @@ Registry<TypeList>::ComponentPtr<Component>::operator bool() const
 }
 
 template <typename TypeList>
-Registry<TypeList>::Registry(const u64 capacity RESULT_ARG)
+Registry<TypeList>::Registry(const Uint64 capacity RESULT_ARG)
 {
+	ValidateComponentTuple<typename TypeTraits::TlToTuple<TypeList>::Type>();
+
 	signatures_ = static_cast<SignatureType*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(SignatureType)));
 	ebegin_ = static_cast<EntityId*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(EntityId)));
 	eend_ = ebegin_ + capacity;
@@ -580,7 +627,7 @@ void Registry<TypeList>::Add(const EntityId id, Component&& component RESULT_ARG
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
 	}
 
-	constexpr u64 l_id = GetComponentId<Component>();
+	constexpr Uint64 l_id = GetComponentId<Component>();
 	auto& l_component_element = GetComponentArrayElement<Component>();
 
 	// Enable component inline
@@ -604,7 +651,7 @@ void Registry<TypeList>::Remove(const EntityId id RESULT_ARG)
 	{
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
 	}
-	constexpr u64 l_id = GetComponentId<Component>();
+	constexpr Uint64 l_id = GetComponentId<Component>();
 	signatures_[id].set(l_id, false);
 	GetComponentArrayElement<Component>().Get()->Remove(id);
 	RESULT_OK();
@@ -624,7 +671,7 @@ typename Registry<TypeList>::template ComponentPtr<Component> Registry<TypeList>
 }
 
 template <typename TypeList>
-u64 Registry<TypeList>::Capacity(RESULT_ARG_SINGLE) const
+Uint64 Registry<TypeList>::Capacity(RESULT_ARG_SINGLE) const
 {
 	return eend_ - ebegin_;
 }
@@ -654,7 +701,7 @@ template <typename Component>
 void Registry<TypeList>::SetEnabledInternal(const EntityId id, const bool value RESULT_ARG)
 {
 	ENSURE_LAST_RESULT_NL();
-	constexpr u64 l_id = GetComponentId<Component>();
+	constexpr Uint64 l_id = GetComponentId<Component>();
 	if(signatures_[id].test(l_id))
 	{
 		RESULT_ERROR(eResultErrorEcsComponentAlreadyEnabled);

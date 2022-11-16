@@ -1,4 +1,12 @@
 
+/** @file Log.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef CORE_LOG_H
 #define CORE_LOG_H
 
@@ -18,8 +26,8 @@ struct LogCategory##NAME	\
 
 
 
-u64 logVerbosity();
-void setLogVerbosity(u64 value);
+Uint64 logVerbosity();
+void setLogVerbosity(Uint64 value);
 
 #define LOG(CATEGORY, MSG, ...)	\
 if(LogCategory##NAME::verbosity <= logVerbosity())	\

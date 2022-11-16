@@ -1,4 +1,12 @@
 
+/** @file Ptr.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef CORE_PTR_H
 #define CORE_PTR_H
 
@@ -9,35 +17,35 @@
 template < typename T, typename = void >
 struct PtrTransferUnderlyng
 {
-	using type = T;
+	using Type = T;
 };
 
 template < typename T >
 struct PtrTransferUnderlyng<T, eastl::void_t<typename T::underlyng_t>>
 {
-	using type = typename T::underlyng_t;
+	using Type = typename T::underlyng_t;
 };
 
 template < typename T, bool IsPointer = true >
 struct PtrTransfer
 {
-	using type = eastl::remove_pointer_t<T>;
+	using Type = eastl::remove_pointer_t<T>;
 };
 
 template < typename T >
 struct PtrTransfer<T, false>
 {
-	using type = typename PtrTransferUnderlyng<T>::type;
+	using Type = typename PtrTransferUnderlyng<T>::type;
 };
 
 template < typename T >
-using ptr_transfer_t = typename PtrTransfer<T, eastl::is_pointer_v<T>>::type;
+using PtrTransferType = typename PtrTransfer<T, eastl::is_pointer_v<T>>::type;
 
 template < typename T >
-static ptr_transfer_t<T>* assertIfPtrInvalid(ptr_transfer_t<T>* value,
+static PtrTransferType<T>* AssertIfPtrInvalid(PtrTransferType<T>* value,
 	const char* function,
 	const char* file,
-	const u32 line)
+	const Uint32 line)
 {
 	if (!value)
 	{
@@ -52,10 +60,10 @@ static ptr_transfer_t<T>* assertIfPtrInvalid(ptr_transfer_t<T>* value,
 }
 
 template < typename T >
-static ptr_transfer_t<T>* warnIfPtrInvalid(ptr_transfer_t<T>* value,
+static PtrTransferType<T>* WarnIfPtrInvalid(PtrTransferType<T>* value,
 	const char* function,
 	const char* file,
-	const u32 line)
+	const Uint32 line)
 {
 	if (!value)
 	{
@@ -68,8 +76,8 @@ static ptr_transfer_t<T>* warnIfPtrInvalid(ptr_transfer_t<T>* value,
 	return value;
 }
 
-#define PTRA(X)	assertIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (u32)__LINE__)
-#define PTRW(X)	warnIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (u32)__LINE__)
+#define PTRA(X)	AssertIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (Uint32)__LINE__)
+#define PTRW(X)	WarnIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (Uint32)__LINE__)
 
 #ifndef NDEBUG
 #define PTR_ASSERT()	\
@@ -81,7 +89,7 @@ if(!value_)	\
 }
 
 #define PTR(VALUE)	Ptr<ptr_transfer_t<decltype(VALUE)>>{VALUE,	\
-	(const char*)__FUNCSIG__, (const char*)__FILE__, (u32)__LINE__}
+	(const char*)__FUNCSIG__, (const char*)__FILE__, (Uint32)__LINE__}
 #define PTRC(X)		PTR(X)
 #else
 #define PTR_ASSERT()
@@ -103,7 +111,7 @@ public:
 	Ptr(T* value,
 		const char* function = nullptr,
 		const char* file = nullptr,
-		u32 line = 0u);
+		Uint32 line = 0u);
 
 	template < typename Y,
 		typename =
@@ -112,7 +120,7 @@ public:
 		Ptr(Y& value,
 			const char* function = nullptr,
 			const char* file = nullptr,
-			const u32 line = 0u) : value_{ (T*)value.operator->() }
+			const Uint32 line = 0u) : value_{ (T*)value.operator->() }
 #ifndef NDEBUG
 		, function_{ const_cast<char*>(function) }
 		, file_{ const_cast<char*>(file) }
@@ -125,7 +133,7 @@ public:
 	Ptr(const Ptr& value,
 		const char* function = nullptr,
 		const char* file = nullptr,
-		u32 line = 0u);
+		Uint32 line = 0u);
 
 	NODISCARD FORCEINLINE T& operator*();
 	NODISCARD FORCEINLINE T* operator->();
@@ -151,7 +159,7 @@ private:
 #ifndef NDEBUG
 	char* function_{};
 	char* file_{};
-	u32 line_{};
+	Uint32 line_{};
 #endif
 };
 
@@ -167,7 +175,7 @@ template <typename T>
 Ptr<T>::~Ptr() = default;
 
 template <typename T>
-Ptr<T>::Ptr(T* value, const char* function, const char* file, const u32 line)
+Ptr<T>::Ptr(T* value, const char* function, const char* file, const Uint32 line)
 	: value_{ value }
 #ifndef NDEBUG
 	, function_{ const_cast<char*>(function) }
@@ -183,7 +191,7 @@ Ptr<T>::Ptr(T* value, const char* function, const char* file, const u32 line)
 }
 
 template <typename T>
-Ptr<T>::Ptr(const Ptr& value, const char* function, const char* file, const u32 line)
+Ptr<T>::Ptr(const Ptr& value, const char* function, const char* file, const Uint32 line)
 	: value_{ value.value_ }
 #ifndef NDEBUG
 	, function_{ const_cast<char*>(function) }

@@ -1,4 +1,12 @@
 
+/** \file Allocator.cpp
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #include "Core/allocator.h"
 
 #define PRINT_ALLOCATIONS 0
@@ -33,15 +41,15 @@ Mimalloc& Mimalloc::operator=(const Mimalloc& other)
 	return *this;
 }
 
-void* Mimalloc::allocate(sz n, i32)
+void* Mimalloc::allocate(Size n, Int32)
 {
 #if PRINT_ALLOCATIONS
-	printf("%s: allocated '%llu' bytes\n", get_name(), n);
+	printf("%s: allocated '%f' KB\n", get_name(), static_cast<Float32>(n)/1024.f);
 #endif
 	return mi_malloc(n);
 }
 
-void* Mimalloc::allocate(sz n, sz alignment, sz alignmentOffset, i32)
+void* Mimalloc::allocate(Size n, Size alignment, Size alignmentOffset, Int32)
 { 
 	#if EASTL_ALIGNED_MALLOC_AVAILABLE
 		if((alignmentOffset % alignment) == 0) // We check for (offset % alignmnent == 0) instead of (offset == 0) because any block which is aligned on e.g. 64 also is aligned at an offset of 64 by definition. 
@@ -53,10 +61,10 @@ void* Mimalloc::allocate(sz n, sz alignment, sz alignmentOffset, i32)
 	return NULL;
 }
 
-void Mimalloc::deallocate(void* p, sz n)
+void Mimalloc::deallocate(void* p, Size n)
 {
 #if PRINT_ALLOCATIONS
-	printf("%s: %p: deallocated '%llu' bytes\n", get_name(), p, n);
+	printf("%s: %p: deallocated '%f' KB\n", get_name(), p, static_cast<Float32>(n)/1024.f);
 #else
 	(void)n;
 #endif

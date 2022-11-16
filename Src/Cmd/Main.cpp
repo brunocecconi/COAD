@@ -31,35 +31,29 @@ int Vsnprintf8 (char*  pDestination, size_t n, const char*  pFormat, va_list arg
 	return vsnprintf(pDestination, n, pFormat, arguments);
 }
 
-template < typename ... TypeLists >
-struct ecs
-{
-	using ComponentTypes = typename TypeTraits::TlCat<TypeLists..., TypeTraits::TypeListEmpty>::Type;
-};
-
-
 int main(int argc, char** argv)
 {
 	Result** result = nullptr;
-
-	Io::File f{"./test.txt", Io::File::eFtWrite RESULT_ARG_PASS};
-	RESULT_ENSURE_CALL(f.Write(3.14f RESULT_ARG_PASS), -1);
+	(void)result;
 
 	(void)argc;
 	(void)argv;
 	LOG_SET_VERBOSITY(info);
 
 	Ecs::Registry<Ecs::TranformComponentTypes> l_reg{};
+	(void)l_reg;
 
-	RESULT_ENFORCE_CALL(const auto l_id = l_reg.Create());
-	RESULT_ENFORCE_CALL(const auto l_id2 = l_reg.Create());
-	RESULT_ENFORCE_CALL(const auto l_id3 = l_reg.Create());
+	printf("%s\n", TypeTraits::TypeName<Float32>().data());
 
-	l_reg.Enable<Ecs::LocationComponent>(l_id);
+	//RESULT_ENFORCE_CALL(const auto l_id = l_reg.Create());
+	//RESULT_ENFORCE_CALL(const auto l_id2 = l_reg.Create());
+	//RESULT_ENFORCE_CALL(const auto l_id3 = l_reg.Create());
 
-	l_reg.Add(l_id, Ecs::LocationComponent{glm::vec3{2.f}});
-	l_reg.Add(l_id2, Ecs::RotationComponent{glm::vec3{5.f}});
-	l_reg.Add(l_id3, Ecs::ScaleComponent{glm::vec3{5.f}});
+	//l_reg.Enable<Ecs::LocationComponent>(l_id);
+
+	//l_reg.Add(l_id, Ecs::LocationComponent{glm::vec3{2.f}});
+	//l_reg.Add(l_id2, Ecs::RotationComponent{glm::vec3{5.f}});
+	//l_reg.Add(l_id3, Ecs::ScaleComponent{glm::vec3{5.f}});
 
 
 

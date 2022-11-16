@@ -1,4 +1,12 @@
 
+/** \file IO.cpp
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #include "Core/IO.h"
 #include "Core/Assert.h"
 
@@ -68,7 +76,7 @@ void File::Open(const char* file_path, const FlagType flags RESULT_ARG)
 	RESULT_OK();
 }
 
-void File::Read(void* data, const u64 size RESULT_ARG) const
+void File::Read(void* data, const Uint64 size RESULT_ARG) const
 {
 	if(!(handle_ && data))
 	{
@@ -85,7 +93,7 @@ void File::Read(void* data, const u64 size RESULT_ARG) const
 	RESULT_OK();
 }
 
-void File::Write(const void* data, const u64 size RESULT_ARG) const
+void File::Write(const void* data, const Uint64 size RESULT_ARG) const
 {
 	if(!(handle_ && data))
 	{
@@ -102,7 +110,7 @@ void File::Write(const void* data, const u64 size RESULT_ARG) const
 	RESULT_OK();
 }
 
-void File::Seek(const u64 value, const SeekType origin RESULT_ARG) const
+void File::Seek(const Uint64 value, const SeekType origin RESULT_ARG) const
 {
 	if(!handle_)
 	{
@@ -117,7 +125,7 @@ void File::Seek(const u64 value, const SeekType origin RESULT_ARG) const
 	RESULT_OK();
 }
 
-void File::Tell(u64* value RESULT_ARG) const
+void File::Tell(Uint64* value RESULT_ARG) const
 {
 	if(!(handle_ && value))
 	{

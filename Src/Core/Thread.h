@@ -1,4 +1,12 @@
 
+/** \file Thread.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef CORE_THREAD_H
 #define CORE_THREAD_H
 
@@ -13,7 +21,7 @@ using NativeThreadHandleType = HANDLE;
 using NativeMutexHandleType = HANDLE;
 #endif
 
-using ThreadFunctionType = u32(*)(NativeThreadParamsType);
+using ThreadFunctionType = Uint32(*)(NativeThreadParamsType);
 
 namespace NativeThreadCiFlags
 {
@@ -47,7 +55,7 @@ public:
 	{
 		ThreadFunctionType function;
 		NativeThreadParamsType params;
-		u64 params_size;
+		Uint64 params_size;
 		NativeThreadCiFlags::Type flags;
 	};
 
@@ -63,7 +71,7 @@ public:
 
 public:
 	MAYBEUNUSED void Create(const Ci& ci RESULT_ARG_OPT);
-	MAYBEUNUSED void Sleep(u32 ms RESULT_ARG_OPT) const;
+	MAYBEUNUSED void Sleep(Uint32 ms RESULT_ARG_OPT) const;
 	MAYBEUNUSED void Suspend(RESULT_ARG_SINGLE_OPT) const;
 	MAYBEUNUSED void Resume(RESULT_ARG_SINGLE_OPT) const;
 	MAYBEUNUSED void Destroy(RESULT_ARG_SINGLE_OPT);

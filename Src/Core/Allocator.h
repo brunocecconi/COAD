@@ -1,4 +1,13 @@
 
+/** \file Allocator.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
+
 #ifndef CORE_ALLOCATOR_H
 #define CORE_ALLOCATOR_H
 
@@ -27,9 +36,9 @@ public:
 
 	Mimalloc& operator=(const Mimalloc& other);
 
-	void* allocate(sz n, i32 /*flags*/ = 0);
-	void* allocate(sz n, sz alignment, sz alignmentOffset, i32 /*flags*/ = 0);
-	void deallocate(void* p, sz n);
+	void* allocate(Size n, Int32 /*flags*/ = 0);
+	void* allocate(Size n, Size alignment, Size alignmentOffset, Int32 /*flags*/ = 0);
+	void deallocate(void* p, Size n);
 };
 
 #undef EASTLAllocatorType

@@ -1,4 +1,12 @@
 
+/** @file Component.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef ECS_COMPONENT_H
 #define ECS_COMPONENT_H
 
@@ -10,14 +18,12 @@
 #define ECS_COMPONENT_BODY(NAME)	\
 public:	\
 CLASS_BODY_ONLY_HEADER(NAME)	\
-struct EcsComponentType{};
+struct EcsComponentType;
 
 #define ECS_COMPONENT_VALIDATION(NAME)	\
 TYPE_INFO_DEFINE(NAME);	\
 static_assert(!eastl::is_polymorphic_v<NAME>, \
-"The component class cannot be polymorphic.");	\
-static_assert(eastl::is_same_v<eastl::void_t<typename NAME::EcsComponentType>, void>, \
-"Target type is not an entity component.");
+"The component class cannot be polymorphic.");
 
 #ifndef COMPONENT_ID_TYPE
 #define COMPONENT_ID_TYPE	u64
@@ -26,9 +32,44 @@ static_assert(eastl::is_same_v<eastl::void_t<typename NAME::EcsComponentType>, v
 namespace Ecs
 {
 
+template < typename T, typename = void >
+struct IsComponent
+{
+	static constexpr bool VALUE = false;
+};
+
+template < typename T >
+struct IsComponent<T, eastl::void_t<typename T::EcsComponentType>>
+{
+	static constexpr bool VALUE = true;
+};
+
+namespace Detail
+{
+
+template < Uint64 Index, typename Tuple >
+void ValidateComponentTuple()
+{
+	if constexpr(Index < eastl::tuple_size_v<Tuple>)
+	{
+		using TupleElementType = eastl::tuple_element_t<Index, Tuple>;
+		static_assert(IsComponent<TupleElementType>::VALUE, 
+			"Invalid ecs component. You must include ECS_COMPONENT_BODY in component type.");
+		ValidateComponentTuple<Index+1, Tuple>();
+	}
+}
+
+}
+
+template < typename Tuple >
+void ValidateComponentTuple()
+{
+	Detail::ValidateComponentTuple<0, Tuple>();
+}
+
 struct LocationComponent
 {
-	ECS_COMPONENT_BODY(LocationComponent)
+	ECS_COMPONENT_BODY(LocationComponent);
 	ALIGNAS(16) glm::vec3 value{};
 };
 

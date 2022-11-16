@@ -1,4 +1,12 @@
 
+/** @file Macros.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef MACROS_H
 #define MACROS_H
 

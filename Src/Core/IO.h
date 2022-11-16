@@ -1,4 +1,12 @@
 
+/** \file IO.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef CORE_IO_H
 #define CORE_IO_H
 
@@ -31,7 +39,7 @@ public:
 	~Path();
 
 public:
-	static constexpr u32 MAX = PLATFORM_FS_MAX_PATH;
+	static constexpr Uint32 MAX = PLATFORM_FS_MAX_PATH;
 
 public:
 	NODISCARD bool Exists(RESULT_ARG_SINGLE_OPT) const;
@@ -81,10 +89,10 @@ public:
 
 public:
 	void Open(const char* file_path, FlagType flags RESULT_ARG_OPT);
-	void Read(void* data, u64 size RESULT_ARG_OPT) const;
-	void Write(const void* data, u64 size RESULT_ARG_OPT) const;
-	void Seek(u64 value, SeekType origin RESULT_ARG_OPT) const;
-	void Tell(u64* value RESULT_ARG_OPT) const;
+	void Read(void* data, Uint64 size RESULT_ARG_OPT) const;
+	void Write(const void* data, Uint64 size RESULT_ARG_OPT) const;
+	void Seek(Uint64 value, SeekType origin RESULT_ARG_OPT) const;
+	void Tell(Uint64* value RESULT_ARG_OPT) const;
 	void Flush(RESULT_ARG_SINGLE_OPT) const;
 	void Close(RESULT_ARG_SINGLE_OPT);
 

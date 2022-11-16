@@ -1,4 +1,12 @@
 
+/** @file Memory.h
+ *
+ * Copyright 2023 CoffeeAddict. All rights reserved.
+ * This file is part of COAD and it is private.
+ * You cannot copy, modify or share this file.
+ *
+ */
+
 #ifndef CORE_MEMORY_H
 #define CORE_MEMORY_H
 
@@ -11,8 +19,8 @@
 namespace Memory
 {
 
-template < u64 Index, u64 Size >
-void CtClearMemory(u8* data)
+template < Uint64 Index, Uint64 Size >
+void CtClearMemory(Uint8* data)
 {
 	if constexpr(Index < Size)
 	{
@@ -24,7 +32,7 @@ void CtClearMemory(u8* data)
 template < typename T >
 void ClearMemoryType(T* value)
 {
-	CtClearMemory<0, sizeof(T)>(reinterpret_cast<u8*>(value));
+	CtClearMemory<0, sizeof(T)>(reinterpret_cast<Uint8*>(value));
 }
 
 }
