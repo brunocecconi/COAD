@@ -18,10 +18,10 @@ namespace Threading
 #if PLATFORM_WINDOWS
 using NativeThreadParamsType = void*;
 using NativeThreadHandleType = HANDLE;
-using NativeMutexHandleType = HANDLE;
+using NativeMutexHandleType	 = HANDLE;
 #endif
 
-using ThreadFunctionType = Uint32(*)(NativeThreadParamsType);
+using ThreadFunctionType = Uint32 (*)(NativeThreadParamsType);
 
 namespace NativeThreadCiFlags
 {
@@ -30,7 +30,7 @@ enum Type
 	eNone,
 	eCreateSuspended
 };
-}
+} // namespace NativeThreadCiFlags
 
 class Thread
 {
@@ -39,8 +39,8 @@ class Thread
 public:
 	/**
 	 * @brief Thread handle.
-	 * 
-	*/
+	 *
+	 */
 	struct Handle
 	{
 		NativeThreadHandleType ptr;
@@ -49,13 +49,13 @@ public:
 
 	/**
 	 * @brief Structure to thread create info.
-	 * 
-	*/
+	 *
+	 */
 	struct Ci
 	{
-		ThreadFunctionType function;
-		NativeThreadParamsType params;
-		Uint64 params_size;
+		ThreadFunctionType		  function;
+		NativeThreadParamsType	  params;
+		Uint64					  params_size;
 		NativeThreadCiFlags::Type flags;
 	};
 
@@ -64,7 +64,7 @@ public:
 	EXPLICIT Thread(const Ci& ci RESULT_ARG_OPT);
 	EXPLICIT Thread(ThreadFunctionType function RESULT_ARG_OPT);
 
-	template < typename TypeArgs >
+	template<typename TypeArgs>
 	EXPLICIT Thread(ThreadFunctionType function, TypeArgs& args RESULT_ARG_OPT);
 
 	~Thread();
@@ -80,15 +80,10 @@ private:
 	Handle handle_{};
 };
 
-template <typename TypeArgs>
+template<typename TypeArgs>
 Thread::Thread(const ThreadFunctionType function, TypeArgs& args RESULT_ARG)
 {
-	Create(Ci
-	{
-		function,
-		&args,
-		sizeof(TypeArgs)
-	});
+	Create(Ci{function, &args, sizeof(TypeArgs)});
 }
 
 class Mutex
@@ -99,7 +94,7 @@ public:
 	struct Handle
 	{
 		NativeMutexHandleType ptr;
-		const char* name;
+		const char*			  name;
 	};
 
 	struct Ci
@@ -123,9 +118,9 @@ private:
 	Handle handle_{};
 };
 
-#define thread_lambda	[](native_thread_params_t)
+#define thread_lambda [](native_thread_params_t)
 
-}
+} // namespace Threading
 
 CLASS_VALIDATION(Threading::Thread)
 CLASS_VALIDATION(Threading::Mutex)

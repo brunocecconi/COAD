@@ -33,7 +33,7 @@ project "COAD"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "USE_SAFE_PTR", "_CRT_SECURE_NO_WARNINGS", "USE_EXPLICIT=1", "USE_RESULT=1" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
 
 	includedirs
 	{
@@ -68,7 +68,7 @@ project "COAD-Cmd"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "USE_SAFE_PTR", "_CRT_SECURE_NO_WARNINGS", "USE_EXPLICIT=1", "USE_RESULT=1" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
 	
 	files { "Src/Cmd/Main.cpp" }
 
@@ -85,7 +85,7 @@ project "COAD-Cmd"
 	
 	SetLibDirs("COAD-Cmd")
 
-project "COAD-Benchmark"
+project "COAD-Benchmark-Entity"
 	location "./Int/"
 	kind "ConsoleApp"
 	language "C++"
@@ -99,9 +99,40 @@ project "COAD-Benchmark"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "USE_SAFE_PTR", "_CRT_SECURE_NO_WARNINGS" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
 	
-	files { "Src/Benchmark/Main.cpp" }
+	files { "Src/Benchmark/Entity.cpp" }
+
+	includedirs
+	{
+		IncludeDir["Windows"],
+		IncludeDir["Linux"],
+		IncludeDir["Mac"],
+		IncludeDir["Prospero"],
+		IncludeDir["XboxSeriesX"],
+		"./Src/",
+		"%{IncludeDir.VulkanSDK}"
+	}
+	
+	SetLibDirs("COAD-Benchmark")
+
+project "COAD-Benchmark-Meta"
+	location "./Int/"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++20"
+	targetdir("./Bin/" .. outputdir)
+	objdir("./Int/" .. outputdir)
+	--staticruntime "On"
+	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
+	vectorextensions "SSE2"
+	warnings "Extra"
+	floatingpoint "Fast"
+	flags { "MultiProcessorCompile", "FatalWarnings" }
+	
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
+	
+	files { "Src/Benchmark/Meta.cpp" }
 
 	includedirs
 	{

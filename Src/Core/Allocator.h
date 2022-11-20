@@ -7,7 +7,6 @@
  *
  */
 
-
 #ifndef CORE_ALLOCATOR_H
 #define CORE_ALLOCATOR_H
 
@@ -27,7 +26,7 @@
 namespace Allocators
 {
 
-class Mimalloc : public eastl::allocator
+class Mimalloc: public eastl::allocator
 {
 public:
 	Mimalloc(const char* name = EASTL_NAME_VAL("Mimalloc"));
@@ -38,19 +37,19 @@ public:
 
 	void* allocate(Size n, Int32 /*flags*/ = 0);
 	void* allocate(Size n, Size alignment, Size alignmentOffset, Int32 /*flags*/ = 0);
-	void deallocate(void* p, Size n);
+	void  deallocate(void* p, Size n);
 };
 
 #undef EASTLAllocatorType
 
 #if PLATFORM_WINDOWS
-#define EASTLAllocatorType	Allocators::Mimalloc
+#define EASTLAllocatorType Allocators::Mimalloc
 #else
 #error Failed to set EASTLAllocatorType to default platform allocator. Create an allocator to the target platform.
 #endif
 
 using Default = EASTLAllocatorType;
 
-}
+} // namespace Allocators
 
 #endif

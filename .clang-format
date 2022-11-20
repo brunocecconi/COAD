@@ -4,6 +4,7 @@ AccessModifierOffset: '-4'
 AlignConsecutiveMacros: 'true'
 AlignConsecutiveAssignments: 'true'
 AlignConsecutiveDeclarations: 'true'
+AlwaysBreakTemplateDeclarations: 'Yes'
 DerivePointerAlignment: 'true'
 Language: Cpp
 NamespaceIndentation: None

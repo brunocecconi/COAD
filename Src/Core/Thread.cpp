@@ -16,7 +16,7 @@ namespace Threading
 
 struct NativeThreadParams
 {
-	ThreadFunctionType function;
+	ThreadFunctionType	   function;
 	NativeThreadParamsType params;
 
 	static void Create(NativeThreadParams** thread_params, const Thread::Ci& ci RESULT_ARG_OPT);
@@ -33,7 +33,8 @@ void NativeThreadParams::Create(NativeThreadParams** thread_params, const Thread
 	{
 		RESULT_ERROR(eResultErrorPtrIsNotNull);
 	}
-	*thread_params = static_cast<NativeThreadParams*>(Allocators::Default(NAME("thread")).allocate(sizeof(NativeThreadParams)));
+	*thread_params =
+		static_cast<NativeThreadParams*>(Allocators::Default(NAME("thread")).allocate(sizeof(NativeThreadParams)));
 	(*thread_params)->function = ci.function;
 
 	if (ci.params && ci.params_size)
@@ -107,13 +108,14 @@ void Thread::Create(const Ci& ci RESULT_ARG)
 	RESULT_ENSURE_CALL_NL(NativeThreadParams::Create(&l_thread_params, ci));
 
 #if PLATFORM_WINDOWS
-	handle_.ptr = CreateThread(nullptr, 0, NativeThreadFunctionCall, l_thread_params, GetCreationFlags(ci.flags), nullptr);
+	handle_.ptr =
+		CreateThread(nullptr, 0, NativeThreadFunctionCall, l_thread_params, GetCreationFlags(ci.flags), nullptr);
 #else
 #error Not supported yet.
 #endif
 	handle_.params = l_thread_params;
 
-	if(!handle_.ptr)
+	if (!handle_.ptr)
 	{
 		RESULT_ERROR(eResultErrorThreadCreateFailed);
 	}
@@ -123,7 +125,7 @@ void Thread::Create(const Ci& ci RESULT_ARG)
 
 void Thread::Sleep(const Uint32 ms RESULT_ARG) const
 {
-	if(WaitForSingleObject(handle_.ptr, ms) != WAIT_TIMEOUT)
+	if (WaitForSingleObject(handle_.ptr, ms) != WAIT_TIMEOUT)
 	{
 		RESULT_ERROR(eResultErrorThreadSleepFailed);
 	}
@@ -138,7 +140,7 @@ void Thread::Suspend(RESULT_ARG_SINGLE) const
 	}
 #if PLATFORM_WINDOWS
 
-	if(SuspendThread(handle_.ptr) == static_cast<DWORD>(-1))
+	if (SuspendThread(handle_.ptr) == static_cast<DWORD>(-1))
 	{
 		RESULT_ERROR(eResultErrorThreadSuspendFailed);
 	}
@@ -159,7 +161,7 @@ void Thread::Resume(RESULT_ARG_SINGLE) const
 
 #if PLATFORM_WINDOWS
 
-	if(ResumeThread(handle_.ptr) == static_cast<DWORD>(-1))
+	if (ResumeThread(handle_.ptr) == static_cast<DWORD>(-1))
 	{
 		RESULT_ERROR(eResultErrorThreadResumeFailed);
 	}
@@ -180,7 +182,7 @@ void Thread::Destroy(RESULT_ARG_SINGLE)
 
 #if PLATFORM_WINDOWS
 
-	if(CloseHandle(handle_.ptr) == FALSE)
+	if (CloseHandle(handle_.ptr) == FALSE)
 	{
 		RESULT_ERROR(eResultErrorThreadDestroyFailed);
 	}
@@ -191,7 +193,7 @@ void Thread::Destroy(RESULT_ARG_SINGLE)
 
 	RESULT_ENSURE_CALL_NL(NativeThreadParams::Destroy(reinterpret_cast<NativeThreadParams**>(&handle_.params)));
 
-	handle_.ptr = nullptr;
+	handle_.ptr	   = nullptr;
 	handle_.params = nullptr;
 
 	RESULT_OK();
@@ -221,12 +223,12 @@ void Mutex::Create(const Ci& ci RESULT_ARG)
 	Destroy();
 
 #if PLATFORM_WINDOWS
-	handle_.ptr = CreateMutexA(nullptr, 0, ci.name);	
+	handle_.ptr = CreateMutexA(nullptr, 0, ci.name);
 #else
 #error Not supported yet.
 #endif
 
-	if(!handle_.ptr)
+	if (!handle_.ptr)
 	{
 		RESULT_ERROR(eResultErrorMutexCreateFailed);
 	}
@@ -236,12 +238,12 @@ void Mutex::Create(const Ci& ci RESULT_ARG)
 
 void Mutex::Lock(RESULT_ARG_SINGLE) const
 {
-	if(!handle_.ptr)
+	if (!handle_.ptr)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 #if PLATFORM_WINDOWS
-	if(WaitForSingleObject(handle_.ptr, INFINITE) != WAIT_OBJECT_0 )
+	if (WaitForSingleObject(handle_.ptr, INFINITE) != WAIT_OBJECT_0)
 	{
 		RESULT_ERROR(eResultErrorMutexLockFailed);
 	}
@@ -253,13 +255,13 @@ void Mutex::Lock(RESULT_ARG_SINGLE) const
 
 void Mutex::Unlock(RESULT_ARG_SINGLE) const
 {
-	if(!handle_.ptr)
+	if (!handle_.ptr)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 #if PLATFORM_WINDOWS
 
-	if(ReleaseMutex(handle_.ptr) == FALSE)
+	if (ReleaseMutex(handle_.ptr) == FALSE)
 	{
 		RESULT_ERROR(eResultErrorMutexUnlockFailed);
 	}
@@ -272,13 +274,13 @@ void Mutex::Unlock(RESULT_ARG_SINGLE) const
 
 void Mutex::Destroy(RESULT_ARG_SINGLE)
 {
-	if(!handle_.ptr)
+	if (!handle_.ptr)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 #if PLATFORM_WINDOWS
 
-	if(CloseHandle(handle_.ptr) == FALSE)
+	if (CloseHandle(handle_.ptr) == FALSE)
 	{
 		RESULT_ERROR(eResultErrorMutexDestroyFailed);
 	}
@@ -290,4 +292,4 @@ void Mutex::Destroy(RESULT_ARG_SINGLE)
 #endif
 }
 
-}
+} // namespace Threading

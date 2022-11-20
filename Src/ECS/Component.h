@@ -21,7 +21,7 @@ CLASS_BODY_ONLY_HEADER(NAME)	\
 struct EcsComponentType;
 
 #define ECS_COMPONENT_VALIDATION(NAME)	\
-TYPE_INFO_DEFINE(NAME);	\
+/*TYPE_INFO_DEFINE(NAME);*/	\
 static_assert(!eastl::is_polymorphic_v<NAME>, \
 "The component class cannot be polymorphic.");
 

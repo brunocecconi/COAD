@@ -30,46 +30,46 @@ File::~File()
 
 void File::Open(const char* file_path, const FlagType flags RESULT_ARG)
 {
-	if(!(handle_ && file_path))
+	if (!(handle_ && file_path))
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 
-	Path l_path {file_path};
+	Path l_path{file_path};
 	ENSURE_LAST_RESULT_NL();
 
 	Path l_full_path = l_path.FullPath();
 	ENSURE_LAST_RESULT_NL();
 
-	if(flags == eFtNone)
+	if (flags == eFtNone)
 	{
 		RESULT_ERROR(eResultErrorIoFileInvalidFlags);
 	}
 
 	char l_mode[64] = {};
-	if(flags & eFtWrite && !(flags & eFtRead))
+	if (flags & eFtWrite && !(flags & eFtRead))
 	{
 		strcat(l_mode, "w");
 	}
-	else if(flags & eFtWrite && flags & eFtRead)
+	else if (flags & eFtWrite && flags & eFtRead)
 	{
 		strcat(l_mode, "w+");
 	}
-	else if(flags & eFtRead && !(flags & eFtWrite))
+	else if (flags & eFtRead && !(flags & eFtWrite))
 	{
 		strcat(l_mode, "r");
 	}
-	else if(flags & eFtRead && flags & eFtWrite)
+	else if (flags & eFtRead && flags & eFtWrite)
 	{
 		strcat(l_mode, "r+");
 	}
-	else if(flags & eFtAppend)
+	else if (flags & eFtAppend)
 	{
 		strcat(l_mode, "a");
 	}
 
 	handle_ = fopen(file_path, l_mode);
-	if(!handle_)
+	if (!handle_)
 	{
 		RESULT_ERROR(eResultErrorIoFileOpenFailed);
 	}
@@ -78,15 +78,15 @@ void File::Open(const char* file_path, const FlagType flags RESULT_ARG)
 
 void File::Read(void* data, const Uint64 size RESULT_ARG) const
 {
-	if(!(handle_ && data))
+	if (!(handle_ && data))
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
-	if(size == 0)
+	if (size == 0)
 	{
 		RESULT_ERROR(eResultErrorZeroSize);
 	}
-	if(fread(data, 1, size, handle_) > size)
+	if (fread(data, 1, size, handle_) > size)
 	{
 		RESULT_ERROR(eResultErrorIoFileReadFailed);
 	}
@@ -95,15 +95,15 @@ void File::Read(void* data, const Uint64 size RESULT_ARG) const
 
 void File::Write(const void* data, const Uint64 size RESULT_ARG) const
 {
-	if(!(handle_ && data))
+	if (!(handle_ && data))
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
-	if(size == 0)
+	if (size == 0)
 	{
 		RESULT_ERROR(eResultErrorZeroSize);
 	}
-	if(fwrite(data, 1, size, handle_) != size)
+	if (fwrite(data, 1, size, handle_) != size)
 	{
 		RESULT_ERROR(eResultErrorIoFileWriteFailed);
 	}
@@ -112,12 +112,12 @@ void File::Write(const void* data, const Uint64 size RESULT_ARG) const
 
 void File::Seek(const Uint64 value, const SeekType origin RESULT_ARG) const
 {
-	if(!handle_)
+	if (!handle_)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 
-	if(_fseeki64(handle_, value, origin) != 0)
+	if (_fseeki64(handle_, value, origin) != 0)
 	{
 		RESULT_ERROR(eResultErrorIoFileSeekFailed);
 	}
@@ -127,7 +127,7 @@ void File::Seek(const Uint64 value, const SeekType origin RESULT_ARG) const
 
 void File::Tell(Uint64* value RESULT_ARG) const
 {
-	if(!(handle_ && value))
+	if (!(handle_ && value))
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
@@ -137,12 +137,12 @@ void File::Tell(Uint64* value RESULT_ARG) const
 
 void File::Flush(RESULT_ARG_SINGLE) const
 {
-	if(!handle_)
+	if (!handle_)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 
-	if(fflush(handle_) != 0)
+	if (fflush(handle_) != 0)
 	{
 		RESULT_ERROR(eResultErrorIoFileFlushFailed);
 	}
@@ -152,11 +152,11 @@ void File::Flush(RESULT_ARG_SINGLE) const
 
 void File::Close(RESULT_ARG_SINGLE)
 {
-	if(!handle_)
+	if (!handle_)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
-	if(fclose(handle_) != 0)
+	if (fclose(handle_) != 0)
 	{
 		RESULT_ERROR(eResultErrorIoFileCloseFailed);
 	}
@@ -167,13 +167,12 @@ void File::Close(RESULT_ARG_SINGLE)
 
 Path::Path(const char* file_path RESULT_ARG)
 {
-	if(!file_path)
+	if (!file_path)
 	{
 		ENSURE_RESULT_NL(eResultErrorNullPtr);
 	}
 
-	if(const auto l_size = std::strlen(file_path); 
-		l_size > MAX)
+	if (const auto l_size = std::strlen(file_path); l_size > MAX)
 	{
 		ENSURE_RESULT_NL(eResultErrorIoExceededMaxPathLength);
 	}
@@ -201,16 +200,15 @@ Path Path::FullPath(RESULT_ARG_SINGLE) const
 Path Path::RelativePath(const char* to RESULT_ARG) const
 {
 	Path l_path{};
-	if(!to)
+	if (!to)
 	{
 		ENSURE_RESULT_NL(eResultErrorNullPtr, l_path);
 	}
-	if(strlen(to) > MAX)
+	if (strlen(to) > MAX)
 	{
 		ENSURE_RESULT_NL(eResultErrorIoExceededMaxPathLength, l_path);
 	}
-	PathRelativePathToA(l_path.value_, value_, 
-		FILE_ATTRIBUTE_DIRECTORY, to, FILE_ATTRIBUTE_NORMAL);
+	PathRelativePathToA(l_path.value_, value_, FILE_ATTRIBUTE_DIRECTORY, to, FILE_ATTRIBUTE_NORMAL);
 	return l_path;
 }
 
@@ -238,4 +236,4 @@ const char* Path::data(RESULT_ARG_SINGLE) const
 	return value_;
 }
 
-}
+} // namespace Io

@@ -29,7 +29,7 @@ typedef FILE* FileHandle;
 /**
  * @brief Path class.
  *
-*/
+ */
 class Path
 {
 	CLASS_BODY(Path)
@@ -46,7 +46,7 @@ public:
 	NODISCARD Path FullPath(RESULT_ARG_SINGLE_OPT) const;
 	NODISCARD Path RelativePath(const char* to RESULT_ARG_OPT) const;
 	NODISCARD eastl::string Extension(RESULT_ARG_SINGLE_OPT);
-	void RemoveExtension(RESULT_ARG_SINGLE_OPT);
+	void					RemoveExtension(RESULT_ARG_SINGLE_OPT);
 
 public:
 	bool IsFile(RESULT_ARG_SINGLE_OPT) const;
@@ -62,7 +62,7 @@ private:
 /**
  * @brief File class.
  *
-*/
+ */
 class File
 {
 	CLASS_BODY_NON_COPYABLE(File)
@@ -70,10 +70,10 @@ class File
 public:
 	enum FlagType
 	{
-		eFtNone		= 0,
-		eFtWrite	= 1,
-		eFtRead		= 2,
-		eFtAppend	= 4
+		eFtNone	  = 0,
+		eFtWrite  = 1,
+		eFtRead	  = 2,
+		eFtAppend = 4
 	};
 
 	enum SeekType
@@ -97,12 +97,13 @@ public:
 	void Close(RESULT_ARG_SINGLE_OPT);
 
 public:
-	template < typename T >
+	template<typename T>
 	void Read(T& value RESULT_ARG_OPT)
 	{
 		if constexpr (eastl::is_fundamental_v<T> || eastl::is_pod_v<T>)
 		{
-			RESULT_ENSURE_CALL_NL(Read((void*)&value, sizeof(T) RESULT_ARG_PASS));;
+			RESULT_ENSURE_CALL_NL(Read((void*)&value, sizeof(T) RESULT_ARG_PASS));
+			;
 		}
 		else
 		{
@@ -110,7 +111,7 @@ public:
 		}
 	}
 
-	template < typename T >
+	template<typename T>
 	void Write(const T& value RESULT_ARG_OPT)
 	{
 		if constexpr (eastl::is_fundamental_v<T> || eastl::is_pod_v<T>)
@@ -130,16 +131,18 @@ private:
 /**
  * @brief Directory class.
  *
-*/
+ */
 class Directory
 {
 	CLASS_BODY(Directory)
 
 public:
-	~Directory() {}
+	~Directory()
+	{
+	}
 };
 
-}
+} // namespace Io
 
 CLASS_VALIDATION(Io::Path);
 CLASS_VALIDATION(Io::File);

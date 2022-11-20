@@ -230,22 +230,7 @@ public:
 	ComponentPtr<Component> Get(EntityId id RESULT_ARG_OPT);
 
 	template <typename Component>
-	void Each(void (*function)(Component&) RESULT_ARG_OPT)
-	{
-		auto l_comp = GetComponentArrayElement<Component>().Get();
-		const auto l_data = l_comp->data_;
-		auto l_eindex = l_comp->eindex_;
-		const auto l_eindex_end = l_comp->eindex_end_;
-
-		while(l_eindex < l_eindex_end)
-		{
-			if(*l_eindex != ComponentArray<Component>::INVALID_COMPONENT_ID)
-			{
-				function(*(l_data + *l_eindex));
-			}
-			++l_eindex;
-		}
-	}
+	void Each(void (*function)(Component&) RESULT_ARG_OPT);
 
 public:
 	NODISCARD Uint64 Capacity(RESULT_ARG_SINGLE_OPT) const;
@@ -668,6 +653,23 @@ typename Registry<TypeList>::template ComponentPtr<Component> Registry<TypeList>
 	}
 	RESULT_OK();
 	return ComponentPtr<Component>{this, PTR(GetComponentArrayElement<Component>().Get()->Get(id))};
+}
+
+template<typename TypeList> template<typename Component> void Registry<TypeList>::Each(void(* function)(Component&) RESULT_ARG)
+{
+	auto       l_comp       = GetComponentArrayElement<Component>().Get();
+	const auto l_data       = l_comp->data_;
+	auto       l_eindex     = l_comp->eindex_;
+	const auto l_eindex_end = l_comp->eindex_end_;
+
+	while(l_eindex < l_eindex_end)
+	{
+		if(*l_eindex != ComponentArray<Component>::INVALID_COMPONENT_ID)
+		{
+			function(*(l_data + *l_eindex));
+		}
+		++l_eindex;
+	}
 }
 
 template <typename TypeList>

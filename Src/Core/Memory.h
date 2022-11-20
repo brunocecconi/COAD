@@ -19,22 +19,22 @@
 namespace Memory
 {
 
-template < Uint64 Index, Uint64 Size >
+template<Uint64 Index, Uint64 Size>
 void CtClearMemory(Uint8* data)
 {
-	if constexpr(Index < Size)
+	if constexpr (Index < Size)
 	{
 		data[Index] = 0;
-		CtClearMemory<Index+1, Size>(data);
+		CtClearMemory<Index + 1, Size>(data);
 	}
 }
 
-template < typename T >
+template<typename T>
 void ClearMemoryType(T* value)
 {
 	CtClearMemory<0, sizeof(T)>(reinterpret_cast<Uint8*>(value));
 }
 
-}
+} // namespace Memory
 
 #endif

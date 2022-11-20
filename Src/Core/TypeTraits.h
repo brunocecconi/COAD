@@ -18,129 +18,130 @@
 #include <EASTL/tuple.h>
 #include <EASTL/array.h>
 #include <EASTL/string_view.h>
+#include <EASTL/bitset.h>
 
 namespace TypeTraits
 {
 
-namespace Detail
-{
-template <Size... Indices>
-constexpr auto SubstringAsArray(std::string_view str, eastl::index_sequence<Indices...>)
-{
-  return eastl::array{str[Indices]..., '\n'};
-}
-
-template <typename T>
-constexpr auto TypeNameArray()
-{
-#if PLATFORM_WINDOWS
-	constexpr auto prefix	= std::string_view{"TypeNameArray<"};
-	constexpr auto suffix	= std::string_view{">(void)"};
-	constexpr auto function = std::string_view{__PRETTY_FUNCTION__};
-
-	constexpr auto start = function.find(prefix) + prefix.size();
-	constexpr auto end	 = function.rfind(suffix);
-
-	static_assert(start < end);
-
-	constexpr auto name = function.substr(start, end-start);
-
-	return SubstringAsArray(name, eastl::make_index_sequence<name.size()>{});
-#endif
-}
-
-template <typename T>
-struct TypeNameHolder
-{
-	static inline constexpr auto VALUE = TypeNameArray<T>();
-};
-}
-
-template <typename T>
-constexpr eastl::string_view TypeName()
-{
-  constexpr auto& value = Detail::TypeNameHolder<T>::VALUE;
-  return {value.data(), value.size()};
-}
-
-template<typename... Types> struct TypeList
+template<typename... Types>
+struct TypeList
 {
 	static constexpr Uint64 SIZE = sizeof...(Types);
 };
 
-using TypeListEmpty = TypeList<>;
+template < typename TypeList >
+struct TlGetFirstElement;
 
-template<typename T1, typename T2> struct TlCat;
-
-template<typename... Types1, typename... Types2> struct TlCat<TypeList<Types1...>, TypeList<Types2...>>
+template<typename Head, typename... Tail>
+struct TlGetFirstElement<TypeList<Head, Tail...>>
 {
-	using Type = TypeList<Types1..., Types2...>;
+	using type_t = Head;
 };
 
-template<typename T> struct TlToTuple
+template < typename TypeList, Uint64 Index >
+struct TlGetByIndex;
+
+template<typename Head, typename... Tail>
+struct TlGetByIndex<TypeList<Head, Tail...>, 0>
 {
-	using Type = eastl::tuple<T>;
+	using type_t = Head;
 };
 
-template<typename... Types> struct TlToTuple<TypeList<Types...>>
+template<typename Head, typename... Tail, Uint64 N>
+struct TlGetByIndex<TypeList<Head, Tail...>, N>
 {
-	using Type = eastl::tuple<Types...>;
+	using type_t = typename TlGetByIndex<TypeList<Tail...>, N-1>::type_t;
 };
 
-template<template<typename> typename T, typename Y> struct TlToTupleTransfer
+using type_list_empty_t = TypeList<>;
+
+template<typename T1, typename T2>
+struct TlCat;
+
+template<typename... Types1, typename... Types2>
+struct TlCat<TypeList<Types1...>, TypeList<Types2...>>
 {
-	using Type = eastl::tuple<T<Y>>;
+	using type_t = TypeList<Types1..., Types2...>;
 };
 
-template<template<typename> typename T, typename... Types> struct TlToTupleTransfer<T, TypeList<Types...>>
+template<typename T>
+struct TlToTuple
 {
-	using Type = eastl::tuple<T<Types>...>;
+	using type_t = eastl::tuple<T>;
 };
 
-template<typename NewType, typename AnotherType> struct TlPushFront
+template<typename... Types>
+struct TlToTuple<TypeList<Types...>>
 {
-	using Type = TypeList<NewType, AnotherType>;
+	using type_t = eastl::tuple<Types...>;
 };
 
-template<typename NewType, typename... Types> struct TlPushFront<NewType, TypeList<Types...>>
+template<template<typename> typename T, typename Y>
+struct TlToTupleTransfer
 {
-	using Type = TypeList<NewType, Types...>;
+	using type_t = eastl::tuple<T<Y>>;
 };
 
-template<typename NewType, typename AnotherType> struct TlPushBack
+template<template<typename> typename T, typename... Types>
+struct TlToTupleTransfer<T, TypeList<Types...>>
 {
-	using Type = TypeList<NewType, AnotherType>;
+	using type_t = eastl::tuple<T<Types>...>;
 };
 
-template<typename NewType, typename... Types> struct TlPushBack<NewType, TypeList<Types...>>
+template<typename NewType, typename AnotherType>
+struct TlPushFront
 {
-	using Type = TypeList<Types..., NewType>;
+	using type_t = TypeList<NewType, AnotherType>;
 };
 
-template<typename T, Uint64 Size> struct TlCreateTypeList
+template<typename NewType, typename... Types>
+struct TlPushFront<NewType, TypeList<Types...>>
 {
-	using Type = TlPushFront<T, typename TlCreateTypeList<T, Size - 1>::Type>;
+	using type_t = TypeList<NewType, Types...>;
 };
 
-template<typename T> struct TlCreateTypeList<T, 0>
+template<typename NewType, typename AnotherType>
+struct TlPushBack
 {
-	using Type = TypeList<>;
+	using type_t = TypeList<NewType, AnotherType>;
 };
 
-template<typename, typename T> struct TypeRepeat
+template<typename NewType, typename... Types>
+struct TlPushBack<NewType, TypeList<Types...>>
 {
-	using Type = T;
+	using type_t = TypeList<Types..., NewType>;
 };
 
-template<typename Tuple> constexpr auto TupleToArray(Tuple&& tuple)
+template<typename T, Uint64 Size>
+struct TlCreateTypeList
+{
+	using type_t = TlPushFront<T, typename TlCreateTypeList<T, Size - 1>::Type>;
+};
+
+template<typename T>
+struct TlCreateTypeList<T, 0>
+{
+	using type_t = TypeList<>;
+};
+
+template<typename, typename T>
+struct TypeRepeat
+{
+	using type_t = T;
+};
+
+template<typename Tuple>
+constexpr auto TupleToArray(Tuple&& tuple)
 {
 	constexpr auto l_array = []<typename... Args>(Args&&... x) { return eastl::array{std::forward<Args>(x)...}; };
 	return eastl::apply(l_array, std::forward<Tuple>(tuple));
 }
 
-template<typename T, typename Tuple> struct TlHasType;
+template<typename T, typename Tuple>
+struct TlHasType;
 
-template<typename T> struct TlHasType<T, eastl::tuple<>>: std::false_type
+template<typename T>
+struct TlHasType<T, eastl::tuple<>>: std::false_type
 {
 };
 
@@ -149,13 +150,15 @@ struct TlHasType<T, eastl::tuple<U, Ts...>>: TlHasType<T, eastl::tuple<Ts...>>
 {
 };
 
-template<typename T, typename... Ts> struct TlHasType<T, eastl::tuple<T, Ts...>>: eastl::true_type
+template<typename T, typename... Ts>
+struct TlHasType<T, eastl::tuple<T, Ts...>>: eastl::true_type
 {
 };
 
 namespace Detail
 {
-template<Uint64 Index, typename T, typename Tuple> static constexpr Uint64 FindTupleType()
+template<Uint64 Index, typename T, typename Tuple>
+static constexpr Uint64 FindTupleType()
 {
 	if constexpr (Index < eastl::tuple_size<Tuple>::value)
 	{
@@ -169,13 +172,25 @@ template<Uint64 Index, typename T, typename Tuple> static constexpr Uint64 FindT
 		}
 	}
 }
+
 } // namespace Detail
 
-template<typename T, typename Tuple> static constexpr Uint64 FindTupleType()
+template<typename T, typename Tuple>
+static constexpr Uint64 FindTupleType()
 {
 	static_assert(TlHasType<T, Tuple>::value, "Type does not contain in tuple.");
 	return Detail::FindTupleType<0, T, Tuple>();
 }
+
+template < typename Function >
+struct FunctionTraits;
+
+template < typename R, typename ... Args>
+struct FunctionTraits<R(Args...)>
+{
+	using return_t = R;
+	using param_type_list_t = TypeList<Args...>;
+};
 
 } // namespace TypeTraits
 

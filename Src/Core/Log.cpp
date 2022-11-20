@@ -9,14 +9,19 @@
 
 #include "Core/Log.h"
 
+namespace Log
+{
+
 Uint64 g_verbosity{};
 
-Uint64 logVerbosity()
+Uint64 Verbosity()
 {
 	return g_verbosity;
 }
 
-void setLogVerbosity(const Uint64 value)
+void SetVerbosity(const Uint64 value)
 {
 	g_verbosity = value;
+}
+
 }
