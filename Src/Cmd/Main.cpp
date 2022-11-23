@@ -284,9 +284,9 @@ int main(int argc, char** argv)
 	}
 
 	const auto& l_test_ctor_ci = Meta::Classof<TestCtor>();
-	if(l_test_ctor_ci.HasMethod("TestCtor::IsEven"))
+	if(l_test_ctor_ci.HasMethodInfo("TestCtor::IsEven"))
 	{
-		const auto& l_method = l_test_ctor_ci.GetMethod("TestCtor::IsEven");
+		const auto& l_method = l_test_ctor_ci.GetMethodInfo("TestCtor::IsEven");
 		l_method.Invoke(nullptr, 4);
 	}
 

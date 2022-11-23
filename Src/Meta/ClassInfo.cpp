@@ -21,32 +21,32 @@ Uint32 ClassInfo::Flags() const
 	return flags_;
 }
 
-const CtorInfo& ClassInfo::GetCtor(const Uint64 index) const
+const CtorInfo& ClassInfo::GetCtorInfo(const Uint64 index) const
 {
 	return ctors_[index];
 }
 
-const PropertyInfo& ClassInfo::GetProperty(const Hash::fnv1a_t id) const
+const PropertyInfo& ClassInfo::GetPropertyInfo(const Hash::fnv1a_t id) const
 {
 	return properties_.at(id);
 }
 
-const MethodInfo& ClassInfo::GetMethod(const Hash::fnv1a_t id) const
+const MethodInfo& ClassInfo::GetMethodInfo(const Hash::fnv1a_t id) const
 {
 	return methods_.at(id);
 }
 
-bool ClassInfo::HasCtor(const Uint64 index) const
+bool ClassInfo::HasCtorInfo(const Uint64 index) const
 {
 	return index < ctors_.size();
 }
 
-bool ClassInfo::HasProperty(const Hash::fnv1a_t id) const
+bool ClassInfo::HasPropertyInfo(const Hash::fnv1a_t id) const
 {
 	return properties_.find(id) != properties_.cend();
 }
 
-bool ClassInfo::HasMethod(const Hash::fnv1a_t id) const
+bool ClassInfo::HasMethodInfo(const Hash::fnv1a_t id) const
 {
 	return methods_.find(id) != methods_.cend();
 }

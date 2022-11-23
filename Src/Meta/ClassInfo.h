@@ -81,25 +81,25 @@ public:
 	NODISCARD Uint32		  Flags() const;
 
 public:
-	NODISCARD const CtorInfo& GetCtor(Uint64 index) const;
+	NODISCARD const CtorInfo& GetCtorInfo(Uint64 index) const;
 
 	template<Size N>
-	NODISCARD const PropertyInfo& GetProperty(const char (&name)[N]) const;
-	NODISCARD const PropertyInfo& GetProperty(Hash::fnv1a_t id) const;
+	NODISCARD const PropertyInfo& GetPropertyInfo(const char (&name)[N]) const;
+	NODISCARD const PropertyInfo& GetPropertyInfo(Hash::fnv1a_t id) const;
 
 	template<Size N>
-	NODISCARD const MethodInfo& GetMethod(const char (&name)[N]) const;
-	NODISCARD const MethodInfo& GetMethod(Hash::fnv1a_t id) const;
+	NODISCARD const MethodInfo& GetMethodInfo(const char (&name)[N]) const;
+	NODISCARD const MethodInfo& GetMethodInfo(Hash::fnv1a_t id) const;
 
-	NODISCARD bool HasCtor(Uint64 index) const;
-
-	template<Size N>
-	NODISCARD bool HasProperty(const char (&name)[N]) const;
-	NODISCARD bool HasProperty(Hash::fnv1a_t id) const;
+	NODISCARD bool HasCtorInfo(Uint64 index) const;
 
 	template<Size N>
-	NODISCARD bool HasMethod(const char (&name)[N]) const;
-	NODISCARD bool HasMethod(Hash::fnv1a_t id) const;
+	NODISCARD bool HasPropertyInfo(const char (&name)[N]) const;
+	NODISCARD bool HasPropertyInfo(Hash::fnv1a_t id) const;
+
+	template<Size N>
+	NODISCARD bool HasMethodInfo(const char (&name)[N]) const;
+	NODISCARD bool HasMethodInfo(Hash::fnv1a_t id) const;
 
 public:
 	Value InvokeCtor();
@@ -153,27 +153,27 @@ ClassInfo::ClassInfo(TypeTag<T>) : type_info_{&Typeof<typename Rebinder<T>::owne
 }
 
 template<Size N>
-const PropertyInfo& ClassInfo::GetProperty(const char(& name)[N]) const
+const PropertyInfo& ClassInfo::GetPropertyInfo(const char(& name)[N]) const
 {
-	return GetProperty(Hash::Fnv1AHash(name));
+	return GetPropertyInfo(Hash::Fnv1AHash(name));
 }
 
 template<Size N>
-const MethodInfo& ClassInfo::GetMethod(const char(& name)[N]) const
+const MethodInfo& ClassInfo::GetMethodInfo(const char(& name)[N]) const
 {
-	return GetMethod(Hash::Fnv1AHash(name));
+	return GetMethodInfo(Hash::Fnv1AHash(name));
 }
 
 template<Size N>
-bool ClassInfo::HasProperty(const char(& name)[N]) const
+bool ClassInfo::HasPropertyInfo(const char(& name)[N]) const
 {
-	return HasProperty(Hash::Fnv1AHash(name));
+	return HasPropertyInfo(Hash::Fnv1AHash(name));
 }
 
 template<Size N>
-bool ClassInfo::HasMethod(const char(& name)[N]) const
+bool ClassInfo::HasMethodInfo(const char(& name)[N]) const
 {
-	return HasMethod(Hash::Fnv1AHash(name));
+	return HasMethodInfo(Hash::Fnv1AHash(name));
 }
 
 template<typename T>
