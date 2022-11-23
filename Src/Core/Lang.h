@@ -11,7 +11,6 @@
 #define CORE_LANG_H
 
 #include "Core/Platform.h"
-#include "Core/TypeInfo.h"
 
 #include <EASTL/vector.h>
 #include <EASTL/set.h>

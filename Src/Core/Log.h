@@ -16,17 +16,17 @@
 #define LOG_DEFINE(NAME)                                                                                               \
 	namespace Log                                                                                                      \
 	{                                                                                                                  \
-	struct NAME                                                                                                   \
+	struct NAME                                                                                                        \
 	{                                                                                                                  \
 	};                                                                                                                 \
 	}
 
-#define LOG_CATEGORY_DEFINE(VERBOSITY_SYMBOL, NAME, COLORS, ...)                                                              \
+#define LOG_CATEGORY_DEFINE(VERBOSITY_SYMBOL, NAME, COLORS, ...)                                                       \
 	namespace Log                                                                                                      \
 	{                                                                                                                  \
-	struct Category##NAME                                                                                           \
+	struct Category##NAME                                                                                              \
 	{                                                                                                                  \
-		static constexpr auto VERBOSITY = VERBOSITY_SYMBOL;                                                                   \
+		static constexpr auto VERBOSITY = VERBOSITY_SYMBOL;                                                            \
 		static constexpr auto VALUE		= " - " COLORS "[" #NAME "]: ";                                                \
 		static void			  Apply()                                                                                  \
 		{                                                                                                              \
@@ -44,15 +44,15 @@ void   SetVerbosity(Uint64 value);
 } // namespace Log
 
 #define LOG(CATEGORY, MSG, ...)                                                                                        \
-	if (Log::Category##NAME::VERBOSITY <= Verbosity())                                                                   \
+	if (Log::Category##CATEGORY::VERBOSITY <= Log::Verbosity())                                                        \
 	{                                                                                                                  \
 		time_t l_time = time(NULL);                                                                                    \
 		auto   l_tm	  = localtime(&l_time);                                                                            \
 		char   l_time_string[64];                                                                                      \
 		strftime(l_time_string, sizeof(l_time_string), "%c", l_tm);                                                    \
 		printf(CONSOLE_COLOR_WHITE CONSOLE_COLOR_BOLD "[%s]" CONSOLE_COLOR_DEFAULT, l_time_string);                    \
-		printf("%s" MSG "%s\n", Log::Category##NAME::value, __VA_ARGS__, CONSOLE_COLOR_DEFAULT);                         \
-		Log::Category##NAME::Apply();                                                                                    \
+		printf("%s" MSG "%s\n", Log::Category##CATEGORY::VALUE, __VA_ARGS__, CONSOLE_COLOR_DEFAULT);                   \
+		Log::Category##CATEGORY::Apply();                                                                              \
 	}
 
 #define LOG_SET_VERBOSITY(CATEGORY) Log::SetVerbosity(Log::Category##CATEGORY::VERBOSITY)

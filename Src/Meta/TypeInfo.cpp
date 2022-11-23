@@ -6,45 +6,54 @@ namespace Meta
 {
 
 TypeInfo*	  g_type_info_none		  = nullptr;
-TypeRegister* TypeRegister::instance_ = nullptr;
+TypeRegistry* TypeRegistry::instance_ = nullptr;
 
 const TypeInfo& Typeof(const char* name)
 {
-	return TypeRegister::Instance().Get(name);
+	return TypeRegistry::Instance().Get(name);
+}
+
+const TypeInfo& Typeof(const Hash::fnv1a_t id)
+{
+	return TypeRegistry::Instance().Get(id);
 }
 
 TypeInfo::TypeInfo() : id_{Hash::Fnv1AHash("none")}, size_{0}, name_{"none"}
 {
 }
 
-TypeRegister::TypeRegister()
+TypeRegistry::TypeRegistry()
 {
 	types_.reserve(256);
 }
 
-const TypeInfo& TypeRegister::Get(const char* name)
+const TypeInfo& TypeRegistry::Get(const char* name)
 {
-	if (types_.find(name) != types_.cend())
+	return Get(Hash::Fnv1AHash(strlen(name), name));
+}
+
+const TypeInfo& TypeRegistry::Get(const Hash::fnv1a_t id)
+{
+	if (types_.find(id) != types_.cend())
 	{
-		return types_.at(name);
+		return types_.at(id);
 	}
 	return TypeInfo::None();
 }
 
-bool TypeRegister::IsRegistered(const char* name) const
+bool TypeRegistry::IsRegistered(const char* name) const
 {
-	return types_.find(name) != types_.cend();
+	return types_.find(Hash::Fnv1AHash(strlen(name), name)) != types_.cend();
 }
 
-TypeRegister& TypeRegister::Instance()
+TypeRegistry& TypeRegistry::Instance()
 {
 	if (!instance_)
 	{
-		instance_ = new (Allocators::Default(NAME_VAL("Meta")).allocate(sizeof(TypeRegister))) TypeRegister{};
+		instance_ = new (Allocators::Default(DEBUG_NAME_VAL("Meta")).allocate(sizeof(TypeRegistry))) TypeRegistry{};
 	}
 	return *instance_;
 }
-
 
 Uint64 TypeInfo::Id() const
 {
@@ -61,18 +70,11 @@ const char* TypeInfo::Name() const
 	return name_;
 }
 
-eastl::string TypeInfo::ToString() const
-{
-	char l_str[256];
-	sprintf(l_str, "TypeInfo(Name=%s,Id=%llu,Size=%llu)", name_, id_, size_);
-	return eastl::string{l_str, Allocators::Default{NAME_VAL("Meta")}};
-}
-
 const TypeInfo& TypeInfo::None()
 {
 	if (!g_type_info_none)
 	{
-		g_type_info_none = new (Allocators::Default(NAME_VAL("Meta")).allocate(sizeof(TypeInfo))) TypeInfo{};
+		g_type_info_none = new (Allocators::Default(DEBUG_NAME_VAL("Meta")).allocate(sizeof(TypeInfo))) TypeInfo{};
 	}
 	return *g_type_info_none;
 }
@@ -95,6 +97,51 @@ bool TypeInfo::operator==(const TypeInfo& value) const
 bool TypeInfo::operator!=(const TypeInfo& value) const
 {
 	return id_ != value.id_;
+}
+
+bool TypeInfo::IsBoolean() const
+{
+	return id_ == Typeof<bool>().id_;
+}
+
+bool TypeInfo::IsIntegral() const
+{
+	return id_ == Typeof<Int8>().id_ || id_ == Typeof<Int16>().id_ || id_ == Typeof<Int32>().id_ ||
+		   id_ == Typeof<Int64>().id_ || id_ == Typeof<Uint8>().id_ || id_ == Typeof<Uint16>().id_ ||
+		   id_ == Typeof<Uint32>().id_ || id_ == Typeof<Uint64>().id_;
+}
+
+bool TypeInfo::IsFloatingPoint() const
+{
+	return id_ == Typeof<Float32>().id_ || id_ == Typeof<Float64>().id_;
+}
+
+bool TypeInfo::IsConvertibleTo(const TypeInfo& value) const
+{
+	return (IsIntegral() && value.IsIntegral()) || (IsFloatingPoint() && value.IsFloatingPoint());
+}
+
+eastl::string TypeInfo::ToString(const Uint64 capacity) const
+{
+	RawBuffer<char> l_str{capacity, DEBUG_NAME_VAL("Meta")};
+	sprintf(l_str.Get(), "TypeInfo(Name=%s,Id=%llu,Size=%llu)", name_, id_, size_);
+	return eastl::string{l_str.Get(), EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+}
+
+eastl::string TypeInfo::ToValueString(void* value, const Uint64 capacity) const
+{
+	OperationBody l_body{};
+
+	eastl::string l_string{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+	auto		  l_args_tuple = eastl::make_tuple(&l_string, value, capacity);
+
+	l_body.type			   = eToString;
+	l_body.args_tuple	   = &l_args_tuple;
+	l_body.args_tuple_size = 3;
+
+	operation_function_(l_body);
+
+	return l_string;
 }
 
 void RegistryBaseTypes()

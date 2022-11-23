@@ -10,11 +10,7 @@
 #ifndef CORE_COMPILER_H
 #define CORE_COMPILER_H
 
-#if USE_EXPLICIT
 #define EXPLICIT explicit
-#else
-#define EXPLICIT
-#endif
 
 #define NOEXCEPT		noexcept
 #define INLINE			inline

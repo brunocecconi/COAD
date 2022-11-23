@@ -214,7 +214,7 @@ Path Path::RelativePath(const char* to RESULT_ARG) const
 
 eastl::string Path::Extension(RESULT_ARG_SINGLE)
 {
-	return eastl::string{NAME_VAL("Path")};
+	return eastl::string{DEBUG_NAME_VAL("Path")};
 }
 
 void Path::RemoveExtension(RESULT_ARG_SINGLE)

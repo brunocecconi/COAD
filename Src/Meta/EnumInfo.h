@@ -10,23 +10,24 @@ namespace Meta
 /**
  * @brief Enum info class.
  *
-*/
+ */
 class EnumInfo
 {
-	friend class TypeRegister;
-	friend class eastl::string_hash_map<TypeInfo>;
-	friend struct eastl::pair<const char* const, TypeInfo>;
+	friend class EnumRegistry;
 
 public:
 	/**
 	 * @brief Enum info flags.
 	 *
-	*/
+	 */
 	enum Flags
 	{
 		eNone,
 		eBitmask
 	};
+
+	template<typename EnumType>
+	struct Rebinder;
 
 	template<typename EnumType, Uint32 Flags = 0>
 	struct Binder
@@ -38,25 +39,23 @@ public:
 private:
 	EnumInfo();
 
-	template<typename BinderType>
-	EXPLICIT EnumInfo(BinderType) : type_info_{Typeof<typename BinderType::owner_t>()}, flags_{BinderType::FLAGS}
-	{
-		entries_ = BinderType::GetEntries();
-	}
+	template<typename T>
+	EXPLICIT EnumInfo(TypeTag<T>);
 
 public:
-	NODISCARD const TypeInfo&		 Type() const;
+	NODISCARD const TypeInfo& Type() const;
+	NODISCARD eastl::string			 ToString() const;
 	NODISCARD static const EnumInfo& None();
 
 public:
-	const char* ToNameGeneric(Int64 value);
-	Int64		ToValueGeneric(const char* name);
+	NODISCARD const char* ToNameGeneric(Int64 value) const;
+	NODISCARD Int64		  ToValueGeneric(const char* name) const;
 
 	template<typename T>
-	const char* ToName(T value);
+	NODISCARD const char* ToName(T value) const;
 
 	template<typename T>
-	T ToValue(const char* name);
+	NODISCARD T ToValue(const char* name) const;
 
 public:
 	NODISCARD bool IsBitmask() const;
@@ -64,19 +63,25 @@ public:
 
 private:
 	const TypeInfo&										  type_info_;
-	eastl::vector<eastl::pair<eastl::string_view, Int64>> entries_{NAME_VAL("Meta")};
+	eastl::vector<eastl::pair<eastl::string_view, Int64>> entries_{DEBUG_NAME_VAL("Meta")};
 	Uint64												  flags_;
 };
 
 template<typename T>
-const char* EnumInfo::ToName(const T value)
+EnumInfo::EnumInfo(TypeTag<T>) : type_info_{Typeof<typename Rebinder<T>::owner_t>()}, flags_{Rebinder<T>::FLAGS}
+{
+	entries_ = Rebinder<T>::Pairs();
+}
+
+template<typename T>
+const char* EnumInfo::ToName(const T value) const
 {
 	static_assert(eastl::is_enum_v<T>, "Invalid enum type.");
 	return ToNameGeneric(static_cast<Int64>(value));
 }
 
 template<typename T>
-T EnumInfo::ToValue(const char* name)
+T EnumInfo::ToValue(const char* name) const
 {
 	static_assert(eastl::is_enum_v<T>, "Invalid enum type.");
 	return static_cast<T>(ToValueGeneric(name));
@@ -85,47 +90,51 @@ T EnumInfo::ToValue(const char* name)
 /**
  * @brief Enum register class.
  *
-*/
-class EnumRegister
+ */
+class EnumRegistry
 {
-	EnumRegister();
+	EnumRegistry();
 
 public:
 	template<typename T>
-	const EnumInfo& Emplace()
-	{
-		constexpr auto l_type_name = Detail::TypeName<T>();
-		auto		   l_it		   = enums_.find(l_type_name.data());
-		if (l_it == enums_.cend())
-		{
-			l_it = enums_.emplace(l_type_name.data(), EnumInfo{TypeTag<T>{}}).first;
-		}
-		return l_it->second;
-	}
+	const EnumInfo& Emplace();
 	const EnumInfo& Get(const char* name);
-	bool			IsRegistered(const char* name) const;
+	const EnumInfo& Get(Hash::fnv1a_t id);
+	bool            IsRegistered(const char* name) const;
+	bool            IsRegistered(Hash::fnv1a_t id) const;
 
-	static EnumRegister& Instance();
+	static EnumRegistry& Instance();
 
 private:
-	eastl::string_hash_map<EnumInfo> enums_{NAME_VAL("Meta")};
-	static EnumRegister*			 instance_;
+	eastl::hash_map<Hash::fnv1a_t, EnumInfo> enums_{DEBUG_NAME_VAL("Meta")};
+	static EnumRegistry*					 instance_;
 };
+
+template<typename T>
+const EnumInfo& EnumRegistry::Emplace()
+{
+	auto l_it = enums_.find(TypeInfo::Rebinder<T>::ID);
+	if (l_it == enums_.cend())
+	{
+		l_it = enums_.emplace(TypeInfo::Rebinder<T>::ID, EnumInfo{TypeTag<T>{}}).first;
+	}
+	return l_it->second;
+}
 
 template<typename T>
 const EnumInfo& Enumof()
 {
-	return EnumRegister::Instance().Emplace<T>();
+	return EnumRegistry::Instance().Emplace<T>();
 }
 
 template<typename T>
 const EnumInfo& Enumof(T)
 {
-	return EnumRegister::Instance().Emplace<T>();
+	return EnumRegistry::Instance().Emplace<T>();
 }
 
 const EnumInfo& Enumof(const char* name);
 
-}
+} // namespace Meta
 
 #endif

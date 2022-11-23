@@ -10,6 +10,8 @@
 #ifndef ECS_COMPONENT_H
 #define ECS_COMPONENT_H
 
+#include <EASTL/string.h>
+
 #include "Core/Common.h"
 
 #include <glm/glm.hpp>

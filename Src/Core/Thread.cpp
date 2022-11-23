@@ -34,12 +34,12 @@ void NativeThreadParams::Create(NativeThreadParams** thread_params, const Thread
 		RESULT_ERROR(eResultErrorPtrIsNotNull);
 	}
 	*thread_params =
-		static_cast<NativeThreadParams*>(Allocators::Default(NAME("thread")).allocate(sizeof(NativeThreadParams)));
+		static_cast<NativeThreadParams*>(Allocators::Default(DEBUG_NAME("thread")).allocate(sizeof(NativeThreadParams)));
 	(*thread_params)->function = ci.function;
 
 	if (ci.params && ci.params_size)
 	{
-		void* l_params = Allocators::Default(NAME("thread")).allocate(ci.params_size);
+		void* l_params = Allocators::Default(DEBUG_NAME("thread")).allocate(ci.params_size);
 		memcpy(l_params, ci.params, ci.params_size);
 		(*thread_params)->params = l_params;
 	}
@@ -55,7 +55,7 @@ void NativeThreadParams::Destroy(NativeThreadParams** thread_params RESULT_ARG)
 	}
 	if ((*thread_params)->params)
 	{
-		Allocators::Default(NAME("thread")).deallocate((*thread_params)->params, 0);
+		Allocators::Default(DEBUG_NAME("thread")).deallocate((*thread_params)->params, 0);
 		(*thread_params)->params = nullptr;
 	}
 	RESULT_OK();

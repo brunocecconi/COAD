@@ -192,6 +192,16 @@ struct FunctionTraits<R(Args...)>
 	using param_type_list_t = TypeList<Args...>;
 };
 
+template < typename T >
+struct PropertyTraits;
+
+template < typename Owner, typename T >
+struct PropertyTraits<T (Owner::*)>
+{
+	using owner_t = Owner;
+	using type_t = T;
+};
+
 } // namespace TypeTraits
 
 #endif

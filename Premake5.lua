@@ -33,7 +33,7 @@ project "COAD"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
 
 	includedirs
 	{
@@ -46,8 +46,8 @@ project "COAD"
 		"%{IncludeDir.VulkanSDK}"
 	}
 	
-	files { "Src/**.h", "Src/**.cpp", "Src/**.cpp" }
-	removefiles { "Src/Cmd/Main.cpp", "Src/Benchmark/Main.cpp" }
+	files { "Src/**.h", "Src/**.cpp", "Src/**.cpp", "./Natvis/**.natvis" }
+	removefiles { "Src/Cmd/Main.cpp", "Src/Benchmark/Entity.cpp", "Src/Benchmark/Meta.cpp" }
 	
 	filter { "not files:**.unity.*" }
 		flags {"ExcludeFromBuild"}
@@ -68,9 +68,9 @@ project "COAD-Cmd"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
 	
-	files { "Src/Cmd/Main.cpp" }
+	files { "Src/Cmd/Main.cpp", "./Natvis/**.natvis" }
 
 	includedirs
 	{
@@ -99,9 +99,9 @@ project "COAD-Benchmark-Entity"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
 	
-	files { "Src/Benchmark/Entity.cpp" }
+	files { "Src/Benchmark/Entity.cpp", "./Natvis/**.natvis" }
 
 	includedirs
 	{
@@ -130,9 +130,9 @@ project "COAD-Benchmark-Meta"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
 	
-	files { "Src/Benchmark/Meta.cpp" }
+	files { "Src/Benchmark/Meta.cpp", "./Natvis/**.natvis" }
 
 	includedirs
 	{

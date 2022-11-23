@@ -7,20 +7,20 @@
 namespace Hash
 {
 
-using Type = Uint64;
+using fnv1a_t = Uint64;
 
 // See http://www.isthe.com/chongo/tech/comp/fnv/#FNV-param
-constexpr Type FNV_BASIS = 14695981039346656037ull;
-constexpr Type FNV_PRIME = 1099511628211ull;
+constexpr fnv1a_t FNV_BASIS = 14695981039346656037ull;
+constexpr fnv1a_t FNV_PRIME = 1099511628211ull;
 
 // FNV-1a 64 bit hash
-constexpr Type Fnv1AHash(const Size n, const char * str, const Type hash = FNV_BASIS)
+constexpr fnv1a_t Fnv1AHash(const Size n, const char * str, const fnv1a_t hash = FNV_BASIS)
 {
     return n > 0 ? Fnv1AHash(n - 1, str + 1, (hash ^ *str) * FNV_PRIME) : hash;
 }
 
 template<Size N>
-constexpr Type Fnv1AHash(const char (&array)[N])
+constexpr fnv1a_t Fnv1AHash(const char (&array)[N])
 {
     return Fnv1AHash(N - 1, &array[0]);
 }
@@ -28,7 +28,7 @@ constexpr Type Fnv1AHash(const char (&array)[N])
 namespace Literals
 {
 
-constexpr Type operator"" _fnv1(const char* str, const Size length)
+constexpr fnv1a_t operator"" _fnv1(const char* str, const Size length)
 {
     return Fnv1AHash(length, str);
 }

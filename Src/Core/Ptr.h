@@ -26,9 +26,9 @@ struct PtrTransferUnderlyng
 };
 
 template<typename T>
-struct PtrTransferUnderlyng<T, eastl::void_t<typename T::UnderlyngType>>
+struct PtrTransferUnderlyng<T, eastl::void_t<typename T::underlyng_t>>
 {
-	using Type = typename T::UnderlyngType;
+	using Type = typename T::underlyng_t;
 };
 
 template<typename T, bool IsPointer = true>
@@ -125,8 +125,8 @@ public:
 
 	template<typename Y,
 			 typename = eastl::enable_if_t<!eastl::is_pointer_v<Y> ||
-										   eastl::is_same_v<void, eastl::void_t<typename Y::UnderlyngType>>>>
-	Ptr(Y& value, const char* function = nullptr, const char* file = nullptr, const Uint32 line = 0u);
+										   eastl::is_same_v<void, eastl::void_t<typename Y::underlyng_t>>>>
+	Ptr(Y& value, const char* function = nullptr, const char* file = nullptr, Uint32 line = 0u);
 
 	Ptr(const Ptr& value, const char* function = nullptr, const char* file = nullptr, Uint32 line = 0u);
 

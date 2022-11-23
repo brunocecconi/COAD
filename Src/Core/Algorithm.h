@@ -11,7 +11,7 @@
 #define CORE_ALGORITHM_H
 
 #include "Core/Types.h"
-#include "Core/Meta.h"
+#include "Core/RawBuffer.h"
 
 #include <EASTL/array.h>
 
@@ -26,16 +26,33 @@ constexpr void PrintArray(const eastl::array<T, Size>& arr)
 {
 	if constexpr (Index < Size)
 	{
-		if constexpr (eastl::is_pointer_v<T>)
+		if constexpr (eastl::is_fundamental_v<T>)
 		{
-			if (arr[Index])
+			if constexpr (eastl::is_pointer_v<T>)
 			{
-				printf("%s ", arr[Index]->ToString().c_str());
+				if (arr[Index])
+				{
+					printf("%s ", arr[Index]);
+				}
+			}
+			else
+			{
+				printf("%s ", arr[Index]);
 			}
 		}
 		else
 		{
-			printf("%s ", arr[Index].ToString().c_str());
+			if constexpr (eastl::is_pointer_v<T>)
+			{
+				if (arr[Index])
+				{
+					printf("%s ", arr[Index]->ToString().c_str());
+				}
+			}
+			else
+			{
+				printf("%s ", arr[Index].ToString().c_str());
+			}
 		}
 
 		PrintArray<Index + 1>(arr);
@@ -62,22 +79,6 @@ Uint64 MaxElementIndex(ForwardIterator first, ForwardIterator last)
 		return l_index;
 	}
 	return 0ull;
-}
-
-/**
- * @brief Prints an array.
- *
- * @tparam T Target type.
- * @tparam Size Target size.
- * @param arr Target array.
- *
- */
-template<typename T, Uint32 Size>
-constexpr void PrintArray(const eastl::array<T, Size>& arr)
-{
-	printf("eastl::array<%s, %u>( ", Meta::Detail::TypeName<T>().data(), Size);
-	Detail::PrintArray<0>(arr);
-	printf(")\n");
 }
 
 } // namespace Algorithm
