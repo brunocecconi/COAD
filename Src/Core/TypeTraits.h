@@ -115,7 +115,7 @@ struct TlPushBack<NewType, TypeList<Types...>>
 template<typename T, Uint64 Size>
 struct TlCreateTypeList
 {
-	using type_t = TlPushFront<T, typename TlCreateTypeList<T, Size - 1>::Type>;
+	using type_t = typename TlPushFront<T, typename TlCreateTypeList<T, Size - 1>::type_t>::type_t;
 };
 
 template<typename T>
@@ -186,8 +186,33 @@ template < typename Function >
 struct FunctionTraits;
 
 template < typename R, typename ... Args>
+struct FunctionTraits<R(*)(Args...)>
+{
+	using owner_t = void;
+	using return_t = R;
+	using param_type_list_t = TypeList<Args...>;
+};
+
+template < typename R, typename ... Args>
 struct FunctionTraits<R(Args...)>
 {
+	using owner_t = void;
+	using return_t = R;
+	using param_type_list_t = TypeList<Args...>;
+};
+
+template < typename Owner, typename R, typename ... Args>
+struct FunctionTraits<R(Owner::*)(Args...)>
+{
+	using owner_t = Owner;
+	using return_t = R;
+	using param_type_list_t = TypeList<Args...>;
+};
+
+template < typename Owner, typename R, typename ... Args>
+struct FunctionTraits<R(Owner::*)(Args...) const>
+{
+	using owner_t = Owner;
 	using return_t = R;
 	using param_type_list_t = TypeList<Args...>;
 };
@@ -201,6 +226,53 @@ struct PropertyTraits<T (Owner::*)>
 	using owner_t = Owner;
 	using type_t = T;
 };
+
+class conststr
+{
+    public:
+        template<std::size_t N>
+        constexpr conststr(const char(&STR)[N])
+        :string(STR), size(N-1)
+        {}
+
+        constexpr conststr(const char* STR, std::size_t N)
+        :string(STR), size(N)
+        {}
+
+        constexpr char operator[](std::size_t n)
+        {
+            return n < size ? string[n] : 0;
+        }
+
+        constexpr std::size_t get_size()
+        {
+            return size;
+        }
+
+        constexpr const char* get_string()
+        {
+            return string;
+        }
+
+        //This method is related with Fowler–Noll–Vo hash function
+        constexpr Uint64 hash(int n=0, unsigned h=2166136261)
+        {
+            return n == size ? h : hash(n+1,(h * 16777619) ^ (string[n]));
+        }
+
+    private:
+        const char* string;
+        std::size_t size;
+};
+
+Uint64 constexpr operator "" _const(const char* str, size_t sz)
+{
+    return conststr(str,sz).hash();
+}
+
+template < Uint64 Id >
+struct Rebinder;
+
 
 } // namespace TypeTraits
 

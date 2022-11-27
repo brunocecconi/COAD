@@ -66,7 +66,8 @@ public:
 	NODISCARD bool IsValid() const;
 
 public:
-	NODISCARD operator bool() const;
+	NODISCARD EXPLICIT operator bool() const;
+	NODISCARD operator void*() const;
 
 public:
 	NODISCARD const void*	 AsGeneric() const;

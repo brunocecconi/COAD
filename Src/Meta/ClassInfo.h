@@ -33,6 +33,28 @@ void ApplyHashMapTypeList(eastl::hash_map<Hash::fnv1a_t, T>& hash_map)
 	}
 }
 
+template<Size N>
+FORCEINLINE CtorInfo* FindCompatibleCtor(const eastl::span<CtorInfo>&			 ctors,
+										 const eastl::array<const TypeInfo*, N>& params_info)
+{
+	for (auto l_it = ctors.rbegin(); l_it != ctors.rend(); ++l_it)
+	{
+		const auto& l_ctor_signature_array = l_it->ParamsSignature();
+
+		if (CompareTypeInfoArray(l_ctor_signature_array.data(), params_info.data(), l_it->NeededParamCount()))
+		{
+			return &*l_it;
+		}
+	}
+	return nullptr;
+}
+
+template<typename... Args>
+constexpr eastl::array<const TypeInfo*, sizeof...(Args)> CreateTypeInfoArray(Args&&... values)
+{
+	return {&values.Type()...};
+}
+
 } // namespace Detail
 
 /**
@@ -61,6 +83,7 @@ public:
 		using property_binder_type_list_t = PropertyBindersTypeList;
 		using method_binder_type_list_t	  = MethodBindersTypeList;
 
+		static constexpr auto ID	= TypeInfo::Rebinder<T>::ID;
 		static constexpr auto FLAGS = 0;
 	};
 
@@ -102,10 +125,43 @@ public:
 	NODISCARD bool HasMethodInfo(Hash::fnv1a_t id) const;
 
 public:
-	Value InvokeCtor();
+	NODISCARD Value InvokeCtor() const;
+	NODISCARD Value InvokeCtor(Value p1) const;
+	NODISCARD Value InvokeCtor(Value p1, Value p2) const;
+	NODISCARD Value InvokeCtor(Value p1, Value p2, Value p3) const;
+	NODISCARD Value InvokeCtor(Value p1, Value p2, Value p3, Value p4) const;
+	NODISCARD Value InvokeCtor(Value p1, Value p2, Value p3, Value p4, Value p5) const;
+	NODISCARD Value InvokeCtor(Value p1, Value p2, Value p3, Value p4, Value p5, Value p6) const;
+	NODISCARD Value InvokeCtor(Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7) const;
+	NODISCARD Value InvokeCtor(Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7, Value p8) const;
 
 public:
-	Value InvokeMethod();
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4,
+								 Value p5) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
+								 Value p6) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
+								 Value p6, Value p7) const;
+	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
+								 Value p6, Value p7, Value p8) const;
+
+	template<Size N, typename... Args>
+	NODISCARD Value InvokeMethod(const char (&name)[N], const void* owner, Args&&... args) const;
+
+public:
+	void			SetProperty(Hash::fnv1a_t id, void* owner, Value value) const;
+	NODISCARD Value GetProperty(Hash::fnv1a_t id, const void* owner) const;
+
+	template<Size N>
+	void SetProperty(const char (&name)[N], void* owner, Value value) const;
+
+	template<Size N>
+	NODISCARD Value GetProperty(const char (&name)[N], const void* owner) const;
 
 public:
 	NODISCARD static const ClassInfo& None();
@@ -153,27 +209,45 @@ ClassInfo::ClassInfo(TypeTag<T>) : type_info_{&Typeof<typename Rebinder<T>::owne
 }
 
 template<Size N>
-const PropertyInfo& ClassInfo::GetPropertyInfo(const char(& name)[N]) const
+const PropertyInfo& ClassInfo::GetPropertyInfo(const char (&name)[N]) const
 {
 	return GetPropertyInfo(Hash::Fnv1AHash(name));
 }
 
 template<Size N>
-const MethodInfo& ClassInfo::GetMethodInfo(const char(& name)[N]) const
+const MethodInfo& ClassInfo::GetMethodInfo(const char (&name)[N]) const
 {
 	return GetMethodInfo(Hash::Fnv1AHash(name));
 }
 
 template<Size N>
-bool ClassInfo::HasPropertyInfo(const char(& name)[N]) const
+bool ClassInfo::HasPropertyInfo(const char (&name)[N]) const
 {
 	return HasPropertyInfo(Hash::Fnv1AHash(name));
 }
 
 template<Size N>
-bool ClassInfo::HasMethodInfo(const char(& name)[N]) const
+bool ClassInfo::HasMethodInfo(const char (&name)[N]) const
 {
 	return HasMethodInfo(Hash::Fnv1AHash(name));
+}
+
+template<Size N, typename... Args>
+Value ClassInfo::InvokeMethod(const char (&name)[N], const void* owner, Args&&... args) const
+{
+	return InvokeMethod(Hash::Fnv1AHash(name), owner, eastl::forward<Args>(args)...);
+}
+
+template<Size N>
+void ClassInfo::SetProperty(const char (&name)[N], void* owner, Value value) const
+{
+	SetProperty(Hash::Fnv1AHash(name), owner, value);
+}
+
+template<Size N>
+Value ClassInfo::GetProperty(const char (&name)[N], const void* owner) const
+{
+	return GetProperty(Hash::Fnv1AHash(name), owner);
 }
 
 template<typename T>
@@ -194,15 +268,45 @@ const ClassInfo& Classof()
 }
 
 template<typename T>
-const ClassInfo& Classof(const T&)
+const ClassInfo& Classof(const TypeTag<T>)
 {
 	return ClassRegistry::Instance().Emplace<T>();
+}
+
+template<typename T>
+const ClassInfo& Classof(const T&)
+{
+	return ClassRegistry::Instance().Emplace<eastl::remove_pointer_t<T>>();
 }
 
 const ClassInfo& Classof(const char* name);
 
 const ClassInfo& Classof(Hash::fnv1a_t id);
 
+template<typename T, T Value>
+struct MemberAccessor
+{
+	using type_t				= T;
+	static constexpr auto VALUE = Value;
+};
+
 } // namespace Meta
+
+#define META_CLASS_INFO_BEGIN()                                                                                        \
+	namespace Meta                                                                                                     \
+	{                                                                                                                  \
+	template<>                                                                                                         \
+		struct ClassInfo::Rebinder<META_CLASS_INFO_OWNER>: ClassInfo::Binder < META_CLASS_INFO_OWNER,
+
+#define CTOR_BINDER(NAME)	  CtorInfo::Rebinder<META_CLASS_INFO_OWNER::Ctor_##NAME##_ID>
+#define PROPERTY_BINDER(NAME) PropertyInfo::Rebinder<META_CLASS_INFO_OWNER::Property_##NAME##_ID>
+#define METHOD_BINDER(NAME)	  MethodInfo::Rebinder<META_CLASS_INFO_OWNER::Method_##NAME##_ID>
+
+#define BINDERS(...) TypeTraits::TypeList<__VA_ARGS__>
+#define FLAGS(VALUE)
+
+#define META_CLASS_INFO_END()                                                                                          \
+	> {};                                                                                                              \
+	}
 
 #endif

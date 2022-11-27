@@ -81,6 +81,26 @@ Uint64 MaxElementIndex(ForwardIterator first, ForwardIterator last)
 	return 0ull;
 }
 
+template<typename ForwardIterator>
+Uint64 MinElementIndex(ForwardIterator first, ForwardIterator last)
+{
+	if (first != last)
+	{
+		ForwardIterator l_current_min = first;
+		Uint64			l_index{};
+		while (++first != last)
+		{
+			if (*l_current_min > *first)
+			{
+				l_current_min = first;
+				++l_index;
+			}
+		}
+		return l_index;
+	}
+	return 0ull;
+}
+
 } // namespace Algorithm
 
 #endif

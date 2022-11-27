@@ -36,6 +36,9 @@ class TypeInfo
 	friend class TypeRegistry;
 
 public:
+	/**
+	 * @brief Operations for type info.
+	*/
 	enum OperationType
 	{
 		eDefaultCtor,
@@ -48,6 +51,11 @@ public:
 		eMax
 	};
 
+	/**
+	 * @brief Operator body structure.
+	 * 
+	 * Used as argument when Rebinder<T>::Operation function is called.
+	*/
 	struct OperationBody
 	{
 		OperationType type;
@@ -57,9 +65,21 @@ public:
 	using operation_function_t = void (*)(OperationBody&);
 
 public:
+	/**
+	 * @brief Rebinder structure.
+	 * 
+	 * @tparam T Target type.
+	 * 
+	*/
 	template<typename T>
 	struct Rebinder;
 
+	/**
+	 * @brief Binder structure.
+	 * 
+	 * @tparam T Target type.
+	 * 
+	*/
 	template<typename T>
 	struct Binder
 	{
@@ -81,19 +101,6 @@ public:
 
 public:
 	~TypeInfo() = default;
-
-	/**
-	 * @brief To string body class.
-	 *
-	 * Used to pass to generic type info to string function.
-	 *
-	 */
-	struct ToStringBody
-	{
-		void*			  value;
-		Uint64			  capacity;
-		eastl::allocator* allocator;
-	};
 
 public:
 	NODISCARD Uint64	  Id() const;
@@ -120,28 +127,45 @@ public:
 	NODISCARD bool IsConvertibleTo(const TypeInfo& value) const;
 
 public:
+	/**
+	 * @brief Invoke operation function.
+	 * 
+	 * Used to call Rebinder<T>::Operation function.
+	 * 
+	 * @tparam ...Args 
+	 * @param type Operation type.
+	 * @param ...args Arguments to be passed to operation function.
+	 * 
+	*/
 	template<typename... Args>
 	void InvokeOperation(OperationType type, Args&&... args) const;
 
+	/**
+	 * @brief Invoke operation custom function.
+	 * 
+	 * Used to call Rebinder<T>::Operation function.
+	 * 
+	 * @tparam ...Args 
+	 * @param type External body.
+	 * @param ...args Arguments to be passed to operation function.
+	 * 
+	*/
 	template<typename... Args>
 	void InvokeOperation(OperationBody& body, Args&&... args) const;
 
 private:
-	Uint64				 id_;
+	Hash::fnv1a_t				 id_;
 	Uint64				 size_;
 	const char*			 name_;
 	operation_function_t operation_function_;
 };
 
 template<typename T>
-eastl::string ToString(const TypeInfo::ToStringBody& body);
-
-template<typename T>
 TypeInfo::TypeInfo(TypeTag<T>)
 	: id_{Rebinder<T>::ID}, size_{Rebinder<T>::SIZE}, name_{Rebinder<T>::NAME.data()}, operation_function_{
 																					&Rebinder<T>::Operations}
 {
-	printf("'%s' reflected: id=%llu, size=%llu\n", name_, id_, size_);
+	//printf("'%s' reflected: id=%llu, size=%llu\n", name_, id_, size_);
 }
 
 template<typename... Args>
@@ -331,7 +355,27 @@ eastl::basic_string<char, StringAllocator> ToString(const eastl::vector<T, Vecto
 
 } // namespace Algorithm
 
+namespace Detail
+{
+
+FORCEINLINE bool CompareTypeInfoArray(const TypeInfo* const* arr1, const TypeInfo* const* arr2, const Uint32 size)
+{
+	for (Uint32 i = 0; i < size; i++)
+	{
+		if (arr1[i] != arr2[i])
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+}
+
 } // namespace Meta
+
+#define META_REBINDER_TYPE_INFO()	\
+	friend struct Meta::TypeInfo::Rebinder<this_t>
 
 #define META_TYPE_BINDER_SPECIALIZATION(TYPE)                                                                          \
 	template<>                                                                                                         \

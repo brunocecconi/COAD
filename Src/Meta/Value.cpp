@@ -32,7 +32,7 @@ Value::Value(void* memory, const TypeInfo& type_info) : type_info_{memory ? cons
 
 Value::Value(const TypeInfo& type_info) : type_info_{const_cast<TypeInfo*>(&type_info)}
 {
-	if (type_info_->Size() <= sizeof iptr_)
+	/*if (type_info_->Size() <= sizeof iptr_)
 	{
 		type_info.InvokeOperation(TypeInfo::eDefaultCtor, static_cast<void*>(iptr_.mCharData));
 	}
@@ -45,7 +45,7 @@ Value::Value(const TypeInfo& type_info) : type_info_{const_cast<TypeInfo*>(&type
 		}
 		eptr_	   = l_allocator.allocate(type_info.Size());
 		type_info.InvokeOperation(TypeInfo::eDefaultCtor, eptr_);
-	}
+	}*/
 }
 
 Value::Value(Value&& other) noexcept
@@ -108,7 +108,12 @@ bool Value::IsValid() const
 
 Value::operator bool() const
 {
-	return type_info_ ? *type_info_ != TypeInfo::None() : false;
+	return type_info_ ? (*type_info_ == Typeof<bool>() ? AsBool() : *type_info_ != TypeInfo::None()) : false;
+}
+
+Value::operator void*() const
+{
+	return type_info_->Size() > sizeof iptr_ ? eptr_ : iptr_.mCharData;
 }
 
 const void* Value::AsGeneric() const

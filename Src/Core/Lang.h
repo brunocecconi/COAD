@@ -19,21 +19,21 @@
 
 template<typename T>
 concept is_coad_class =
-	eastl::is_same_v<void, eastl::void_t<typename T::coad_class_type>> && eastl::is_same_v<typename T::this_type, T>;
+	eastl::is_same_v<void, eastl::void_t<typename T::CoadClass>> && eastl::is_same_v<typename T::this_t, T>;
 
 #define CLASS_BODY_ONLY_HEADER(CLASS_NAME)                                                                             \
 public:                                                                                                                \
-	struct coad_class_type                                                                                             \
+	struct CoadClass                                                                                             \
 	{                                                                                                                  \
 	};                                                                                                                 \
-	using this_type = CLASS_NAME;
+	using this_t = CLASS_NAME;
 
 #define CLASS_BODY_ONLY_HEADER_NAMED(CLASS_NAME, CUSTOM_NAME)                                                          \
 public:                                                                                                                \
-	struct coad_class_type                                                                                             \
+	struct CoadClass                                                                                             \
 	{                                                                                                                  \
 	};                                                                                                                 \
-	using this_type = CLASS_NAME;
+	using this_t = CLASS_NAME;
 
 #define CLASS_BODY_CUSTOM(CLASS_NAME, body_move, body_copy)                                                            \
 	CLASS_BODY_ONLY_HEADER(CLASS_NAME)                                                                                 \

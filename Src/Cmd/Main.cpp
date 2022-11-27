@@ -42,6 +42,8 @@ int Vsnprintf8(char* pDestination, size_t n, const char* pFormat, va_list argume
 
 struct TestCtor
 {
+	CLASS_BODY_ONLY_HEADER(TestCtor)
+
 	TestCtor()
 	{
 		printf("default ctor\n");
@@ -74,13 +76,6 @@ struct TestCtor
 	}
 
 private:
-	friend struct Meta::TypeInfo::Rebinder<TestCtor>;
-	friend struct TestCtor_Ctor0;
-	friend struct TestCtor_Ctor1;
-	friend struct TestCtor_Ctor2;
-	friend struct TestCtor_Property_number_;
-	friend struct TestCtor_Method_IsEven;
-
 	int number_ = 6;
 
 	TestCtor(const Int64 index, Float32 pi = 3.14f) : pi{pi}
@@ -92,127 +87,70 @@ private:
 	{
 		printf("Name: %s\n", name.data());
 	}
+
+private:
+	META_REBINDER_TYPE_INFO();
+	META_REBINDER_CTOR(0);
+	META_REBINDER_CTOR(1);
+	META_REBINDER_CTOR(2);
+	META_REBINDER_PROPERTY(TestCtor, number_);
+	META_REBINDER_METHOD(TestCtor, IsEven);
 };
-
-namespace Meta                                                                                                     
-{                                                                                                                  
-META_TYPE_BINDER_SPECIALIZATION(TestCtor)
-{
-#undef TO_STRING
-#define TO_STRING	\
-auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, TestCtor*, Uint64>*>(body.args_tuple);			\
-		eastl::get<0>(l_to_string_args_tuple)->resize(256);	\
-		sprintf(eastl::get<0>(l_to_string_args_tuple)->data(), "TestCtor(pi=%f)",	\
-			eastl::get<1>(l_to_string_args_tuple)->pi);
-
-	META_TYPE_BINDER_BODY(TestCtor)
-	META_TYPE_BINDER_OPERATIONS_CUSTOM(              
-	META_TYPE_BINDER_DEFAULT_OPERATION_DEFAULT_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_CTOR(),             
-	META_TYPE_BINDER_DEFAULT_OPERATION_COPY_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_ASSIGN(),              
-	META_TYPE_BINDER_DEFAULT_OPERATION_COPY_ASSIGN(), META_TYPE_BINDER_DEFAULT_OPERATION_DTOR(), 
-		TO_STRING
-	)
-};          
-}
-
-struct TestCtor_Method_IsEven : Meta::MethodInfo::Binder<TestCtor, bool, TypeTraits::TypeList<Int32>>
-{
-	using base_t = Meta::MethodInfo::Binder<TestCtor, bool, TypeTraits::TypeList<Int32>>;
-
-	static constexpr auto ID = Hash::Fnv1AHash("TestCtor::IsEven");
-
-	constexpr TestCtor_Method_IsEven() : base_t{"IsEven"}
-	{
-	}
-
-	static Meta::Value Invoke(body_t& body)
-	{
-		Meta::MethodInfo::BodyAdapter<TestCtor, args_t> l_body{body};
-		return l_body.owner.IsEven(eastl::get<0>(l_body.args_tuple));
-	}
-};
-
-struct TestCtor_Property_number_: Meta::PropertyInfo::Binder<TestCtor, int, Meta::PropertyInfo::eReadOnly>
-{
-	using base_t = Meta::PropertyInfo::Binder<TestCtor, int, Meta::PropertyInfo::eReadOnly>;
-
-	static constexpr auto ID = Hash::Fnv1AHash("TestCtor::number_");
-
-	constexpr TestCtor_Property_number_() : base_t{"number_"}
-	{
-	}
-
-	static void Set(const body_t& body)
-	{
-		if constexpr (FLAGS & (Meta::PropertyInfo::eWriteOnly | Meta::PropertyInfo::eReadWrite))
-		{
-			static_cast<TestCtor*>(body.owner)->number_ = *static_cast<type_t*>(body.value);
-		}
-	}
-
-	static void* Get(const body_t& body)
-	{
-		if constexpr (FLAGS & (Meta::PropertyInfo::eReadOnly | Meta::PropertyInfo::eReadWrite))
-		{
-			return &static_cast<TestCtor*>(body.owner)->number_;
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-};
-
-struct TestCtor_Ctor0: Meta::CtorInfo::Binder<TestCtor(), 0>
-{
-	static void Invoke(body_t& body)
-	{
-		new (body.memory) TestCtor{};
-	}
-};
-
-struct TestCtor_Ctor1: Meta::CtorInfo::Binder<TestCtor(Int64, Float32), 1>
-{
-	static void Invoke(body_t& body)
-	{
-		auto& l_args_tuple = *static_cast<eastl::tuple<Meta::Value, Meta::Value>*>(body.args_tuple);
-		if (body.args_tuple_size == 1)
-		{
-			new (body.memory) TestCtor{eastl::get<0>(l_args_tuple).AsInt64()};
-			return;
-		}
-		if (body.args_tuple_size == 2)
-		{
-			new (body.memory) TestCtor{eastl::get<0>(l_args_tuple).AsInt64(), eastl::get<1>(l_args_tuple).AsFloat32()};
-			return;
-		}
-	}
-};
-
-struct TestCtor_Ctor2: Meta::CtorInfo::Binder<TestCtor(eastl::string_view), 1>
-{
-	static void Invoke(body_t& body)
-	{
-		const auto l_body = body_adapter_t{body};
-		new (body.memory) TestCtor{eastl::get<0>(l_body.args_tuple)};
-	}
-};
-
-using test_ctor_ctors_t = TypeTraits::TypeList<TestCtor_Ctor0, TestCtor_Ctor1, TestCtor_Ctor2>;
 
 namespace Meta
 {
-
-template<>
-struct ClassInfo::Rebinder<TestCtor> : ClassInfo::Binder<TestCtor, 
-	TypeTraits::TypeList<TestCtor_Ctor0, TestCtor_Ctor1, TestCtor_Ctor2>,
-	TypeTraits::TypeList<TestCtor_Property_number_>,
-	TypeTraits::TypeList<TestCtor_Method_IsEven>>
+META_TYPE_BINDER_SPECIALIZATION(TestCtor)
 {
-	static constexpr Hash::fnv1a_t ID = TypeInfo::Rebinder<TestCtor>::ID;
+#undef TO_STRING
+#define TO_STRING                                                                                                      \
+	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, TestCtor*, Uint64>*>(body.args_tuple);    \
+	eastl::get<0>(l_to_string_args_tuple)->resize(256);                                                                \
+	sprintf(eastl::get<0>(l_to_string_args_tuple)->data(), "TestCtor(pi=%f)",                                          \
+			eastl::get<1>(l_to_string_args_tuple)->pi);
+
+	META_TYPE_BINDER_BODY(TestCtor)
+	META_TYPE_BINDER_OPERATIONS_CUSTOM(
+		META_TYPE_BINDER_DEFAULT_OPERATION_DEFAULT_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_CTOR(),
+		META_TYPE_BINDER_DEFAULT_OPERATION_COPY_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_ASSIGN(),
+		META_TYPE_BINDER_DEFAULT_OPERATION_COPY_ASSIGN(), META_TYPE_BINDER_DEFAULT_OPERATION_DTOR(), TO_STRING)
+};
+} // namespace Meta
+
+META_METHOD_INFO_BINDER_DEFAULT(TestCtor, IsEven, bool, 0, Meta::MethodInfo::eCallable,
+								META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS1, Int32);
+
+META_PROPERTY_INFO_BINDER_DEFAULT(TestCtor, int, number_, Meta::PropertyInfo::eReadOnly);
+
+namespace Meta
+{
+META_CTOR_INFO_BINDER(TestCtor, 0, 0)
+// struct TestCtor_Ctor0: Meta::CtorInfo::Binder<TestCtor(), 0>
+{
+	META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS0();
 };
 
-}
+META_CTOR_INFO_BINDER(TestCtor, 1, 1, Int64, Float32)
+// struct TestCtor_Ctor1: Meta::CtorInfo::Binder<TestCtor(Int64, Float32), 1>
+{
+	META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS2();
+};
+
+META_CTOR_INFO_BINDER(TestCtor, 2, 0, eastl::string_view)
+// struct TestCtor_Ctor2: Meta::CtorInfo::Binder<TestCtor(eastl::string_view), 1>
+{
+	META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS1();
+};
+
+} // namespace Meta
+
+#undef META_CLASS_INFO_OWNER
+#define META_CLASS_INFO_OWNER TestCtor
+
+META_CLASS_INFO_BEGIN()
+	BINDERS(CTOR_BINDER(0)),
+	BINDERS(PROPERTY_BINDER(number_)),
+	BINDERS(METHOD_BINDER(IsEven))
+META_CLASS_INFO_END()
 
 struct Test
 {
@@ -268,26 +206,17 @@ int main(int argc, char** argv)
 	Meta::Value		  l_v2 = l_v1;
 	l_v2				   = 7;
 
-	Meta::CtorInfo l_ctor1	{TypeTraits::TlGetByIndex<test_ctor_ctors_t, 1>::type_t{}};
-	const auto	   l_result = l_ctor1.Invoke(4ll,5.f);
+	eastl::vector<int> d{3, 4, 5, 6};
 
-	printf("%f\n", l_result.As<TestCtor>().pi);
-
-	Meta::MethodInfo l_check_int {TestCtor_Method_IsEven{}};
-	Int32 l_n = 4;
-
-	eastl::vector<int> d{3,4,5,6};
-
-	if(const auto l_iseven = l_check_int.Invoke(l_result.AsGeneric(), l_n); l_iseven.AsBool())
+	const auto& l_info = Meta::Classof<TestCtor>();
+	auto l_tc = l_info.GetCtorInfo(0)();
+	const auto& IsEventFI = l_info.GetMethodInfo("TestCtor::IsEven");
+	const auto& NumberPI = l_info.GetPropertyInfo("TestCtor::number_");
+	NumberPI.Set(l_tc, 4);
+	printf("%d\n", NumberPI.Get(l_tc).AsInt32());
+	if(IsEventFI(l_tc, NumberPI.Get(l_tc)))
 	{
-		printf("TestCtor::IsEven by reflection: number '%d' is even\n", l_n);
-	}
-
-	const auto& l_test_ctor_ci = Meta::Classof<TestCtor>();
-	if(l_test_ctor_ci.HasMethodInfo("TestCtor::IsEven"))
-	{
-		const auto& l_method = l_test_ctor_ci.GetMethodInfo("TestCtor::IsEven");
-		l_method.Invoke(nullptr, 4);
+		printf("EVEN\n");
 	}
 
 	// const auto& l_test_enum_info = Meta::Enumof<TestEnum>();

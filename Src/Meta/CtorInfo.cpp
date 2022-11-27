@@ -21,6 +21,11 @@ Uint32 CtorInfo::NeededParamCount() const
 	return total_param_count_ - optional_param_count_;
 }
 
+Hash::fnv1a_t CtorInfo::Id() const
+{
+	return id_;
+}
+
 Uint32 CtorInfo::TotalParamCount() const
 {
 	return total_param_count_;
@@ -91,4 +96,48 @@ Value CtorInfo::Invoke(Value p1, Value p2, Value p3, Value p4, Value p5, Value p
 	META_CTOR_INFO_INVOKE_GENERIC_BODY(8, p1, p2, p3, p4, p5, p6, p7, p8);
 }
 
+Value CtorInfo::operator()() const
+{
+	return Invoke();
+}
+
+Value CtorInfo::operator()(Value p1) const
+{
+	return Invoke(p1);
+}
+
+Value CtorInfo::operator()(Value p1, Value p2) const
+{
+	return Invoke(p1,p2);
+}
+
+Value CtorInfo::operator()(Value p1, Value p2, Value p3) const
+{
+	return Invoke(p1,p2,p3);
+}
+
+Value CtorInfo::operator()(Value p1, Value p2, Value p3, Value p4) const
+{
+	return Invoke(p1,p2,p3,p4);
+}
+
+Value CtorInfo::operator()(Value p1, Value p2, Value p3, Value p4, Value p5) const
+{
+	return Invoke(p1,p2,p3,p4,p5);
+}
+
+Value CtorInfo::operator()(Value p1, Value p2, Value p3, Value p4, Value p5, Value p6) const
+{
+	return Invoke(p1,p2,p3,p4,p5,p6);
+}
+
+Value CtorInfo::operator()(Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7) const
+{
+	return Invoke(p1,p2,p3,p4,p5,p6,p7);
+}
+
+Value CtorInfo::operator()(Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7, Value p8) const
+{
+	return Invoke(p1,p2,p3,p4,p5,p6,p7,p8);
+}
 } // namespace Meta
