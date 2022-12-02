@@ -14,10 +14,10 @@
 
 #include <cassert>
 
-#define ENSURE_NO_LOG(EXP, ...)                                                                                        \
+#define ENSURE_NOLOG(EXP, ...)                                                                                         \
 	if (!(EXP))                                                                                                        \
 	{                                                                                                                  \
-		return##__VA_ARGS__;                                                                                           \
+		return __VA_ARGS__;                                                                                           \
 	}
 
 #define ENSURE(EXP, ...)                                                                                               \
@@ -25,10 +25,10 @@
 	{                                                                                                                  \
 		printf(LOG_COLOR_LIGHT_YELLOW LOG_COLOR_BOLD "ENSURE FAILED '" #EXP "' at '%s':'%d'\n" LOG_COLOR_DEFAULT,      \
 			   __FILE__, __LINE__);                                                                                    \
-		return##__VA_ARGS__;                                                                                           \
+		return __VA_ARGS__;                                                                                           \
 	}
 
-#define ENFORCE_NL(EXP)                                                                                                \
+#define ENFORCE_NOLOG(EXP)                                                                                             \
 	if (!(EXP))                                                                                                        \
 	{                                                                                                                  \
 		exit(-1);                                                                                                      \
@@ -52,14 +52,14 @@
 		exit(-1);                                                                                                      \
 	}
 
-#ifndef NDEBUG
-#define ASSERT_NL(EXP)			  ENFORCE_NL(EXP)
+#ifndef RELEASE
+#define ASSERT_NOLOG(EXP)		  ENFORCE_NOLOG(EXP)
 #define ASSERT(EXP)				  ENFORCE(EXP)
 #define ASSERT_MSG(EXP, MSG, ...) ENFORCE_MSG(EXP, MSG, __VA_ARGS__)
 #define ASSERT_FAIL()			  ASSERT(false)
 #define ASSERT_FAIL_MSG(MSG, ...) ASSERT_MSG(false, MSG, __VA_ARGS__)
 #else
-#define ASSERT_NL(EXP)
+#define ASSERT_NOLOG(EXP)
 #define ASSERT(EXP)
 #define ASSERT_MSG(EXP, MSG, ...)
 #define ASSERT_FAIL()

@@ -7,6 +7,8 @@
  *
  */
 
+#ifndef RELEASE
+
 #include "Core/Log.h"
 
 namespace Log
@@ -25,3 +27,5 @@ void SetVerbosity(const Uint64 value)
 }
 
 }
+
+#endif

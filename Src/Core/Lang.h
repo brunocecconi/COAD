@@ -23,14 +23,14 @@ concept is_coad_class =
 
 #define CLASS_BODY_ONLY_HEADER(CLASS_NAME)                                                                             \
 public:                                                                                                                \
-	struct CoadClass                                                                                             \
+	struct CoadClass                                                                                                   \
 	{                                                                                                                  \
 	};                                                                                                                 \
 	using this_t = CLASS_NAME;
 
 #define CLASS_BODY_ONLY_HEADER_NAMED(CLASS_NAME, CUSTOM_NAME)                                                          \
 public:                                                                                                                \
-	struct CoadClass                                                                                             \
+	struct CoadClass                                                                                                   \
 	{                                                                                                                  \
 	};                                                                                                                 \
 	using this_t = CLASS_NAME;
@@ -40,6 +40,9 @@ public:                                                                         
 	body_move body_copy
 
 #define CLASS_BODY(CLASS_NAME) CLASS_BODY_CUSTOM(CLASS_NAME, CLASS_MOVEABLE(CLASS_NAME), CLASS_COPYABLE(CLASS_NAME))
+
+#define CLASS_PRIVATE_MOVEABLE_COPYABLE(CLASS_NAME)                                                                    \
+	CLASS_BODY_CUSTOM(CLASS_NAME, CLASS_PRIVATE_MOVEABLE(CLASS_NAME), CLASS_PRIVATE_COPYABLE(CLASS_NAME))
 
 #define CLASS_BODY_NO_HEADER(CLASS_NAME)                                                                               \
 public:                                                                                                                \
@@ -58,6 +61,13 @@ public:                                                                         
 	CLASS_NAME(CLASS_NAME&&) noexcept			 = default;                                                            \
 	CLASS_NAME& operator=(CLASS_NAME&&) noexcept = default;
 
+#define CLASS_PRIVATE_MOVEABLE(CLASS_NAME)                                                                             \
+private:                                                                                                               \
+	CLASS_NAME(CLASS_NAME&&) noexcept			 = default;                                                            \
+	CLASS_NAME& operator=(CLASS_NAME&&) noexcept = default;                                                            \
+                                                                                                                       \
+public:
+
 #define CLASS_NON_MOVEABLE(CLASS_NAME)                                                                                 \
 	CLASS_NAME(CLASS_NAME&&) noexcept			 = delete;                                                             \
 	CLASS_NAME& operator=(CLASS_NAME&&) noexcept = delete;
@@ -66,19 +76,29 @@ public:                                                                         
 	CLASS_NAME(const CLASS_NAME&) noexcept			  = default;                                                       \
 	CLASS_NAME& operator=(const CLASS_NAME&) noexcept = default;
 
+#define CLASS_PRIVATE_COPYABLE(CLASS_NAME)                                                                             \
+private:                                                                                                               \
+	CLASS_NAME(const CLASS_NAME&) noexcept			  = default;                                                       \
+	CLASS_NAME& operator=(const CLASS_NAME&) noexcept = default;                                                       \
+                                                                                                                       \
+public:
+
 #define CLASS_NON_COPYABLE(CLASS_NAME)                                                                                 \
 	CLASS_NAME(const CLASS_NAME&) noexcept			  = delete;                                                        \
 	CLASS_NAME& operator=(const CLASS_NAME&) noexcept = delete;
 
-#define CLASS_VALIDATION(CLASS_NAME)                                                                                   \
-	static_assert(is_coad_class<CLASS_NAME>,                                                                           \
+#define CLASS_VALIDATION(CLASS_NAME, ...)                                                                                   \
+	template<> struct ClassValidation<CLASS_NAME>	\
+	{	\
+		static_assert(is_coad_class<CLASS_NAME>,                                                                           \
 				  "Invalid COAD class. Hint: You need to put CLASS_BODY() macro inside the class.");                   \
-	static_assert(!eastl::is_polymorphic_v<CLASS_NAME>, "The class cannot be polymorphic.");                           \
-	static_assert(!eastl::is_trivially_constructible_v<CLASS_NAME>, "The class cannot be trivially constructible.");   \
-	static_assert(!eastl::is_trivially_destructible_v<CLASS_NAME>, "The class cannot be trivially destructible.");
-/*\
-META_TYPE_DEFINE(CLASS_NAME);	\
-META_TYPE_DEFINE(eastl::vector<CLASS_NAME>);	\
-META_TYPE_DEFINE(eastl::set<CLASS_NAME>);*/
+		static_assert(!eastl::is_polymorphic_v<CLASS_NAME>, "The class cannot be polymorphic.");                           \
+		static_assert(!eastl::is_trivially_constructible_v<CLASS_NAME>, "The class cannot be trivially constructible.");   \
+		static_assert(!eastl::is_trivially_destructible_v<CLASS_NAME>, "The class cannot be trivially destructible.");	\
+		__VA_ARGS__	\
+	}
+
+template < typename ... >
+struct ClassValidation;
 
 #endif

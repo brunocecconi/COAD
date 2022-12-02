@@ -75,7 +75,7 @@ public:
 	 * @tparam Id Hash name id.
 	 * 
 	*/
-	template<Hash::fnv1a_t Id>
+	template<id_t Id>
 	struct Rebinder;
 
 	/**
@@ -91,7 +91,7 @@ public:
 	 * @tparam Id Hash name id.
 	 * 
 	*/
-	template<Hash::fnv1a_t Id, typename Owner, typename Return, typename TypeListArgs, Uint32 OptionalParamCount = 0,
+	template<id_t Id, typename Owner, typename Return, typename TypeListArgs, Uint32 OptionalParamCount = 0,
 			 Uint32 Flags = eCallable>
 	struct Binder
 	{
@@ -115,7 +115,7 @@ public:
 	NODISCARD const TypeInfo& OwnerType() const;
 	NODISCARD const TypeInfo& ReturnType() const;
 	NODISCARD const char*	  Name() const;
-	NODISCARD Hash::fnv1a_t					   Id() const;
+	NODISCARD id_t					   Id() const;
 	NODISCARD Uint32						   Flags() const;
 	NODISCARD const method_params_signature_t& ParamsSignature() const;
 	NODISCARD Uint32						   NeededParamCount() const;
@@ -151,7 +151,7 @@ private:
 	const TypeInfo&			  owner_type_;
 	const TypeInfo&			  return_type_;
 	const char*				  name_;
-	Hash::fnv1a_t			  id_;
+	id_t			  id_;
 	Uint32					  flags_;
 	method_params_signature_t params_signature_;
 	binder_invoke_function_t  function_;
@@ -184,100 +184,5 @@ MethodInfo::MethodInfo(BinderType)
 }
 
 } // namespace Meta
-
-#define META_REBINDER_METHOD(OWNER, METHOD)                                                                            \
-public:                                                                                                                \
-	static constexpr auto Method_##METHOD##_ID = #OWNER "::" #METHOD##_fnv1a;                                          \
-                                                                                                                       \
-private:                                                                                                               \
-	friend struct Meta::MethodInfo::Rebinder<Method_##METHOD##_ID>
-
-#define META_METHOD_INFO_BINDER(OWNER, NAME_SYMBOL, RETURN_TYPE, OPTIONAL_ARGS, FLAGS, ...)                            \
-	template<>                                                                                                         \
-	struct Meta::MethodInfo::Rebinder<OWNER::Method_##NAME_SYMBOL##_ID>                                                \
-		: MethodInfo::Binder<OWNER::Method_##NAME_SYMBOL##_ID, OWNER, RETURN_TYPE, TypeTraits::TypeList<__VA_ARGS__>,  \
-							 OPTIONAL_ARGS, FLAGS>
-
-#define META_METHOD_INFO_BINDER_BODY(OWNER, NAME_SYMBOL)                                                               \
-	static constexpr char NAME[64]	 = {#OWNER "::" #NAME_SYMBOL};                                                     \
-	static constexpr auto MEMBER_PTR = &OWNER::NAME_SYMBOL
-
-#define META_METHOD_INFO_BINDER_INVOKE_CUSTOM(...)                                                                     \
-	static Meta::Value Invoke(body_t& body)                                                                            \
-	{                                                                                                                  \
-		body_adapter_t l_body{body};                                                                                   \
-		if constexpr (FLAGS & Meta::MethodInfo::eCallable)                                                             \
-		{                                                                                                              \
-			__VA_ARGS__                                                                                                \
-		}                                                                                                              \
-		else                                                                                                           \
-		{                                                                                                              \
-			return {};                                                                                                 \
-		}                                                                                                              \
-	}
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS0()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 0) { return (l_body.owner.*MEMBER_PTR)(); } else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS1()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 1) { return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>()); } else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS2()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 2) {                                                                             \
-			return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>(), l_body.Get<1>());                                       \
-		} else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS3()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 3) {                                                                             \
-			return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>());                      \
-		} else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS4()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 4) {                                                                             \
-			return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>());     \
-		} else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS5()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 5) {                                                                             \
-			return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(),      \
-											  l_body.Get<4>());                                                        \
-		} else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS6()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 6) {                                                                             \
-			return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(),      \
-											  l_body.Get<4>(), l_body.Get<5>());                                       \
-		} else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS7()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 7) {                                                                             \
-			return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(),      \
-											  l_body.Get<4>(), l_body.Get<5>(), l_body.Get<6>());                      \
-		} else { return {}; })
-
-#define META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS8()                                                                 \
-	META_METHOD_INFO_BINDER_INVOKE_CUSTOM(                                                                             \
-		if (l_body.args_tuple_size == 8) {                                                                             \
-			return (l_body.owner.*MEMBER_PTR)(l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(),      \
-											  l_body.Get<4>(), l_body.Get<5>(), l_body.Get<6>(), l_body.Get<7>());     \
-		} else { return {}; })
-
-#define META_METHOD_INFO_BINDER_DEFAULT(OWNER, NAME_SYMBOL, RETURN_TYPE, OPTIONAL_ARGS, FLAGS, INVOKE_MACRO, ...)      \
-	namespace Meta                                                                                                     \
-	{                                                                                                                  \
-	META_METHOD_INFO_BINDER(OWNER, NAME_SYMBOL, RETURN_TYPE, OPTIONAL_ARGS, FLAGS, __VA_ARGS__)                        \
-	{                                                                                                                  \
-		META_METHOD_INFO_BINDER_BODY(OWNER, NAME_SYMBOL);                                                              \
-		INVOKE_MACRO();                                                                                                \
-	};                                                                                                                 \
-	}
 
 #endif

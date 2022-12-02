@@ -10,15 +10,10 @@
 #ifndef CORE_TYPE_TRAITS_H
 #define CORE_TYPE_TRAITS_H
 
-#include <string_view>
-
 #include "Core/Compiler.h"
 
 #include <EASTL/type_traits.h>
 #include <EASTL/tuple.h>
-#include <EASTL/array.h>
-#include <EASTL/string_view.h>
-#include <EASTL/bitset.h>
 
 namespace TypeTraits
 {
@@ -29,7 +24,7 @@ struct TypeList
 	static constexpr Uint64 SIZE = sizeof...(Types);
 };
 
-template < typename TypeList >
+template<typename TypeList>
 struct TlGetFirstElement;
 
 template<typename Head, typename... Tail>
@@ -38,7 +33,7 @@ struct TlGetFirstElement<TypeList<Head, Tail...>>
 	using type_t = Head;
 };
 
-template < typename TypeList, Uint64 Index >
+template<typename TypeList, Uint64 Index>
 struct TlGetByIndex;
 
 template<typename Head, typename... Tail>
@@ -50,7 +45,7 @@ struct TlGetByIndex<TypeList<Head, Tail...>, 0>
 template<typename Head, typename... Tail, Uint64 N>
 struct TlGetByIndex<TypeList<Head, Tail...>, N>
 {
-	using type_t = typename TlGetByIndex<TypeList<Tail...>, N-1>::type_t;
+	using type_t = typename TlGetByIndex<TypeList<Tail...>, N - 1>::type_t;
 };
 
 using type_list_empty_t = TypeList<>;
@@ -130,13 +125,6 @@ struct TypeRepeat
 	using type_t = T;
 };
 
-template<typename Tuple>
-constexpr auto TupleToArray(Tuple&& tuple)
-{
-	constexpr auto l_array = []<typename... Args>(Args&&... x) { return eastl::array{std::forward<Args>(x)...}; };
-	return eastl::apply(l_array, std::forward<Tuple>(tuple));
-}
-
 template<typename T, typename Tuple>
 struct TlHasType;
 
@@ -182,97 +170,126 @@ static constexpr Uint64 FindTupleType()
 	return Detail::FindTupleType<0, T, Tuple>();
 }
 
-template < typename Function >
+template<typename Function>
 struct FunctionTraits;
 
-template < typename R, typename ... Args>
-struct FunctionTraits<R(*)(Args...)>
+template<typename R, typename... Args>
+struct FunctionTraits<R (*)(Args...)>
 {
-	using owner_t = void;
-	using return_t = R;
+	using owner_t			= void;
+	using return_t			= R;
 	using param_type_list_t = TypeList<Args...>;
 };
 
-template < typename R, typename ... Args>
+template<typename R, typename... Args>
 struct FunctionTraits<R(Args...)>
 {
-	using owner_t = void;
-	using return_t = R;
+	using owner_t			= void;
+	using return_t			= R;
 	using param_type_list_t = TypeList<Args...>;
 };
 
-template < typename Owner, typename R, typename ... Args>
-struct FunctionTraits<R(Owner::*)(Args...)>
+template<typename Owner, typename R, typename... Args>
+struct FunctionTraits<R (Owner::*)(Args...)>
 {
-	using owner_t = Owner;
-	using return_t = R;
+	using owner_t			= Owner;
+	using return_t			= R;
 	using param_type_list_t = TypeList<Args...>;
 };
 
-template < typename Owner, typename R, typename ... Args>
-struct FunctionTraits<R(Owner::*)(Args...) const>
+template<typename Owner, typename R, typename... Args>
+struct FunctionTraits<R (Owner::*)(Args...) const>
 {
-	using owner_t = Owner;
-	using return_t = R;
+	using owner_t			= Owner;
+	using return_t			= R;
 	using param_type_list_t = TypeList<Args...>;
 };
 
-template < typename T >
+template<typename T>
 struct PropertyTraits;
 
-template < typename Owner, typename T >
-struct PropertyTraits<T (Owner::*)>
+template<typename Owner, typename T>
+struct PropertyTraits<T(Owner::*)>
 {
 	using owner_t = Owner;
-	using type_t = T;
+	using type_t  = T;
 };
 
-class conststr
+/**
+ * @brief Has const iterator.
+ *
+ * @link https://stackoverflow.com/questions/9407367/determine-if-a-type-is-an-stl-container-at-compile-time
+ *
+ * @tparam T Type.
+ *
+*/
+template<typename T>
+struct HasConstIterator
 {
-    public:
-        template<std::size_t N>
-        constexpr conststr(const char(&STR)[N])
-        :string(STR), size(N-1)
-        {}
+private:
+	typedef char yes_t;
+	typedef struct
+	{
+		char array[2];
+	} no_t;
 
-        constexpr conststr(const char* STR, std::size_t N)
-        :string(STR), size(N)
-        {}
+	template<typename C>
+	static yes_t Test(typename C::const_iterator*);
+	template<typename C>
+	static no_t Test(...);
 
-        constexpr char operator[](std::size_t n)
-        {
-            return n < size ? string[n] : 0;
-        }
-
-        constexpr std::size_t get_size()
-        {
-            return size;
-        }
-
-        constexpr const char* get_string()
-        {
-            return string;
-        }
-
-        //This method is related with Fowler–Noll–Vo hash function
-        constexpr Uint64 hash(int n=0, unsigned h=2166136261)
-        {
-            return n == size ? h : hash(n+1,(h * 16777619) ^ (string[n]));
-        }
-
-    private:
-        const char* string;
-        std::size_t size;
+public:
+	static const bool VALUE = sizeof(Test<T>(nullptr)) == sizeof(yes_t);
+	typedef T		  type_t;
 };
 
-Uint64 constexpr operator "" _const(const char* str, size_t sz)
+/**
+ * @brief
+ *
+ * @link https://stackoverflow.com/questions/9407367/determine-if-a-type-is-an-stl-container-at-compile-time
+ *
+ * @tparam T Type.
+ *
+*/
+template<typename T>
+struct HasBeginEnd
 {
-    return conststr(str,sz).hash();
-}
+	template<typename C>
+	static char (
+		&F(std::enable_if_t<std::is_same_v<decltype(static_cast<typename C::const_iterator (C::*)() const>(&C::begin)),
+										   typename C::const_iterator (C::*)() const>,
+							void>*))[1];
 
-template < Uint64 Id >
-struct Rebinder;
+	template<typename C>
+	static char (&F(...))[2];
 
+	template<typename C>
+	static char (
+		&G(std::enable_if_t<std::is_same_v<decltype(static_cast<typename C::const_iterator (C::*)() const>(&C::end)),
+										   typename C::const_iterator (C::*)() const>,
+							void>*))[1];
+
+	template<typename C>
+	static char (&G(...))[2];
+
+	static bool const BEG_VALUE = sizeof(F<T>(nullptr)) == 1;
+	static bool const END_VALUE = sizeof(G<T>(nullptr)) == 1;
+};
+
+/**
+ * @brief Is container.
+ *
+ * @link https://stackoverflow.com/questions/9407367/determine-if-a-type-is-an-stl-container-at-compile-time
+ *
+ * @tparam T Type.
+ *
+*/
+template<typename T>
+struct IsContainer
+{
+	static constexpr bool VALUE = 
+		eastl::integral_constant<bool, HasConstIterator<T>::value && HasBeginEnd<T>::beg_value && HasBeginEnd<T>::end_value>::value;
+};
 
 } // namespace TypeTraits
 

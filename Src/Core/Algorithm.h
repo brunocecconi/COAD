@@ -61,6 +61,21 @@ constexpr void PrintArray(const eastl::array<T, Size>& arr)
 
 } // namespace Detail
 
+template < typename Function, typename ... Args >
+void Call(Function function, Args&&... args)
+{
+	return function(eastl::forward<Args>(args)...);
+}
+
+template < typename Function, typename ... Args >
+void Call(eastl::vector<Function>& functions,
+	Args&&... args)
+{
+	eastl::for_each(functions.begin(), functions.end(), [&](Function& f) {
+		f(eastl::forward<Args>(args)...);
+	});
+}
+
 template<typename ForwardIterator>
 Uint64 MaxElementIndex(ForwardIterator first, ForwardIterator last)
 {
@@ -99,6 +114,16 @@ Uint64 MinElementIndex(ForwardIterator first, ForwardIterator last)
 		return l_index;
 	}
 	return 0ull;
+}
+
+template < Size Index, typename Tuple >
+constexpr void CtContainerTupleReserve(Tuple& tuple, Size new_capacity)
+{
+	if constexpr (Index < eastl::tuple_size_v<Tuple>)
+	{
+		eastl::get<Index>(tuple).reserve(new_capacity);
+		CtContainerTupleReserve<Index+1>(tuple, new_capacity);
+	}
 }
 
 } // namespace Algorithm

@@ -23,7 +23,7 @@
 #include <EASTL/span.h>
 #include <EASTL/tuple.h>
 
-LOG_DEFINE(ecs)
+LOG_DEFINE(Ecs)
 
 #ifndef ENTITY_ID_TYPE
 #define ENTITY_ID_TYPE	Uint64
@@ -102,8 +102,8 @@ private:
 		EXPLICIT ComponentArray(Uint64 capacity);
 
 	private:
-		void Add(entity_id_t id, Component&& component RESULT_ARG_OPT);
-		void Remove(entity_id_t id RESULT_ARG_OPT);
+		void Add(entity_id_t id, Component&& component, RESULT_PARAM_DEFINE);
+		void Remove(entity_id_t id, RESULT_PARAM_DEFINE);
 		void Each(void (*function)(Component&))
 		{
 			eastl::for_each(eindex_, eindex_end_, [&](Uint64& e)
@@ -151,7 +151,7 @@ private:
 		ComponentArrayType* Get();
 	};
 
-	using component_map_tuple_t = typename TypeTraits::TlToTupleTransfer<ComponentArrayElement, components_t>::Type;
+	using component_map_tuple_t = typename TypeTraits::TlToTupleTransfer<ComponentArrayElement, components_t>::type_t;
 
 	template < typename Component >
 	static constexpr Uint64 GetComponentId();
@@ -197,7 +197,7 @@ private:
 	};
 
 public:
-	EXPLICIT Registry(Uint64 capacity = 10000ull RESULT_ARG_OPT);
+	EXPLICIT Registry(Uint64 capacity = 10000ull, RESULT_PARAM_DEFINE);
 
 	Registry(Registry&& other) NOEXCEPT;
 	Registry(const Registry&) = delete;
@@ -206,41 +206,41 @@ public:
 	~Registry();
 
 public:
-	entity_id_t Create(RESULT_ARG_SINGLE_OPT);
+	entity_id_t Create(RESULT_PARAM_DEFINE);
 
-	void Destroy(entity_id_t id RESULT_ARG_OPT);
+	void Destroy(entity_id_t id, RESULT_PARAM_DEFINE);
 
 public:
 	template <typename ... Components>
-	void Enable(entity_id_t id RESULT_ARG_OPT);
+	void Enable(entity_id_t id, RESULT_PARAM_DEFINE);
 
 	template <typename ... Components>
-	void Disable(entity_id_t id RESULT_ARG_OPT);
+	void Disable(entity_id_t id, RESULT_PARAM_DEFINE);
 
 	template <typename Component>
-	NODISCARD bool IsEnabled(entity_id_t id RESULT_ARG_OPT) const;
+	NODISCARD bool IsEnabled(entity_id_t id, RESULT_PARAM_DEFINE) const;
 
 public:
 	template <typename Component>
-	void Add(entity_id_t id, Component&& component RESULT_ARG_OPT);
+	void Add(entity_id_t id, Component&& component, RESULT_PARAM_DEFINE);
 
 	template <typename Component>
-	void Remove(entity_id_t id RESULT_ARG_OPT);
+	void Remove(entity_id_t id, RESULT_PARAM_DEFINE);
 
 	template <typename Component>
-	ComponentPtr<Component> Get(entity_id_t id RESULT_ARG_OPT);
+	ComponentPtr<Component> Get(entity_id_t id, RESULT_PARAM_DEFINE);
 
 	template <typename Component>
-	void Each(void (*function)(Component&) RESULT_ARG_OPT);
+	void Each(void (*function)(Component&), RESULT_PARAM_DEFINE);
 
 public:
-	NODISCARD Uint64 Capacity(RESULT_ARG_SINGLE_OPT) const;
-	NODISCARD bool Contains(const entity_id_t* ptr RESULT_ARG_OPT) const;
-	void Clear(RESULT_ARG_SINGLE_OPT);
+	NODISCARD Uint64 Capacity(RESULT_PARAM_DEFINE) const;
+	NODISCARD bool Contains(const entity_id_t* ptr, RESULT_PARAM_DEFINE) const;
+	void Clear(RESULT_PARAM_DEFINE);
 
 private:
 	template <typename Component>
-	void SetEnabledInternal(entity_id_t id, bool value RESULT_ARG_OPT);
+	void SetEnabledInternal(entity_id_t id, bool value, RESULT_PARAM_DEFINE);
 
 private:
 	entity_id_t *ebegin_{}, *eend_{}, *ecursor_{};
@@ -275,9 +275,9 @@ Registry<TypeList>::ComponentArray<Component>::~ComponentArray()
 
 template <typename TypeList>
 template <typename Component>
-void Registry<TypeList>::ComponentArray<Component>::Add(const entity_id_t id, Component&& component RESULT_ARG)
+void Registry<TypeList>::ComponentArray<Component>::Add(const entity_id_t id, Component&& component, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	if (Contains(id))
 	{
 		RESULT_ERROR(eResultErrorEcsComponentDataAddedMoreThanOnce);
@@ -303,9 +303,9 @@ void Registry<TypeList>::ComponentArray<Component>::Add(const entity_id_t id, Co
 
 template <typename TypeList>
 template <typename Component>
-void Registry<TypeList>::ComponentArray<Component>::Remove(const entity_id_t id RESULT_ARG)
+void Registry<TypeList>::ComponentArray<Component>::Remove(const entity_id_t id, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	if (!Contains(id))
 	{
 		RESULT_ERROR(eResultErrorEcsComponentDataNotAdded);
@@ -487,9 +487,9 @@ Registry<TypeList>::ComponentPtr<Component>::operator bool() const
 }
 
 template <typename TypeList>
-Registry<TypeList>::Registry(const Uint64 capacity RESULT_ARG)
+Registry<TypeList>::Registry(const Uint64 capacity, RESULT_PARAM_IMPL)
 {
-	ValidateComponentTuple<typename TypeTraits::TlToTuple<TypeList>::Type>();
+	ValidateComponentTuple<typename TypeTraits::TlToTuple<TypeList>::type_t>();
 
 	signatures_ = static_cast<signature_t*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(signature_t)));
 	ebegin_ = static_cast<entity_id_t*>(EASTLAllocatorType("Ecs").allocate(capacity * sizeof(entity_id_t)));
@@ -535,9 +535,9 @@ Registry<TypeList>::~Registry()
 }
 
 template <typename TypeList>
-entity_id_t Registry<TypeList>::Create(RESULT_ARG_SINGLE)
+entity_id_t Registry<TypeList>::Create(RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL(INVALID_ENTITY_ID);
+	RESULT_ENSURE_LAST_NOLOG(INVALID_ENTITY_ID);
 	if (!Contains(ecursor_))
 	{
 		RESULT_ERROR(eResultErrorEcsNoEntityAvailable, INVALID_ENTITY_ID);
@@ -553,9 +553,9 @@ entity_id_t Registry<TypeList>::Create(RESULT_ARG_SINGLE)
 }
 
 template <typename TypeList>
-void Registry<TypeList>::Destroy(entity_id_t id RESULT_ARG)
+void Registry<TypeList>::Destroy(entity_id_t id, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
@@ -567,9 +567,9 @@ void Registry<TypeList>::Destroy(entity_id_t id RESULT_ARG)
 
 template <typename TypeList>
 template <typename ... Components>
-void Registry<TypeList>::Enable(const entity_id_t id RESULT_ARG)
+void Registry<TypeList>::Enable(const entity_id_t id, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
@@ -580,9 +580,9 @@ void Registry<TypeList>::Enable(const entity_id_t id RESULT_ARG)
 
 template <typename TypeList>
 template <typename ... Components>
-void Registry<TypeList>::Disable(const entity_id_t id RESULT_ARG)
+void Registry<TypeList>::Disable(const entity_id_t id, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
@@ -593,7 +593,7 @@ void Registry<TypeList>::Disable(const entity_id_t id RESULT_ARG)
 
 template <typename TypeList>
 template <typename Component>
-bool Registry<TypeList>::IsEnabled(const entity_id_t id RESULT_ARG) const
+bool Registry<TypeList>::IsEnabled(const entity_id_t id, RESULT_PARAM_IMPL) const
 {
 	if (id >= Capacity())
 	{
@@ -605,9 +605,9 @@ bool Registry<TypeList>::IsEnabled(const entity_id_t id RESULT_ARG) const
 
 template <typename TypeList>
 template <typename Component>
-void Registry<TypeList>::Add(const entity_id_t id, Component&& component RESULT_ARG)
+void Registry<TypeList>::Add(const entity_id_t id, Component&& component, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
@@ -630,9 +630,9 @@ void Registry<TypeList>::Add(const entity_id_t id, Component&& component RESULT_
 
 template <typename TypeList>
 template <typename Component>
-void Registry<TypeList>::Remove(const entity_id_t id RESULT_ARG)
+void Registry<TypeList>::Remove(const entity_id_t id, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
@@ -645,9 +645,9 @@ void Registry<TypeList>::Remove(const entity_id_t id RESULT_ARG)
 
 template <typename TypeList>
 template <typename Component>
-typename Registry<TypeList>::template ComponentPtr<Component> Registry<TypeList>::Get(const entity_id_t id RESULT_ARG)
+typename Registry<TypeList>::template ComponentPtr<Component> Registry<TypeList>::Get(const entity_id_t id, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL(ComponentPtr<Component>{this, nullptr});
+	RESULT_ENSURE_LAST_NOLOG(ComponentPtr<Component>{this, nullptr});
 	if (!IsEnabled<Component>(id))
 	{
 		RESULT_ERROR(eResultErrorEcsComponentNotEnabled, ComponentPtr<Component>{this, nullptr});
@@ -656,7 +656,7 @@ typename Registry<TypeList>::template ComponentPtr<Component> Registry<TypeList>
 	return ComponentPtr<Component>{this, PTR(GetComponentArrayElement<Component>().Get()->Get(id))};
 }
 
-template<typename TypeList> template<typename Component> void Registry<TypeList>::Each(void(* function)(Component&) RESULT_ARG)
+template<typename TypeList> template<typename Component> void Registry<TypeList>::Each(void(* function)(Component&), RESULT_PARAM_IMPL)
 {
 	auto       l_comp       = GetComponentArrayElement<Component>().Get();
 	const auto l_data       = l_comp->data_;
@@ -674,19 +674,19 @@ template<typename TypeList> template<typename Component> void Registry<TypeList>
 }
 
 template <typename TypeList>
-Uint64 Registry<TypeList>::Capacity(RESULT_ARG_SINGLE) const
+Uint64 Registry<TypeList>::Capacity(RESULT_PARAM_IMPL) const
 {
 	return eend_ - ebegin_;
 }
 
 template <typename TypeList>
-bool Registry<TypeList>::Contains(const entity_id_t* ptr RESULT_ARG) const
+bool Registry<TypeList>::Contains(const entity_id_t* ptr, RESULT_PARAM_IMPL) const
 {
 	return ptr >= ebegin_ && ptr < eend_;
 }
 
 template <typename TypeList>
-void Registry<TypeList>::Clear(RESULT_ARG_SINGLE)
+void Registry<TypeList>::Clear(RESULT_PARAM_IMPL)
 {
 	//entities_.clear();
 
@@ -701,9 +701,9 @@ void Registry<TypeList>::Clear(RESULT_ARG_SINGLE)
 
 template <typename TypeList>
 template <typename Component>
-void Registry<TypeList>::SetEnabledInternal(const entity_id_t id, const bool value RESULT_ARG)
+void Registry<TypeList>::SetEnabledInternal(const entity_id_t id, const bool value, RESULT_PARAM_IMPL)
 {
-	ENSURE_LAST_RESULT_NL();
+	RESULT_ENSURE_LAST_NOLOG();
 	constexpr Uint64 l_id = GetComponentId<Component>();
 	if(signatures_[id].test(l_id))
 	{

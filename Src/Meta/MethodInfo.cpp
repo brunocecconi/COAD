@@ -19,7 +19,7 @@ const char* MethodInfo::Name() const
 	return name_;
 }
 
-Hash::fnv1a_t MethodInfo::Id() const
+id_t MethodInfo::Id() const
 {
 	return id_;
 }

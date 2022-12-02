@@ -19,11 +19,11 @@ struct NativeThreadParams
 	ThreadFunctionType	   function;
 	NativeThreadParamsType params;
 
-	static void Create(NativeThreadParams** thread_params, const Thread::Ci& ci RESULT_ARG_OPT);
-	static void Destroy(NativeThreadParams** thread_params RESULT_ARG_OPT);
+	static void Create(NativeThreadParams** thread_params, const Thread::Ci& ci, RESULT_PARAM_DEFINE);
+	static void Destroy(NativeThreadParams** thread_params, RESULT_PARAM_DEFINE);
 };
 
-void NativeThreadParams::Create(NativeThreadParams** thread_params, const Thread::Ci& ci RESULT_ARG)
+void NativeThreadParams::Create(NativeThreadParams** thread_params, const Thread::Ci& ci, RESULT_PARAM_IMPL)
 {
 	if (!thread_params)
 	{
@@ -47,7 +47,7 @@ void NativeThreadParams::Create(NativeThreadParams** thread_params, const Thread
 	RESULT_OK();
 }
 
-void NativeThreadParams::Destroy(NativeThreadParams** thread_params RESULT_ARG)
+void NativeThreadParams::Destroy(NativeThreadParams** thread_params, RESULT_PARAM_IMPL)
 {
 	if (!(thread_params && *thread_params))
 	{
@@ -74,16 +74,16 @@ static DWORD GetCreationFlags(const NativeThreadCiFlags::Type flags)
 }
 #endif
 
-Thread::Thread(RESULT_ARG_SINGLE)
+Thread::Thread(RESULT_PARAM_IMPL)
 {
 }
 
-Thread::Thread(const Ci& ci RESULT_ARG)
+Thread::Thread(const Ci& ci, RESULT_PARAM_IMPL)
 {
 	Create(eastl::move(ci));
 }
 
-Thread::Thread(const ThreadFunctionType function RESULT_ARG)
+Thread::Thread(const ThreadFunctionType function, RESULT_PARAM_IMPL)
 {
 	Create(Ci{function, nullptr, 0ull, NativeThreadCiFlags::eNone});
 }
@@ -93,7 +93,7 @@ Thread::~Thread()
 	Destroy();
 }
 
-void Thread::Create(const Ci& ci RESULT_ARG)
+void Thread::Create(const Ci& ci, RESULT_PARAM_IMPL)
 {
 	if (!handle_.ptr)
 	{
@@ -105,7 +105,7 @@ void Thread::Create(const Ci& ci RESULT_ARG)
 	}
 
 	NativeThreadParams* l_thread_params{};
-	RESULT_ENSURE_CALL_NL(NativeThreadParams::Create(&l_thread_params, ci));
+	RESULT_ENSURE_CALL_NOLOG(NativeThreadParams::Create(&l_thread_params, ci));
 
 #if PLATFORM_WINDOWS
 	handle_.ptr =
@@ -123,7 +123,7 @@ void Thread::Create(const Ci& ci RESULT_ARG)
 	RESULT_OK();
 }
 
-void Thread::Sleep(const Uint32 ms RESULT_ARG) const
+void Thread::Sleep(const Uint32 ms, RESULT_PARAM_IMPL) const
 {
 	if (WaitForSingleObject(handle_.ptr, ms) != WAIT_TIMEOUT)
 	{
@@ -132,7 +132,7 @@ void Thread::Sleep(const Uint32 ms RESULT_ARG) const
 	RESULT_OK();
 }
 
-void Thread::Suspend(RESULT_ARG_SINGLE) const
+void Thread::Suspend(RESULT_PARAM_IMPL) const
 {
 	if (!handle_.ptr)
 	{
@@ -152,7 +152,7 @@ void Thread::Suspend(RESULT_ARG_SINGLE) const
 #endif
 }
 
-void Thread::Resume(RESULT_ARG_SINGLE) const
+void Thread::Resume(RESULT_PARAM_IMPL) const
 {
 	if (!handle_.ptr)
 	{
@@ -173,7 +173,7 @@ void Thread::Resume(RESULT_ARG_SINGLE) const
 #endif
 }
 
-void Thread::Destroy(RESULT_ARG_SINGLE)
+void Thread::Destroy(RESULT_PARAM_IMPL)
 {
 	if (!handle_.ptr)
 	{
@@ -191,7 +191,7 @@ void Thread::Destroy(RESULT_ARG_SINGLE)
 #error Not supported yet.
 #endif
 
-	RESULT_ENSURE_CALL_NL(NativeThreadParams::Destroy(reinterpret_cast<NativeThreadParams**>(&handle_.params)));
+	RESULT_ENSURE_CALL_NOLOG(NativeThreadParams::Destroy(reinterpret_cast<NativeThreadParams**>(&handle_.params)));
 
 	handle_.ptr	   = nullptr;
 	handle_.params = nullptr;
@@ -199,16 +199,16 @@ void Thread::Destroy(RESULT_ARG_SINGLE)
 	RESULT_OK();
 }
 
-Mutex::Mutex(RESULT_ARG_SINGLE)
+Mutex::Mutex(RESULT_PARAM_IMPL)
 {
 }
 
-Mutex::Mutex(const Ci& ci RESULT_ARG)
+Mutex::Mutex(const Ci& ci, RESULT_PARAM_IMPL)
 {
 	Create(ci);
 }
 
-Mutex::Mutex(const char* name RESULT_ARG)
+Mutex::Mutex(const char* name, RESULT_PARAM_IMPL)
 {
 	Create(Ci{name});
 }
@@ -218,7 +218,7 @@ Mutex::~Mutex()
 	Destroy();
 }
 
-void Mutex::Create(const Ci& ci RESULT_ARG)
+void Mutex::Create(const Ci& ci, RESULT_PARAM_IMPL)
 {
 	Destroy();
 
@@ -236,7 +236,7 @@ void Mutex::Create(const Ci& ci RESULT_ARG)
 	RESULT_OK();
 }
 
-void Mutex::Lock(RESULT_ARG_SINGLE) const
+void Mutex::Lock(RESULT_PARAM_IMPL) const
 {
 	if (!handle_.ptr)
 	{
@@ -253,7 +253,7 @@ void Mutex::Lock(RESULT_ARG_SINGLE) const
 	RESULT_OK();
 }
 
-void Mutex::Unlock(RESULT_ARG_SINGLE) const
+void Mutex::Unlock(RESULT_PARAM_IMPL) const
 {
 	if (!handle_.ptr)
 	{
@@ -272,7 +272,7 @@ void Mutex::Unlock(RESULT_ARG_SINGLE) const
 #endif
 }
 
-void Mutex::Destroy(RESULT_ARG_SINGLE)
+void Mutex::Destroy(RESULT_PARAM_IMPL)
 {
 	if (!handle_.ptr)
 	{

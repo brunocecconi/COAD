@@ -10,6 +10,8 @@
 #ifndef CORE_LOG_H
 #define CORE_LOG_H
 
+#ifndef RELEASE
+
 #include "Core/BaseTypes.h"
 #include <ctime>
 
@@ -64,5 +66,14 @@ LOG_CATEGORY_DEFINE(3, info, CONSOLE_COLOR_DEFAULT)
 LOG_CATEGORY_DEFINE(4, verbose, CONSOLE_COLOR_LIGHT_CYAN)
 
 LOG_DEFINE(core)
+
+#else
+
+#define LOG_DEFINE(NAME)
+#define LOG_CATEGORY_DEFINE(VERBOSITY_SYMBOL, NAME, COLORS, ...)
+#define LOG(CATEGORY, MSG, ...)
+#define LOG_SET_VERBOSITY(CATEGORY)
+
+#endif
 
 #endif

@@ -1,6 +1,7 @@
 
 #include "Meta/EnumInfo.h"
 #include "Core/Algorithm.h"
+#include "Core/Assert.h"
 
 namespace Meta
 {
@@ -69,10 +70,10 @@ EnumRegistry::EnumRegistry()
 
 const EnumInfo& EnumRegistry::Get(const char* name)
 {
-	return Get(Hash::Fnv1AHash(strlen(name), name));
+	return Get(Hash::Fnv1A(strlen(name), name));
 }
 
-const EnumInfo& EnumRegistry::Get(const Hash::fnv1a_t id)
+const EnumInfo& EnumRegistry::Get(const id_t id)
 {
 	if (enums_.find(id) != enums_.cend())
 	{
@@ -83,10 +84,10 @@ const EnumInfo& EnumRegistry::Get(const Hash::fnv1a_t id)
 
 bool EnumRegistry::IsRegistered(const char* name) const
 {
-	return IsRegistered(Hash::Fnv1AHash(strlen(name), name));
+	return IsRegistered(Hash::Fnv1A(strlen(name), name));
 }
 
-bool EnumRegistry::IsRegistered(const Hash::fnv1a_t id) const
+bool EnumRegistry::IsRegistered(const id_t id) const
 {
 	return enums_.find(id) != enums_.cend();
 }

@@ -21,7 +21,7 @@ Uint32 CtorInfo::NeededParamCount() const
 	return total_param_count_ - optional_param_count_;
 }
 
-Hash::fnv1a_t CtorInfo::Id() const
+id_t CtorInfo::Id() const
 {
 	return id_;
 }

@@ -20,7 +20,7 @@
 #define ECS_COMPONENT_BODY(NAME)	\
 public:	\
 CLASS_BODY_ONLY_HEADER(NAME)	\
-struct EcsComponentType;
+struct EcsComponentType{};
 
 #define ECS_COMPONENT_VALIDATION(NAME)	\
 /*TYPE_INFO_DEFINE(NAME);*/	\

@@ -13,12 +13,12 @@ const TypeInfo& Typeof(const char* name)
 	return TypeRegistry::Instance().Get(name);
 }
 
-const TypeInfo& Typeof(const Hash::fnv1a_t id)
+const TypeInfo& Typeof(const id_t id)
 {
 	return TypeRegistry::Instance().Get(id);
 }
 
-TypeInfo::TypeInfo() : id_{Hash::Fnv1AHash("none")}, size_{0}, name_{"none"}
+TypeInfo::TypeInfo() : id_{Hash::Fnv1A("None")}, size_{0}, name_{"None"}, operation_function_{nullptr}
 {
 }
 
@@ -29,10 +29,10 @@ TypeRegistry::TypeRegistry()
 
 const TypeInfo& TypeRegistry::Get(const char* name)
 {
-	return Get(Hash::Fnv1AHash(strlen(name), name));
+	return Get(Hash::Fnv1A(strlen(name), name));
 }
 
-const TypeInfo& TypeRegistry::Get(const Hash::fnv1a_t id)
+const TypeInfo& TypeRegistry::Get(const id_t id)
 {
 	if (types_.find(id) != types_.cend())
 	{
@@ -43,7 +43,7 @@ const TypeInfo& TypeRegistry::Get(const Hash::fnv1a_t id)
 
 bool TypeRegistry::IsRegistered(const char* name) const
 {
-	return types_.find(Hash::Fnv1AHash(strlen(name), name)) != types_.cend();
+	return types_.find(Hash::Fnv1A(strlen(name), name)) != types_.cend();
 }
 
 TypeRegistry& TypeRegistry::Instance()
@@ -130,6 +130,9 @@ eastl::string TypeInfo::ToString(const Uint64 capacity) const
 
 eastl::string TypeInfo::ToValueString(void* value, const Uint64 capacity) const
 {
+	ENFORCE_MSG(operation_function_, "Operations function is marked as not implemented for '%s' type, and it is needed to properly "
+									 "apply the value string operation.", name_);
+
 	OperationBody l_body{};
 
 	eastl::string l_string{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};

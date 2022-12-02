@@ -60,28 +60,28 @@ public:
 	};
 
 public:
-	Thread(RESULT_ARG_SINGLE);
-	EXPLICIT Thread(const Ci& ci RESULT_ARG_OPT);
-	EXPLICIT Thread(ThreadFunctionType function RESULT_ARG_OPT);
+	Thread(RESULT_PARAM_DEFINE);
+	EXPLICIT Thread(const Ci& ci, RESULT_PARAM_DEFINE);
+	EXPLICIT Thread(ThreadFunctionType function, RESULT_PARAM_DEFINE);
 
 	template<typename TypeArgs>
-	EXPLICIT Thread(ThreadFunctionType function, TypeArgs& args RESULT_ARG_OPT);
+	EXPLICIT Thread(ThreadFunctionType function, TypeArgs& args, RESULT_PARAM_DEFINE);
 
 	~Thread();
 
 public:
-	MAYBEUNUSED void Create(const Ci& ci RESULT_ARG_OPT);
-	MAYBEUNUSED void Sleep(Uint32 ms RESULT_ARG_OPT) const;
-	MAYBEUNUSED void Suspend(RESULT_ARG_SINGLE_OPT) const;
-	MAYBEUNUSED void Resume(RESULT_ARG_SINGLE_OPT) const;
-	MAYBEUNUSED void Destroy(RESULT_ARG_SINGLE_OPT);
+	MAYBEUNUSED void Create(const Ci& ci, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED void Sleep(Uint32 ms, RESULT_PARAM_DEFINE) const;
+	MAYBEUNUSED void Suspend(RESULT_PARAM_DEFINE) const;
+	MAYBEUNUSED void Resume(RESULT_PARAM_DEFINE) const;
+	MAYBEUNUSED void Destroy(RESULT_PARAM_DEFINE);
 
 private:
 	Handle handle_{};
 };
 
 template<typename TypeArgs>
-Thread::Thread(const ThreadFunctionType function, TypeArgs& args RESULT_ARG)
+Thread::Thread(const ThreadFunctionType function, TypeArgs& args, RESULT_PARAM_IMPL)
 {
 	Create(Ci{function, &args, sizeof(TypeArgs)});
 }
@@ -103,16 +103,16 @@ public:
 	};
 
 public:
-	Mutex(RESULT_ARG_SINGLE);
-	EXPLICIT Mutex(const Ci& ci RESULT_ARG_OPT);
-	EXPLICIT Mutex(const char* name RESULT_ARG_OPT);
+	Mutex(RESULT_PARAM_DEFINE);
+	EXPLICIT Mutex(const Ci& ci, RESULT_PARAM_DEFINE);
+	EXPLICIT Mutex(const char* name, RESULT_PARAM_DEFINE);
 	~Mutex();
 
 public:
-	MAYBEUNUSED void Create(const Ci& ci RESULT_ARG_OPT);
-	MAYBEUNUSED void Lock(RESULT_ARG_SINGLE_OPT) const;
-	MAYBEUNUSED void Unlock(RESULT_ARG_SINGLE_OPT) const;
-	MAYBEUNUSED void Destroy(RESULT_ARG_SINGLE_OPT);
+	MAYBEUNUSED void Create(const Ci& ci, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED void Lock(RESULT_PARAM_DEFINE) const;
+	MAYBEUNUSED void Unlock(RESULT_PARAM_DEFINE) const;
+	MAYBEUNUSED void Destroy(RESULT_PARAM_DEFINE);
 
 private:
 	Handle handle_{};
@@ -122,7 +122,7 @@ private:
 
 } // namespace Threading
 
-CLASS_VALIDATION(Threading::Thread)
-CLASS_VALIDATION(Threading::Mutex)
+CLASS_VALIDATION(Threading::Thread);
+CLASS_VALIDATION(Threading::Mutex);
 
 #endif

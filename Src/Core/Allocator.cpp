@@ -7,9 +7,13 @@
  *
  */
 
-#include "Core/allocator.h"
+#include "Core/Allocator.h"
 
+#ifndef RELEASE
 #define PRINT_ALLOCATIONS 0
+#else
+#define PRINT_ALLOCATIONS 0
+#endif
 
 namespace Allocators
 {

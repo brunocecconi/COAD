@@ -10,11 +10,18 @@
 #ifndef CORE_MEMORY_H
 #define CORE_MEMORY_H
 
-#include "Core/result.h"
-#include "Core/allocator.h"
+#include "Core/Result.h"
+#include "Core/Allocator.h"
+#include "Core/Lang.h"
+#include "Core/TypeTraits.h"
+#include "Macros.h"
 
 #include <EASTL/type_traits.h>
 #include <EASTL/memory.h>
+#include <EASTL/vector.h>
+#include <EASTL/array.h>
+#include <EASTL/string.h>
+#include <EASTL/hash_map.h>
 
 namespace Memory
 {

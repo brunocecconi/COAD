@@ -81,173 +81,47 @@ static void TypeInfo_GetByName(benchmark::State& state)
 BENCHMARK(TypeInfo_GetByName);
 //BENCHMARK(TypeInfo_GetByName)->Threads(8);
 
-struct TestCtor
+struct PodClassType
 {
-	TestCtor()
-	{
-		//printf("default ctor\n");
-	}
-
-	TestCtor(TestCtor&& other) NOEXCEPT: pi{other.pi}
-	{
-		//printf("move ctor %f - %f\n", pi, other.pi);
-		other.pi = 0.f;
-	}
-	TestCtor& operator=(TestCtor&& other) NOEXCEPT
-	{
-		//printf("move assign\n");
-		pi		 = other.pi;
-		other.pi = 0.f;
-		return *this;
-	}
-	TestCtor(const TestCtor&)			 = default;
-	TestCtor& operator=(const TestCtor&) = default;
-	~TestCtor()
-	{
-		//printf("dtor\n");
-	}
-
-	float pi = 3.14f;
-
-
-private:
-	friend struct Meta::TypeInfo::Rebinder<TestCtor>;
-	friend struct TestCtor_Ctor0;
-	friend struct TestCtor_Ctor1;
-	friend struct TestCtor_Ctor2;
-	friend struct TestCtor_Property_number_;
-
-	int number_;
-
-	TestCtor(const Int64 index, Float32 pi = 3.14f) : pi{pi}
-	{
-		//printf("Index: %lld - Pi: %f\n", index, pi);
-	}
-
-	TestCtor(eastl::string_view name)
-	{
-		//printf("Name: %s\n", name.data());
-	}
+  int a;
+  float b;
 };
 
-META_TYPE_BINDER_DEFAULT_NO_TO_STRING(TestCtor)
-
-namespace Meta
+FORCEINLINE void Construct(PodClassType& value, int a, float b)
 {
-//
-//struct TestCtor_Property_number_ : Meta::PropertyInfo::Binder<decltype(&TestCtor::number_)>
-//{
-//	static void Set(const body_t& body)
-//	{
-//		static_cast<TestCtor*>(body.owner)->number_ = *static_cast<type_t*>(body.value);
-//	}
-//
-//	static void* Get(const body_t& body)
-//	{
-//		return &static_cast<TestCtor*>(body.owner)->number_;
-//	}
-};
-
-struct TestCtor_Ctor0 : Meta::CtorInfo::Binder<TestCtor(), 0>
-{
-	static void Invoke(body_t& body)
-	{
-		new (body.memory) TestCtor{};
-	}
-};
-
-struct TestCtor_Ctor1 : Meta::CtorInfo::Binder<TestCtor(Int64, Float32), 1>
-{
-	static void Invoke(body_t& body)
-	{
-		auto& l_args_tuple = *static_cast<eastl::tuple<Meta::Value, Meta::Value>*>(body.args_tuple);
-		if(body.args_tuple_size == 1)
-		{
-			new (body.memory) TestCtor{eastl::get<0>(l_args_tuple).AsInt64()};
-			return;
-		}
-		if(body.args_tuple_size == 2)
-		{
-			new (body.memory) TestCtor{eastl::get<0>(l_args_tuple).AsInt64(), eastl::get<1>(l_args_tuple).AsFloat32()};
-			return;
-		}
-	}
-};
-
-struct TestCtor_Ctor2 : Meta::CtorInfo::Binder<TestCtor(eastl::string_view), 1>
-{
-	static void Invoke(body_t& body)
-	{
-		const auto l_body = body_adapter_t{body};
-		new (body.memory) TestCtor{eastl::get<0>(l_body.args)};
-	}
-};
-
-using test_ctor_ctors_t = TypeTraits::TypeList<TestCtor_Ctor0, TestCtor_Ctor1, TestCtor_Ctor2>;
-
-static void CtorInfo_Default(benchmark::State& state)
-{
-	Meta::CtorInfo l_tc_ctor0 = TypeTraits::TlGetByIndex<test_ctor_ctors_t, 0>::type_t{};
-
-	for (auto _ : state)
-	{
-		auto v = l_tc_ctor0.Invoke();
-		(void)v;
-	}
+  value.a = a;
+  value.b = b;
 }
 
-// Register the function as a benchmark
-BENCHMARK(CtorInfo_Default);
-BENCHMARK(CtorInfo_Default)->Threads(8);
-
-static void CtorInfo_CustomWithOptionalParam(benchmark::State& state)
+FORCEINLINE void Destruct(PodClassType& value)
 {
-	Meta::CtorInfo l_tc_ctor1 = TypeTraits::TlGetByIndex<test_ctor_ctors_t, 1>::type_t{};
-
-	for (auto _ : state)
-	{
-		auto v = l_tc_ctor1.Invoke(4ll);
-		(void)v;
-	}
 }
 
-// Register the function as a benchmark
-BENCHMARK(CtorInfo_CustomWithOptionalParam);
-BENCHMARK(CtorInfo_CustomWithOptionalParam)->Threads(8);
-
-static void CtorInfo_CustomWithAllParams(benchmark::State& state)
-{
-	Meta::CtorInfo l_tc_ctor1 = TypeTraits::TlGetByIndex<test_ctor_ctors_t, 1>::type_t{};
-	//char l_memory[32];
-	for (auto _ : state)
-	{
-		auto v = l_tc_ctor1.Invoke(4ll, 1.543f);
-		(void)v;
-	}
+static void PodClass(benchmark::State& state) {
+  for (auto _ : state) {
+    PodClassType v;
+    Construct(v, 4, 2.3f);
+    Destruct(v);
+  }
 }
-
 // Register the function as a benchmark
-BENCHMARK(CtorInfo_CustomWithAllParams);
-BENCHMARK(CtorInfo_CustomWithAllParams)->Threads(8);
+BENCHMARK(PodClass);
 
-//static void CtorInfo_Resolver(benchmark::State& state)
-//{
-//	/*Meta::CtorInfo l_tc_ctors[] =
-//	{
-//		Meta::CtorBinderOld<TestCtor, 0, 0>{},
-//		Meta::CtorBinderOld<TestCtor, 1, 1>{}
-//	};
-//
-//	for (auto _ : state)
-//	{
-//		auto v = Meta::CtorInfo::InvokeSolver<TestCtor>(eastl::span{l_tc_ctors}, 4ll);
-//		(void)v;
-//	}*/
-//}
-//
-//// Register the function as a benchmark
-//BENCHMARK(CtorInfo_Resolver);
-//BENCHMARK(CtorInfo_Resolver)->Threads(8);
+class DefaultClassType
+{
+public:
+  DefaultClassType(int a, float b) : a{a}, b{b} {}
+
+  int a;
+  float b;
+};
+
+static void DefatulClass(benchmark::State& state) {
+  for (auto _ : state) {
+    DefaultClassType v{4, 2.3f};
+  }
+}
+BENCHMARK(DefatulClass);
 
 BENCHMARK_MAIN();
 

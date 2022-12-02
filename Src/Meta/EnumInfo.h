@@ -99,14 +99,14 @@ public:
 	template<typename T>
 	const EnumInfo& Emplace();
 	const EnumInfo& Get(const char* name);
-	const EnumInfo& Get(Hash::fnv1a_t id);
-	bool            IsRegistered(const char* name) const;
-	bool            IsRegistered(Hash::fnv1a_t id) const;
+	const EnumInfo& Get(id_t id);
+	bool			IsRegistered(const char* name) const;
+	bool			IsRegistered(id_t id) const;
 
 	static EnumRegistry& Instance();
 
 private:
-	eastl::hash_map<Hash::fnv1a_t, EnumInfo> enums_{DEBUG_NAME_VAL("Meta")};
+	eastl::hash_map<id_t, EnumInfo> enums_{DEBUG_NAME_VAL("Meta")};
 	static EnumRegistry*					 instance_;
 };
 

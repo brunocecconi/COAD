@@ -32,7 +32,7 @@ project "COAD"
 	warnings "Extra"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
-	
+
 	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
 
 	includedirs

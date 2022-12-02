@@ -103,7 +103,7 @@ public:
 	 * @tparam Id Hash name id.
 	 * 
 	*/
-	template<Hash::fnv1a_t Id>
+	template<id_t Id>
 	struct Rebinder;
 
 	/**
@@ -116,7 +116,7 @@ public:
 	 * @tparam OptionalParamCount Number of optional arguments. Later used for heuristics.
 	 *
 	 */
-	template<Hash::fnv1a_t Id, typename CtorFunction, Uint32 OptionalParamCount>
+	template<id_t Id, typename CtorFunction, Uint32 OptionalParamCount>
 	struct Binder
 	{
 		using owner_t		 = typename TypeTraits::FunctionTraits<CtorFunction>::return_t;
@@ -143,7 +143,7 @@ public:
 	NODISCARD const TypeInfo&				   OwnerType() const;
 	NODISCARD const method_params_signature_t& ParamsSignature() const;
 	NODISCARD Uint32						   NeededParamCount() const;
-	NODISCARD Hash::fnv1a_t Id() const;
+	NODISCARD id_t Id() const;
 	NODISCARD Uint32		TotalParamCount() const;
 	NODISCARD Uint32		OptionalParamCount() const;
 
@@ -172,7 +172,7 @@ private:
 	const TypeInfo&			  owner_type_;
 	method_params_signature_t params_signature_{};
 	binder_invoke_function_t  function_;
-	Hash::fnv1a_t			  id_;
+	id_t			  id_;
 	Uint32					  total_param_count_;
 	Uint32					  optional_param_count_;
 };
@@ -203,175 +203,5 @@ CtorInfo::CtorInfo(RebinderType)
 }
 
 } // namespace Meta
-
-#define META_REBINDER_CTOR(INDEX)	\
-public:                                                                                                                \
-	static constexpr auto Ctor_##INDEX##_ID = "Ctor_"#INDEX##_fnv1a;                                                                    \
-                                                                                                                       \
-private:                                                                                                               \
-	friend struct Meta::CtorInfo::Rebinder<Ctor_##INDEX##_ID>
-
-#define META_CTOR_INFO_BINDER(OWNER, INDEX, OPTIONAL_ARGS, ...)                                                        \
-	template<> struct CtorInfo::Rebinder<OWNER::Ctor_##INDEX##_ID>                                                                \
-		: Binder<OWNER::Ctor_##INDEX##_ID, OWNER(__VA_ARGS__), OPTIONAL_ARGS>
-
-#define META_CTOR_INFO_BINDER_INVOKE_CUSTOM(...)                                                                       \
-	static void Invoke(body_t& body)                                                                                   \
-	{                                                                                                                  \
-		__VA_ARGS__                                                                                                    \
-	}
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS0()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(if (body.args_tuple_size == 0) { new (body.memory) owner_t{}; })
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS1()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {           \
-		new (body.memory) owner_t{l_body.Get<0>()};                                                                    \
-	})
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS2()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(                                                                               \
-		auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {                                           \
-			new (body.memory) owner_t{l_body.Get<0>()};                                                                \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 2) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>()};                                               \
-		})
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS3()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(                                                                               \
-		auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {                                           \
-			new (body.memory) owner_t{l_body.Get<0>()};                                                                \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 2) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>()};                                               \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 3) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>()};                              \
-		})
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS4()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(                                                                               \
-		auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {                                           \
-			new (body.memory) owner_t{l_body.Get<0>()};                                                                \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 2) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>()};                                               \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 3) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 4) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>()};             \
-		})
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS5()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(                                                                               \
-		auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {                                           \
-			new (body.memory) owner_t{l_body.Get<0>()};                                                                \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 2) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>()};                                               \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 3) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 4) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>()};             \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 5) {                                                                             \
-			new (body.memory)                                                                                          \
-				owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(), l_body.Get<4>()};          \
-		})
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS6()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(                                                                               \
-		auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {                                           \
-			new (body.memory) owner_t{l_body.Get<0>()};                                                                \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 2) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>()};                                               \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 3) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 4) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>()};             \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 5) {                                                                             \
-			new (body.memory)                                                                                          \
-				owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(), l_body.Get<4>()};          \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 6) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(),                               \
-									  l_body.Get<3>(), l_body.Get<4>(), l_body.Get<5>()};                              \
-		})
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS7()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(                                                                               \
-		auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {                                           \
-			new (body.memory) owner_t{l_body.Get<0>()};                                                                \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 2) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>()};                                               \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 3) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 4) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>()};             \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 5) {                                                                             \
-			new (body.memory)                                                                                          \
-				owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(), l_body.Get<4>()};          \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 6) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(),                               \
-									  l_body.Get<3>(), l_body.Get<4>(), l_body.Get<5>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 7) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(),              \
-									  l_body.Get<4>(), l_body.Get<5>(), l_body.Get<6>()};                              \
-		})
-
-#define META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS8()                                                                   \
-	META_CTOR_INFO_BINDER_INVOKE_CUSTOM(                                                                               \
-		auto l_body = body_adapter_t{body}; if (body.args_tuple_size == 1) {                                           \
-			new (body.memory) owner_t{l_body.Get<0>()};                                                                \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 2) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>()};                                               \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 3) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 4) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>()};             \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 5) {                                                                             \
-			new (body.memory)                                                                                          \
-				owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(), l_body.Get<4>()};          \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 6) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(),                               \
-									  l_body.Get<3>(), l_body.Get<4>(), l_body.Get<5>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 7) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(),              \
-									  l_body.Get<4>(), l_body.Get<5>(), l_body.Get<6>()};                              \
-			return;                                                                                                    \
-		} if (body.args_tuple_size == 8) {                                                                             \
-			new (body.memory) owner_t{l_body.Get<0>(), l_body.Get<1>(), l_body.Get<2>(), l_body.Get<3>(),              \
-									  l_body.Get<4>(), l_body.Get<5>(), l_body.Get<6>(), l_body.Get<7>()};             \
-		})
-
-#define META_CTOR_INFO_BINDER_DEFAULT(OWNER, INDEX, OPTIONAL_ARGS, ...)                                                \
-	namespace Meta                                                                                                     \
-	{                                                                                                                  \
-	META_CTOR_INFO_BINDER(OWNER, INDEX, OPTIONAL_ARGS, __VA_ARGS__)                                                    \
-	{                                                                                                                  \
-		META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS0();                                                                  \
-	};                                                                                                                 \
-	}
 
 #endif

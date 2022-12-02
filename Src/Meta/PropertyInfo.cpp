@@ -33,7 +33,7 @@ const char* PropertyInfo::Name() const
 	return name_;
 }
 
-Hash::fnv1a_t PropertyInfo::Id() const
+id_t PropertyInfo::Id() const
 {
 	return id_;
 }

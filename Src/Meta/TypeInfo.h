@@ -6,12 +6,16 @@
 #include "Core/Allocator.h"
 #include "Core/Hash.h"
 #include "Core/Algorithm.h"
+#include "Core/Assert.h"
 
 #include <EASTL/span.h>
 #include <EASTL/string_hash_map.h>
 #include <EASTL/utility.h>
 
-#include "Core/RawBuffer.h"
+#if _MSC_VER
+// Disable warning C4702: unreachable code 
+#pragma warning (disable:4702)
+#endif
 
 namespace Meta
 {
@@ -28,6 +32,8 @@ struct TypeTag
 	using type_t = T;
 };
 
+using id_t = Hash::fnv1a_t;
+
 /**
  * @brief Type info class.
  */
@@ -38,7 +44,7 @@ class TypeInfo
 public:
 	/**
 	 * @brief Operations for type info.
-	*/
+	 */
 	enum OperationType
 	{
 		eDefaultCtor,
@@ -50,12 +56,15 @@ public:
 		eToString,
 		eMax
 	};
+	static constexpr char* OPERATION_TYPE_STRING[] = {(char*)"eDefaultCtor", (char*)"eMoveCtor",   (char*)"eCopyCtor",
+													  (char*)"eMoveAssign",	 (char*)"eCopyAssign", (char*)"eDtor",
+													  (char*)"eToString"};
 
 	/**
 	 * @brief Operator body structure.
-	 * 
+	 *
 	 * Used as argument when Rebinder<T>::Operation function is called.
-	*/
+	 */
 	struct OperationBody
 	{
 		OperationType type;
@@ -67,19 +76,19 @@ public:
 public:
 	/**
 	 * @brief Rebinder structure.
-	 * 
+	 *
 	 * @tparam T Target type.
-	 * 
-	*/
+	 *
+	 */
 	template<typename T>
 	struct Rebinder;
 
 	/**
 	 * @brief Binder structure.
-	 * 
+	 *
 	 * @tparam T Target type.
-	 * 
-	*/
+	 *
+	 */
 	template<typename T>
 	struct Binder
 	{
@@ -129,32 +138,32 @@ public:
 public:
 	/**
 	 * @brief Invoke operation function.
-	 * 
+	 *
 	 * Used to call Rebinder<T>::Operation function.
-	 * 
-	 * @tparam ...Args 
+	 *
+	 * @tparam ...Args
 	 * @param type Operation type.
 	 * @param ...args Arguments to be passed to operation function.
-	 * 
-	*/
+	 *
+	 */
 	template<typename... Args>
 	void InvokeOperation(OperationType type, Args&&... args) const;
 
 	/**
 	 * @brief Invoke operation custom function.
-	 * 
+	 *
 	 * Used to call Rebinder<T>::Operation function.
-	 * 
-	 * @tparam ...Args 
+	 *
+	 * @tparam ...Args
 	 * @param type External body.
 	 * @param ...args Arguments to be passed to operation function.
-	 * 
-	*/
+	 *
+	 */
 	template<typename... Args>
 	void InvokeOperation(OperationBody& body, Args&&... args) const;
 
 private:
-	Hash::fnv1a_t				 id_;
+	id_t				 id_;
 	Uint64				 size_;
 	const char*			 name_;
 	operation_function_t operation_function_;
@@ -163,14 +172,19 @@ private:
 template<typename T>
 TypeInfo::TypeInfo(TypeTag<T>)
 	: id_{Rebinder<T>::ID}, size_{Rebinder<T>::SIZE}, name_{Rebinder<T>::NAME.data()}, operation_function_{
-																					&Rebinder<T>::Operations}
+																						   &Rebinder<T>::Operations}
 {
-	//printf("'%s' reflected: id=%llu, size=%llu\n", name_, id_, size_);
+	// printf("'%s' reflected: id=%llu, size=%llu\n", name_, id_, size_);
 }
 
 template<typename... Args>
 void TypeInfo::InvokeOperation(const OperationType type, Args&&... args) const
 {
+	ENFORCE_MSG(operation_function_,
+				"Operations function is marked as not implemented for '%s' type, and it is needed to properly "
+				"apply the '%s' operation.",
+				name_, OPERATION_TYPE_STRING[type]);
+
 	auto		  l_args_tuple = eastl::make_tuple(eastl::forward<Args>(args)...);
 	OperationBody l_body{type, sizeof...(Args), &l_args_tuple};
 	operation_function_(l_body);
@@ -179,6 +193,11 @@ void TypeInfo::InvokeOperation(const OperationType type, Args&&... args) const
 template<typename... Args>
 void TypeInfo::InvokeOperation(OperationBody& body, Args&&... args) const
 {
+	ENFORCE_MSG(operation_function_,
+				"Operations function is marked as not implemented for '%s' type and it is needed to properly "
+				"apply the target operation.",
+				name_);
+
 	auto l_args_tuple	 = eastl::make_tuple(eastl::forward<Args>(args)...);
 	body.args_tuple_size = sizeof...(Args);
 	body.args_tuple		 = &l_args_tuple;
@@ -197,14 +216,14 @@ public:
 	template<typename T>
 	const TypeInfo& Emplace();
 	const TypeInfo& Get(const char* name);
-	const TypeInfo& Get(Hash::fnv1a_t id);
+	const TypeInfo& Get(id_t id);
 	bool			IsRegistered(const char* name) const;
 
 	static TypeRegistry& Instance();
 
 private:
-	eastl::hash_map<Hash::fnv1a_t, TypeInfo> types_{DEBUG_NAME_VAL("Meta")};
-	static TypeRegistry*					 instance_;
+	eastl::hash_map<id_t, TypeInfo> types_{DEBUG_NAME_VAL("Meta")};
+	static TypeRegistry*			instance_;
 };
 
 template<typename T>
@@ -268,7 +287,7 @@ NODISCARD const TypeInfo& Typeof(const char* name);
  * @return TypeInfo.
  *
  */
-NODISCARD const TypeInfo& Typeof(Hash::fnv1a_t id);
+NODISCARD const TypeInfo& Typeof(id_t id);
 
 /**
  * @brief Registry base types.
@@ -297,49 +316,56 @@ constexpr void PrintArray(const eastl::array<T, Size>& arr)
 	printf(")\n");
 }
 
-template<typename T, typename StringAllocator = EASTLAllocatorType,
-		 typename = eastl::enable_if_t<eastl::is_fundamental_v<T>>>
-eastl::basic_string<char, StringAllocator> ToString(const T&			   value,
-													const StringAllocator& allocator = {DEBUG_NAME_VAL("Algorithm")},
-													Uint64				   str_size_hint = 512)
+template<typename T>
+eastl::string ToString(const T& value, const EASTLAllocatorType& allocator = {DEBUG_NAME_VAL("Algorithm")},
+					   Uint64 str_size_hint = 512)
 {
-	RawBuffer<char> l_buffer{str_size_hint, allocator};
-	sprintf(l_buffer.Get(), "%s(%s)", TypeInfo::Rebinder<T>::NAME.data(), eastl::to_string(value).c_str());
-	return eastl::basic_string<char, StringAllocator>{l_buffer.Get(), allocator};
+	if constexpr (eastl::is_fundamental_v<T>)
+	{
+		RawBuffer<char> l_buffer{str_size_hint, allocator};
+		sprintf(l_buffer.Get(), "%s(%s)", TypeInfo::Rebinder<T>::NAME.data(), eastl::to_string(value).c_str());
+		return eastl::string{l_buffer.Get(), allocator};
+	}
+	else if constexpr(is_coad_class<T>)
+	{
+		return value.ToString(str_size_hint);
+	}
+	ENFORCE_MSG(false, "Invalid to string implementation.");
+	return eastl::string{allocator};
 }
 
-template<typename StringAllocator = EASTLAllocatorType>
-eastl::basic_string<char, StringAllocator> ToString(const eastl::string_view& value,
-													const StringAllocator&	  allocator = {DEBUG_NAME_VAL("Algorithm")},
-													const Uint64			  str_size_hint = 0)
+INLINE eastl::string ToString(const eastl::string_view& value,
+							  const EASTLAllocatorType& allocator	  = {DEBUG_NAME_VAL("Algorithm")},
+							  const Uint64				str_size_hint = 0)
 {
 	RawBuffer<char> l_buffer{value.size() + 32 + str_size_hint, allocator};
 	sprintf(l_buffer.Get(), "eastl::string_view(%s)", value.data());
-	return eastl::basic_string<char, StringAllocator>{l_buffer.Get(), allocator};
+	return eastl::string{l_buffer.Get(), allocator};
 }
 
-template<typename T, typename Y, typename StringAllocator = EASTLAllocatorType>
-eastl::basic_string<char, StringAllocator> ToString(const eastl::pair<T, Y>& pair,
-													const StringAllocator&	 allocator = {DEBUG_NAME_VAL("Algorithm")},
-													const Uint64			 str_size_hint = 512)
+template<typename T, typename Y>
+eastl::string ToString(const eastl::pair<T, Y>&	 pair,
+					   const EASTLAllocatorType& allocator	   = {DEBUG_NAME_VAL("Algorithm")},
+					   const Uint64				 str_size_hint = 512)
 {
 	RawBuffer<char> l_buffer{str_size_hint + 32, allocator};
-	sprintf(l_buffer.Get(), "eastl::pair<%s, %s>(%s, %s)", TypeInfo::Rebinder<T>::NAME.data(), TypeInfo::Rebinder<Y>::NAME.data(),
-			ToString(pair.first, allocator).c_str(), ToString(pair.second, allocator).c_str());
-	return eastl::basic_string<char, StringAllocator>{l_buffer.Get(), allocator};
+	sprintf(l_buffer.Get(), "eastl::pair<%s, %s>(%s, %s)", TypeInfo::Rebinder<T>::NAME.data(),
+			TypeInfo::Rebinder<Y>::NAME.data(), ToString(pair.first, allocator).c_str(),
+			ToString(pair.second, allocator).c_str());
+	return eastl::string{l_buffer.Get(), allocator};
 }
 
-template<typename T, typename StringAllocator = EASTLAllocatorType, typename VectorAllocator = EASTLAllocatorType>
-eastl::basic_string<char, StringAllocator> ToString(const eastl::vector<T, VectorAllocator>& vector,
-													const StringAllocator& allocator = {DEBUG_NAME_VAL("Algorithm")},
-													const Uint64		   str_size_hint = 0)
+template<typename T>
+eastl::string ToString(const eastl::vector<T>&	 vector,
+					   const EASTLAllocatorType& allocator	   = {DEBUG_NAME_VAL("Algorithm")},
+					   const Uint64				 str_size_hint = 0)
 {
 	if (vector.empty())
 	{
-		return eastl::basic_string<char, StringAllocator>{allocator};
+		return eastl::string{allocator};
 	}
 
-	eastl::basic_string<char, StringAllocator> l_str{allocator};
+	eastl::string l_str{allocator};
 	l_str.reserve(vector.size() * 32);
 	l_str += "eastl::vector<";
 	l_str += TypeInfo::Rebinder<T>::NAME.data();
@@ -370,122 +396,11 @@ FORCEINLINE bool CompareTypeInfoArray(const TypeInfo* const* arr1, const TypeInf
 	return true;
 }
 
-}
+} // namespace Detail
 
 } // namespace Meta
 
-#define META_REBINDER_TYPE_INFO()	\
-	friend struct Meta::TypeInfo::Rebinder<this_t>
-
-#define META_TYPE_BINDER_SPECIALIZATION(TYPE)                                                                          \
-	template<>                                                                                                         \
-	struct TypeInfo::Rebinder<TYPE>: TypeInfo::Binder<TYPE>
-
-#define META_TYPE_BINDER_SPECIALIZATION_TEMPLATE(TYPE, ...)                                                            \
-	template<>                                                                                                         \
-	struct TypeInfo::Rebinder<TYPE<__VA_ARGS__>>: TypeInfo::Binder<TYPE<__VA_ARGS__>>
-
-#define META_TYPE_BINDER_BODY(TYPE)                                                                                    \
-	using this_t							 = TYPE;                                                                   \
-	static constexpr Hash::fnv1a_t		ID	 = Hash::Fnv1AHash(#TYPE);                                                 \
-	static constexpr eastl::string_view NAME = (char*)#TYPE;
-
-#define META_TYPE_BINDER_BODY_TEMPLATE(TYPE, TYPE_NAME, ...)                                                           \
-	using this_t							 = TYPE<__VA_ARGS__>;                                                      \
-	static constexpr Hash::fnv1a_t		ID	 = Hash::Fnv1AHash(TYPE_NAME);                                             \
-	static constexpr eastl::string_view NAME = (char*)TYPE_NAME;
-
-#define META_TYPE_BINDER_OPERATIONS_CUSTOM(DEFAULT_CTOR, MOVE_CTOR, COPY_CTOR, MOVE_ASSIGN, COPY_ASSIGN, DTOR,         \
-										   TO_STRING)                                                                  \
-	static void Operations(TypeInfo::OperationBody& body)                                                              \
-	{                                                                                                                  \
-		auto& l_default_args_tuple = *static_cast<eastl::tuple<void*, void*>*>(body.args_tuple);                       \
-		switch (body.type)                                                                                             \
-		{                                                                                                              \
-		case TypeInfo::eDefaultCtor: {                                                                                 \
-			DEFAULT_CTOR                                                                                               \
-			return;                                                                                                    \
-		}                                                                                                              \
-		case TypeInfo::eMoveCtor: {                                                                                    \
-			MOVE_CTOR                                                                                                  \
-			return;                                                                                                    \
-		}                                                                                                              \
-		case TypeInfo::eCopyCtor: {                                                                                    \
-			COPY_CTOR                                                                                                  \
-			return;                                                                                                    \
-		}                                                                                                              \
-		case TypeInfo::eMoveAssign: {                                                                                  \
-			MOVE_ASSIGN                                                                                                \
-			return;                                                                                                    \
-		}                                                                                                              \
-		case TypeInfo::eCopyAssign: {                                                                                  \
-			COPY_ASSIGN                                                                                                \
-			return;                                                                                                    \
-		}                                                                                                              \
-		case TypeInfo::eDtor: {                                                                                        \
-			DTOR return;                                                                                               \
-		}                                                                                                              \
-		case TypeInfo::eToString: {                                                                                    \
-			TO_STRING                                                                                                  \
-			return;                                                                                                    \
-		}                                                                                                              \
-		}                                                                                                              \
-	}
-
-#define META_TYPE_BINDER_DEFAULT_OPERATION_DEFAULT_CTOR() new (eastl::get<0>(l_default_args_tuple)) this_t{};
-
-#define META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_CTOR()                                                                 \
-	new (eastl::get<0>(l_default_args_tuple))                                                                          \
-		this_t{eastl::move(*static_cast<this_t*>(eastl::get<1>(l_default_args_tuple)))};
-
-#define META_TYPE_BINDER_DEFAULT_OPERATION_COPY_CTOR()                                                                 \
-	new (eastl::get<0>(l_default_args_tuple)) this_t{*static_cast<this_t*>(eastl::get<1>(l_default_args_tuple))};
-
-#define META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_ASSIGN()                                                               \
-	*static_cast<this_t*>(eastl::get<0>(l_default_args_tuple)) =                                                       \
-		eastl::move(*static_cast<this_t*>(eastl::get<1>(l_default_args_tuple)));
-
-#define META_TYPE_BINDER_DEFAULT_OPERATION_COPY_ASSIGN()                                                               \
-	*static_cast<this_t*>(eastl::get<0>(l_default_args_tuple)) =                                                       \
-		*static_cast<this_t*>(eastl::get<1>(l_default_args_tuple));
-
-#define META_TYPE_BINDER_DEFAULT_OPERATION_DTOR()                                                                      \
-	eastl::destroy_at(static_cast<this_t*>(eastl::get<0>(l_default_args_tuple)));
-
-#define META_TYPE_BINDER_DEFAULT_OPERATION_TO_STRING()                                                                 \
-	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, void*, Uint64>*>(body.args_tuple);        \
-	*eastl::get<0>(l_to_string_args_tuple) =                                                                           \
-		Algorithm::ToString(*static_cast<this_t*>(eastl::get<1>(l_to_string_args_tuple)), {DEBUG_NAME("Meta")},        \
-							eastl::get<2>(l_to_string_args_tuple));
-
-#define META_TYPE_BINDER_DEFAULT_OPERATIONS()                                                                          \
-	META_TYPE_BINDER_OPERATIONS_CUSTOM(                                                                                \
-		META_TYPE_BINDER_DEFAULT_OPERATION_DEFAULT_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_CTOR(),             \
-		META_TYPE_BINDER_DEFAULT_OPERATION_COPY_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_ASSIGN(),              \
-		META_TYPE_BINDER_DEFAULT_OPERATION_COPY_ASSIGN(), META_TYPE_BINDER_DEFAULT_OPERATION_DTOR(),                   \
-		META_TYPE_BINDER_DEFAULT_OPERATION_TO_STRING())
-
-#define META_TYPE_BINDER_DEFAULT(TYPE)                                                                                 \
-	namespace Meta                                                                                                     \
-	{                                                                                                                  \
-	META_TYPE_BINDER_SPECIALIZATION(TYPE){META_TYPE_BINDER_BODY(TYPE) META_TYPE_BINDER_DEFAULT_OPERATIONS()};          \
-	}
-
-#define META_TYPE_BINDER_DEFAULT_NO_TO_STRING(TYPE)                                                                    \
-	namespace Meta                                                                                                     \
-	{                                                                                                                  \
-	META_TYPE_BINDER_SPECIALIZATION(TYPE){META_TYPE_BINDER_BODY(TYPE) META_TYPE_BINDER_OPERATIONS_CUSTOM(              \
-		META_TYPE_BINDER_DEFAULT_OPERATION_DEFAULT_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_CTOR(),             \
-		META_TYPE_BINDER_DEFAULT_OPERATION_COPY_CTOR(), META_TYPE_BINDER_DEFAULT_OPERATION_MOVE_ASSIGN(),              \
-		META_TYPE_BINDER_DEFAULT_OPERATION_COPY_ASSIGN(), META_TYPE_BINDER_DEFAULT_OPERATION_DTOR(), EMPTY)};          \
-	}
-
-#define META_TYPE_BINDER_DEFAULT_TEMPLATE(TYPE, TYPE_NAME, ...)                                                        \
-	namespace Meta                                                                                                     \
-	{                                                                                                                  \
-	META_TYPE_BINDER_SPECIALIZATION_TEMPLATE(TYPE, __VA_ARGS__){                                                       \
-		META_TYPE_BINDER_BODY_TEMPLATE(TYPE, TYPE_NAME, __VA_ARGS__) META_TYPE_BINDER_DEFAULT_OPERATIONS()};           \
-	}
+#include "Meta/Macros.h"
 
 // META_TYPE_BINDER_DEFAULT(void*)
 META_TYPE_BINDER_DEFAULT(bool)

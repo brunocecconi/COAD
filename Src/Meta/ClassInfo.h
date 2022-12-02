@@ -23,7 +23,7 @@ void ApplyVectorTypeList(eastl::vector<T>& vector)
 }
 
 template<Uint64 Index, typename Tuple, typename T>
-void ApplyHashMapTypeList(eastl::hash_map<Hash::fnv1a_t, T>& hash_map)
+void ApplyHashMapTypeList(eastl::hash_map<id_t, T>& hash_map)
 {
 	if constexpr (Index < eastl::tuple_size_v<Tuple>)
 	{
@@ -108,21 +108,21 @@ public:
 
 	template<Size N>
 	NODISCARD const PropertyInfo& GetPropertyInfo(const char (&name)[N]) const;
-	NODISCARD const PropertyInfo& GetPropertyInfo(Hash::fnv1a_t id) const;
+	NODISCARD const PropertyInfo& GetPropertyInfo(id_t id) const;
 
 	template<Size N>
 	NODISCARD const MethodInfo& GetMethodInfo(const char (&name)[N]) const;
-	NODISCARD const MethodInfo& GetMethodInfo(Hash::fnv1a_t id) const;
+	NODISCARD const MethodInfo& GetMethodInfo(id_t id) const;
 
 	NODISCARD bool HasCtorInfo(Uint64 index) const;
 
 	template<Size N>
 	NODISCARD bool HasPropertyInfo(const char (&name)[N]) const;
-	NODISCARD bool HasPropertyInfo(Hash::fnv1a_t id) const;
+	NODISCARD bool HasPropertyInfo(id_t id) const;
 
 	template<Size N>
 	NODISCARD bool HasMethodInfo(const char (&name)[N]) const;
-	NODISCARD bool HasMethodInfo(Hash::fnv1a_t id) const;
+	NODISCARD bool HasMethodInfo(id_t id) const;
 
 public:
 	NODISCARD Value InvokeCtor() const;
@@ -136,26 +136,26 @@ public:
 	NODISCARD Value InvokeCtor(Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7, Value p8) const;
 
 public:
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4,
+	NODISCARD Value InvokeMethod(id_t id, const void* owner) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4,
 								 Value p5) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
 								 Value p6) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
 								 Value p6, Value p7) const;
-	NODISCARD Value InvokeMethod(Hash::fnv1a_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
 								 Value p6, Value p7, Value p8) const;
 
 	template<Size N, typename... Args>
 	NODISCARD Value InvokeMethod(const char (&name)[N], const void* owner, Args&&... args) const;
 
 public:
-	void			SetProperty(Hash::fnv1a_t id, void* owner, Value value) const;
-	NODISCARD Value GetProperty(Hash::fnv1a_t id, const void* owner) const;
+	void			SetProperty(id_t id, void* owner, Value value) const;
+	NODISCARD Value GetProperty(id_t id, const void* owner) const;
 
 	template<Size N>
 	void SetProperty(const char (&name)[N], void* owner, Value value) const;
@@ -170,8 +170,8 @@ private:
 	const TypeInfo*								 type_info_;
 	Uint32										 flags_;
 	eastl::vector<CtorInfo>						 ctors_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
-	eastl::hash_map<Hash::fnv1a_t, PropertyInfo> properties_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
-	eastl::hash_map<Hash::fnv1a_t, MethodInfo>	 methods_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+	eastl::hash_map<id_t, PropertyInfo> properties_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+	eastl::hash_map<id_t, MethodInfo>	 methods_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
 };
 
 class ClassRegistry
@@ -182,13 +182,13 @@ public:
 	template<typename T>
 	const ClassInfo& Emplace();
 	const ClassInfo& Get(const char* name);
-	const ClassInfo& Get(Hash::fnv1a_t id);
+	const ClassInfo& Get(id_t id);
 	bool			 IsRegistered(const char* name) const;
 
 	static ClassRegistry& Instance();
 
 private:
-	eastl::hash_map<Hash::fnv1a_t, ClassInfo> classes_{DEBUG_NAME_VAL("Meta")};
+	eastl::hash_map<id_t, ClassInfo> classes_{DEBUG_NAME_VAL("Meta")};
 	static ClassRegistry*					  instance_;
 };
 
@@ -211,43 +211,43 @@ ClassInfo::ClassInfo(TypeTag<T>) : type_info_{&Typeof<typename Rebinder<T>::owne
 template<Size N>
 const PropertyInfo& ClassInfo::GetPropertyInfo(const char (&name)[N]) const
 {
-	return GetPropertyInfo(Hash::Fnv1AHash(name));
+	return GetPropertyInfo(Hash::Fnv1A(name));
 }
 
 template<Size N>
 const MethodInfo& ClassInfo::GetMethodInfo(const char (&name)[N]) const
 {
-	return GetMethodInfo(Hash::Fnv1AHash(name));
+	return GetMethodInfo(Hash::Fnv1A(name));
 }
 
 template<Size N>
 bool ClassInfo::HasPropertyInfo(const char (&name)[N]) const
 {
-	return HasPropertyInfo(Hash::Fnv1AHash(name));
+	return HasPropertyInfo(Hash::Fnv1A(name));
 }
 
 template<Size N>
 bool ClassInfo::HasMethodInfo(const char (&name)[N]) const
 {
-	return HasMethodInfo(Hash::Fnv1AHash(name));
+	return HasMethodInfo(Hash::Fnv1A(name));
 }
 
 template<Size N, typename... Args>
 Value ClassInfo::InvokeMethod(const char (&name)[N], const void* owner, Args&&... args) const
 {
-	return InvokeMethod(Hash::Fnv1AHash(name), owner, eastl::forward<Args>(args)...);
+	return InvokeMethod(Hash::Fnv1A(name), owner, eastl::forward<Args>(args)...);
 }
 
 template<Size N>
 void ClassInfo::SetProperty(const char (&name)[N], void* owner, Value value) const
 {
-	SetProperty(Hash::Fnv1AHash(name), owner, value);
+	SetProperty(Hash::Fnv1A(name), owner, value);
 }
 
 template<Size N>
 Value ClassInfo::GetProperty(const char (&name)[N], const void* owner) const
 {
-	return GetProperty(Hash::Fnv1AHash(name), owner);
+	return GetProperty(Hash::Fnv1A(name), owner);
 }
 
 template<typename T>
@@ -281,7 +281,7 @@ const ClassInfo& Classof(const T&)
 
 const ClassInfo& Classof(const char* name);
 
-const ClassInfo& Classof(Hash::fnv1a_t id);
+const ClassInfo& Classof(id_t id);
 
 template<typename T, T Value>
 struct MemberAccessor
@@ -291,22 +291,5 @@ struct MemberAccessor
 };
 
 } // namespace Meta
-
-#define META_CLASS_INFO_BEGIN()                                                                                        \
-	namespace Meta                                                                                                     \
-	{                                                                                                                  \
-	template<>                                                                                                         \
-		struct ClassInfo::Rebinder<META_CLASS_INFO_OWNER>: ClassInfo::Binder < META_CLASS_INFO_OWNER,
-
-#define CTOR_BINDER(NAME)	  CtorInfo::Rebinder<META_CLASS_INFO_OWNER::Ctor_##NAME##_ID>
-#define PROPERTY_BINDER(NAME) PropertyInfo::Rebinder<META_CLASS_INFO_OWNER::Property_##NAME##_ID>
-#define METHOD_BINDER(NAME)	  MethodInfo::Rebinder<META_CLASS_INFO_OWNER::Method_##NAME##_ID>
-
-#define BINDERS(...) TypeTraits::TypeList<__VA_ARGS__>
-#define FLAGS(VALUE)
-
-#define META_CLASS_INFO_END()                                                                                          \
-	> {};                                                                                                              \
-	}
 
 #endif

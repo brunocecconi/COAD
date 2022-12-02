@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef RESULT_H
-#define RESULT_H
+#ifndef CORE_RESULT_H
+#define CORE_RESULT_H
 
 #include "Core/BaseTypes.h"
 
@@ -16,124 +16,195 @@
 #pragma warning(disable : 4100)
 #endif
 
-#if defined(RELEASE)
-#undef USE_RESULT
-#define USE_RESULT 0
-#endif
-
-#if USE_RESULT
-
 #define RESULT Result
 #define RESULT_VAR(NAME)                                                                                               \
 	RESULT* NAME = nullptr;                                                                                            \
 	(void)result
-#define RESULT_SET_VAR(NAME, VALUE) NAME = (Result*)(VALUE)
+#define RESULT_SET_VAR(NAME, VALUE) NAME = (Result)(VALUE)
 #define RESULT_GET_VAR(NAME)		NAME
+#define RESULT_LAST					RESULT_GET_VAR(result) ? *RESULT_GET_VAR(result) : eResultOk
 #define RESULT_SET(VALUE)                                                                                              \
 	if (result)                                                                                                        \
 	RESULT_SET_VAR(*result, VALUE)
 #define RESULT_GET()  RESULT_GET_VAR(*result)
-#define RESULT_OK_PTR (Result*)(eResultOk)
+#define RESULT_LAST_COMPARE(RESULT)  (RESULT_LAST == RESULT)
+#define RESULT_OK_PTR (Result)(eResultOk)
 #define RESULT_OK()	  RESULT_SET(eResultOk)
 #define RESULT_ERROR(VALUE, ...)                                                                                       \
 	RESULT_SET(VALUE);                                                                                                 \
 	return __VA_ARGS__
-#define RESULT_ARG_OPT		  , RESULT** result = nullptr
-#define RESULT_ARG			  , RESULT** result
-#define RESULT_ARG_PASS		  , result
-#define RESULT_ARG_SINGLE_OPT RESULT** result = nullptr
-#define RESULT_ARG_SINGLE	  RESULT** result
 
-#define ENSURE_RESULT_NL(RESULT, ...)                                                                                  \
+#define RESULT_PARAM_DEFINE			 RESULT* result = nullptr
+#define RESULT_PARAM_IMPL			 RESULT* result
+#define RESULT_ARG_PASS				 result
+#define RESULT_ARG_VALUE_PASS		 &result
+
+#define RESULT_CONDITION_ENSURE_NOLOG(EXP, RESULT, ...)                                                                \
+	if (!(EXP))                                                                                                        \
+	{                                                                                                                  \
+		RESULT_ERROR(RESULT, __VA_ARGS__);                                                                             \
+	}
+
+#define RESULT_CONDITION_ENSURE(EXP, RESULT, ...)                                                                      \
+	if (!(EXP))                                                                                                        \
+	{                                                                                                                  \
+		printf(CONSOLE_COLOR_LIGHT_YELLOW CONSOLE_COLOR_BOLD                                                           \
+			   "RESULT ENSURE FAILED "                                                                                 \
+			   " at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                           \
+			   __FILE__, __LINE__, ResultString(RESULT), ResultInfo(RESULT));                                          \
+		RESULT_ERROR(RESULT, __VA_ARGS__);                                                                             \
+	}
+
+#define RESULT_ENSURE_NOLOG(RESULT, ...)                                                                               \
 	if ((result ? *result : RESULT_OK_PTR) != RESULT_OK_PTR)                                                           \
 	{                                                                                                                  \
 		return __VA_ARGS__;                                                                                            \
 	}
 
-#define ENSURE_RESULT(RESULT, ...)                                                                                     \
+#define RESULT_VALUE_ENSURE_NOLOG(RESULT, ...)                                                                         \
+	if (result != RESULT_OK_PTR)                                                                                       \
+	{                                                                                                                  \
+		return __VA_ARGS__;                                                                                            \
+	}
+
+#define RESULT_ENSURE(RESULT, ...)                                                                                     \
 	if ((result ? *result : RESULT_OK_PTR) != RESULT_OK_PTR)                                                           \
 	{                                                                                                                  \
 		printf(CONSOLE_COLOR_LIGHT_YELLOW CONSOLE_COLOR_BOLD                                                           \
 			   "ENSURE RESULT FAILED '" #RESULT                                                                        \
 			   "' at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                          \
 			   __FILE__, __LINE__, ResultString(RESULT), ResultInfo(RESULT));                                          \
-		return __VA_ARGS__;                                                                                            \
+		RESULT_ERROR(RESULT, __VA_ARGS__);                                                                             \
 	}
 
-#define ENSURE_LAST_RESULT_NL(...)                                                                                     \
+#define RESULT_VALUE_ENSURE(RESULT, ...)                                                                               \
+	if (result != RESULT_OK_PTR)                                                                                       \
+	{                                                                                                                  \
+		printf(CONSOLE_COLOR_LIGHT_YELLOW CONSOLE_COLOR_BOLD                                                           \
+			   "ENSURE RESULT FAILED '" #RESULT                                                                        \
+			   "' at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                          \
+			   __FILE__, __LINE__, ResultString(RESULT), ResultInfo(RESULT));                                          \
+		RESULT_ERROR(RESULT, __VA_ARGS__);                                                                             \
+	}
+
+#define RESULT_ENSURE_LAST_NOLOG(...)                                                                                  \
 	if ((result ? (*result != RESULT_OK_PTR) : false))                                                                 \
 	{                                                                                                                  \
 		return __VA_ARGS__;                                                                                            \
 	}
 
-#define ENSURE_LAST_RESULT(...)                                                                                        \
+#define RESULT_VALUE_ENSURE_LAST_NOLOG(...)                                                                            \
+	if (result != RESULT_OK_PTR)                                                                                       \
+	{                                                                                                                  \
+		return __VA_ARGS__;                                                                                            \
+	}
+
+#define RESULT_ENSURE_LAST(...)                                                                                        \
 	if ((result ? (*result != RESULT_OK_PTR) : false))                                                                 \
 	{                                                                                                                  \
 		printf(CONSOLE_COLOR_LIGHT_YELLOW CONSOLE_COLOR_BOLD                                                           \
 			   "ENSURE LAST RESULT FAILED "                                                                            \
 			   " at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                           \
-			   __FILE__, __LINE__, ResultString((Result)(Uint64)result), ResultInfo((Result)(Uint64)result));          \
+			   __FILE__, __LINE__, ResultString(*result), ResultInfo(*result));                                        \
 		return __VA_ARGS__;                                                                                            \
 	}
 
-#define ENFORCE_RESULT_NL(RESULT)                                                                                      \
+#define RESULT_VALUE_ENSURE_LAST(...)                                                                                  \
+	if (result != RESULT_OK_PTR)                                                                                       \
+	{                                                                                                                  \
+		printf(CONSOLE_COLOR_LIGHT_YELLOW CONSOLE_COLOR_BOLD                                                           \
+			   "ENSURE LAST RESULT FAILED "                                                                            \
+			   " at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                           \
+			   __FILE__, __LINE__, ResultString(result), ResultInfo(result));                                          \
+		return __VA_ARGS__;                                                                                            \
+	}
+
+#define RESULT_ENFORCE_NOLOG(RESULT)                                                                                   \
 	if ((RESULT) != RESULT_OK_PTR)                                                                                     \
 	{                                                                                                                  \
 		abort();                                                                                                       \
 	}
 
-#define ENFORCE_RESULT(RESULT)                                                                                         \
+#define RESULT_ENFORCE(RESULT)                                                                                         \
 	if ((RESULT) != RESULT_OK_PTR)                                                                                     \
 	{                                                                                                                  \
-		printf(CONSOLE_COLOR_LIGHT_RED LOG_COLOR_BOLD                                                                  \
+		printf(CONSOLE_COLOR_LIGHT_RED CONSOLE_COLOR_BOLD                                                              \
 			   "ENFORCE RESULT FAILED '" #RESULT                                                                       \
 			   "' at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                          \
 			   __FILE__, __LINE__, ResultString(RESULT), ResultInfo(RESULT));                                          \
 		abort();                                                                                                       \
 	}
 
-#define ENFORCE_LAST_RESULT_NL()                                                                                       \
+#define RESULT_ENFORCE_LAST_NOLOG()                                                                                    \
 	if ((result ? (*result != RESULT_OK_PTR) : false))                                                                 \
 	{                                                                                                                  \
 		abort();                                                                                                       \
 	}
 
-#define ENFORCE_LAST_RESULT()                                                                                          \
+#define RESULT_VALUE_ENFORCE_LAST_NOLOG()                                                                              \
+	if (result != RESULT_OK_PTR)                                                                                       \
+	{                                                                                                                  \
+		abort();                                                                                                       \
+	}
+
+#define RESULT_ENFORCE_LAST()                                                                                          \
 	if ((result ? (*result != RESULT_OK_PTR) : false))                                                                 \
 	{                                                                                                                  \
 		printf(CONSOLE_COLOR_LIGHT_RED CONSOLE_COLOR_BOLD                                                              \
 			   "ENFORCE LAST RESULT FAILED "                                                                           \
 			   " at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                           \
-			   __FILE__, __LINE__, ResultString((Result)(Uint64)result), ResultInfo((Result)(Uint64)result));          \
+			   __FILE__, __LINE__, ResultString(*result), ResultInfo(*result));                                        \
 		abort();                                                                                                       \
 	}
 
-#define RESULT_ENSURE_CALL(FUNCTION, ...)                                                                              \
-	FUNCTION;                                                                                                          \
-	ENSURE_LAST_RESULT(__VA_ARGS__)
+#define RESULT_VALUE_ENFORCE_LAST()                                                                                    \
+	if (result != RESULT_OK_PTR)                                                                                       \
+	{                                                                                                                  \
+		printf(CONSOLE_COLOR_LIGHT_RED CONSOLE_COLOR_BOLD                                                              \
+			   "ENFORCE LAST RESULT FAILED "                                                                           \
+			   " at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                           \
+			   __FILE__, __LINE__, ResultString(result), ResultInfo(result));                                          \
+		abort();                                                                                                       \
+	}
 
-#define RESULT_ENSURE_CALL_NL(FUNCTION, ...)                                                                           \
-	FUNCTION;                                                                                                          \
-	ENSURE_LAST_RESULT_NL(__VA_ARGS__)
+#define RESULT_ENSURE_CALL(SYMBOL, ...)                                                                                \
+	SYMBOL;                                                                                                            \
+	RESULT_ENSURE_LAST(__VA_ARGS__)
 
-#define RESULT_ENFORCE_CALL(FUNCTION, ...)                                                                             \
-	FUNCTION;                                                                                                          \
-	ENFORCE_LAST_RESULT(__VA_ARGS__)
+#define RESULT_ENSURE_CALL_NOLOG(SYMBOL, ...)                                                                          \
+	SYMBOL;                                                                                                            \
+	RESULT_ENSURE_LAST_NOLOG(__VA_ARGS__)
 
-#define RESULT_ENFORCE_CALL_NL(FUNCTION, ...)                                                                          \
-	FUNCTION;                                                                                                          \
-	ENFORCE_LAST_RESULT_NL(__VA_ARGS__)
+#define RESULT_ENFORCE_CALL(SYMBOL, ...)                                                                               \
+	SYMBOL;                                                                                                            \
+	RESULT_ENFORCE_LAST(__VA_ARGS__)
 
-#ifndef NDEBUG
-#define ASSERT_NL(EXP)			 ENFORCE_NL(EXP)
-#define ASSERT(EXP)				 ENFORCE(EXP)
-#define ASSERT_RESULT_NL(RESULT) ENFORCE_RESULT_NL(RESULT)
-#define ASSERT_RESULT(RESULT)	 ENFORCE_RESULT(RESULT)
+#define RESULT_ENFORCE_CALL_NOLOG(SYMBOL, ...)                                                                         \
+	SYMBOL;                                                                                                            \
+	RESULT_ENFORCE_LAST_NOLOG(__VA_ARGS__)
+
+#define RESULT_VALUE_ENSURE_CALL(SYMBOL, ...)                                                                          \
+	SYMBOL;                                                                                                            \
+	RESULT_VALUE_ENSURE_LAST(__VA_ARGS__)
+
+#define RESULT_VALUE_ENSURE_CALL_NOLOG(SYMBOL, ...)                                                                    \
+	SYMBOL;                                                                                                            \
+	RESULT_VALUE_ENSURE_LAST_NOLOG(__VA_ARGS__)
+
+#define RESULT_VALUE_ENFORCE_CALL(SYMBOL, ...)                                                                         \
+	SYMBOL;                                                                                                            \
+	RESULT_VALUE_ENFORCE_LAST(__VA_ARGS__)
+
+#define RESULT_VALUE_ENFORCE_CALL_NOLOG(SYMBOL, ...)                                                                   \
+	SYMBOL;                                                                                                            \
+	RESULT_VALUE_ENFORCE_LAST_NOLOG(__VA_ARGS__)
+
+#ifndef RELEASE
+#define RESULT_ASSERT_NOLOG(RESULT) RESULT_ENFORCE_NOLOG(RESULT)
+#define RESULT_ASSERT(RESULT)		RESULT_ENFORCE(RESULT)
 #else
-#define ASSERT_NL(EXP)
-#define ASSERT(EXP)
-#define ASSERT_RESULT_NL(RESULT)
-#define ASSERT_RESULT(RESULT)
+#define RESULT_ASSERT_NOLOG(RESULT)
+#define RESULT_ASSERT(RESULT)
 #endif
 
 /**
@@ -179,6 +250,8 @@ enum Result : Uint64
 	 */
 	eResultErrorZeroSize,
 
+	eResultErrorNotImplemented,
+
 	/**
 	 * @brief Out of memory.
 	 *
@@ -203,6 +276,12 @@ enum Result : Uint64
 	 *
 	 */
 	eResultErrorMemoryNotEnoughBufferMemory,
+
+	eResultErrorMemoryOutOfBuffer,
+
+	eResultErrorStreamInvalidSizes,
+	eResultErrorStreamFailedToWrite,
+	eResultErrorStreamFailedToRead,
 
 	/**
 	 * @brief Exceeded max path length.
@@ -282,7 +361,15 @@ enum Result : Uint64
 	eResultErrorEcsComponentDataNotAdded,
 	eResultErrorEcsInvalidEntityId,
 	eResultErrorEcsInvalidComponentIndex,
-	eResultErrorEcsNoEntityAvailable
+	eResultErrorEcsNoEntityAvailable,
+
+	eResultErrorAssetFailedToAdd,
+	eResultErrorAssetLoadFailedInvalidFile,
+	eResultErrorAssetObjectLoadFailed,
+	eResultErrorAssetAlreadyLoaded,
+	eResultErrorAssetWasNotLoaded,
+	eResultErrorAssetFailedToImport,
+	eResultErrorAssetFailedToOpenRegistryFile
 };
 
 /**
@@ -304,27 +391,38 @@ static constexpr char* ResultString(const Result value)
 	{
 		RESULT_STRING_CASE_IMPL(Ok);
 		RESULT_STRING_CASE_IMPL(Fail);
-		/*RESULT_STRING_CASE_IMPL(ERROR_NULL_PTR);
-		RESULT_STRING_CASE_IMPL(ERROR_ZERO_SIZE);
-		RESULT_STRING_CASE_IMPL(ERROR_PTR_IS_NOT_NULL);
+		RESULT_STRING_CASE_IMPL(ErrorNullPtr);
+		RESULT_STRING_CASE_IMPL(ErrorZeroSize);
+		RESULT_STRING_CASE_IMPL(ErrorPtrIsNotNull);
 
-		RESULT_STRING_CASE_IMPL(ERROR_MEMORY__OUT_OF_MEMORY);
-		RESULT_STRING_CASE_IMPL(ERROR_MEMORY__NOT_ENOUGH_BUFFER_MEMORY);
+		RESULT_STRING_CASE_IMPL(ErrorMemoryOutOfMemory);
+		RESULT_STRING_CASE_IMPL(ErrorMemoryNotEnoughBufferMemory);
+		RESULT_STRING_CASE_IMPL(ErrorMemoryOutOfBuffer);
 
-		RESULT_STRING_CASE_IMPL(ERROR_IO__EXCEEDED_MAX_PATH_LENGTH);
+		RESULT_STRING_CASE_IMPL(ErrorStreamInvalidSizes);
+		RESULT_STRING_CASE_IMPL(ErrorStreamFailedToWrite);
+		RESULT_STRING_CASE_IMPL(ErrorStreamFailedToRead);
 
-		RESULT_STRING_CASE_IMPL(ERROR_IO__FILE_INVALID_FLAGS);
-		RESULT_STRING_CASE_IMPL(ERROR_IO__FILE_OPEN_FAILED);
-		RESULT_STRING_CASE_IMPL(ERROR_IO__FILE_READ_FAILED);
-		RESULT_STRING_CASE_IMPL(ERROR_IO__FILE_WRITE_FAILED);
-		RESULT_STRING_CASE_IMPL(ERROR_IO__FILE_SEEK_FAILED);
-		RESULT_STRING_CASE_IMPL(ERROR_IO__FILE_FLUSH_FAILED);
-		RESULT_STRING_CASE_IMPL(ERROR_IO__FILE_CLOSE_FAILED);*/
+		RESULT_STRING_CASE_IMPL(ErrorIoExceededMaxPathLength);
+
+		RESULT_STRING_CASE_IMPL(ErrorIoFileInvalidFlags);
+		RESULT_STRING_CASE_IMPL(ErrorIoFileOpenFailed);
+		RESULT_STRING_CASE_IMPL(ErrorIoFileReadFailed);
+		RESULT_STRING_CASE_IMPL(ErrorIoFileWriteFailed);
+		RESULT_STRING_CASE_IMPL(ErrorIoFileSeekFailed);
+		RESULT_STRING_CASE_IMPL(ErrorIoFileFlushFailed);
+		RESULT_STRING_CASE_IMPL(ErrorIoFileCloseFailed);
 
 		RESULT_STRING_CASE_IMPL(ErrorEcsComponentAlreadyEnabled);
 		RESULT_STRING_CASE_IMPL(ErrorEcsComponentNotEnabled);
 		RESULT_STRING_CASE_IMPL(ErrorEcsInvalidEntityId);
 		RESULT_STRING_CASE_IMPL(ErrorEcsNoEntityAvailable);
+
+		RESULT_STRING_CASE_IMPL(ErrorAssetFailedToAdd);
+		RESULT_STRING_CASE_IMPL(ErrorAssetLoadFailedInvalidFile);
+		RESULT_STRING_CASE_IMPL(ErrorAssetAlreadyLoaded);
+		RESULT_STRING_CASE_IMPL(ErrorAssetWasNotLoaded);
+		RESULT_STRING_CASE_IMPL(ErrorAssetFailedToImport);
 
 	default:;
 	}
@@ -379,38 +477,5 @@ static constexpr char* ResultInfo(const Result value)
 	}
 	return (char*)"INVALID RESULT";
 }
-
-#else
-
-#define RESULT
-#define RESULT_VAR(NAME)
-#define RESULT_SET_VAR(NAME, VALUE)
-#define RESULT_GET_VAR(NAME)
-#define RESULT_SET(VALUE)
-#define RESULT_GET()
-#define RESULT_OK_PTR
-#define RESULT_OK()
-#define RESULT_ERROR(VALUE, ...)
-#define RESULT_ARG_OPT
-#define RESULT_ARG
-#define RESULT_ARG_PASS
-#define RESULT_ARG_SINGLE_OPT
-#define RESULT_ARG_SINGLE
-
-#define ENSURE_RESULT_NL(RESULT, ...)
-#define ENSURE_RESULT(RESULT, ...)
-#define ENSURE_LAST_RESULT(...)
-#define ENSURE_LAST_RESULT_NL(...)
-#define ENFORCE_RESULT_NL(RESULT)
-#define ENFORCE_RESULT(RESULT)
-#define ENFORCE_LAST_RESULT_NL(RESULT)
-#define ENFORCE_LAST_RESULT(RESULT)
-
-#define RESULT_ENSURE_CALL(FUNCTION, ...)	  FUNCTION
-#define RESULT_ENSURE_CALL_NL(FUNCTION, ...)  FUNCTION
-#define RESULT_ENFORCE_CALL(FUNCTION, ...)	  FUNCTION
-#define RESULT_ENFORCE_CALL_NL(FUNCTION, ...) FUNCTION
-
-#endif
 
 #endif

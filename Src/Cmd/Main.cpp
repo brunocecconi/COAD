@@ -10,11 +10,11 @@
 #include <mimalloc.h>
 #include <memory>
 #include <algorithm>
-#include "Core/IO.h"
+#include "Core/Io.h"
 #include "Core/Assert.h"
 #include "Core/Thread.h"
 #include "Core/Allocator.h"
-#include "Core/IO.h"
+#include "Core/Io.h"
 
 #include <thread>
 #include <chrono>
@@ -34,6 +34,7 @@
 #include "Meta/Value.h"
 #include "Core/RawBuffer.h"
 #include "Meta/MethodInfo.h"
+#include "Asset/Registry.h"
 
 int Vsnprintf8(char* pDestination, size_t n, const char* pFormat, va_list arguments)
 {
@@ -115,6 +116,7 @@ META_TYPE_BINDER_SPECIALIZATION(TestCtor)
 		META_TYPE_BINDER_DEFAULT_OPERATION_COPY_ASSIGN(), META_TYPE_BINDER_DEFAULT_OPERATION_DTOR(), TO_STRING)
 };
 } // namespace Meta
+META_TYPE_AUTO_REGISTER(TestCtor);
 
 META_METHOD_INFO_BINDER_DEFAULT(TestCtor, IsEven, bool, 0, Meta::MethodInfo::eCallable,
 								META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS1, Int32);
@@ -143,10 +145,9 @@ META_CTOR_INFO_BINDER(TestCtor, 2, 0, eastl::string_view)
 
 } // namespace Meta
 
-#undef META_CLASS_INFO_OWNER
-#define META_CLASS_INFO_OWNER TestCtor
-
-META_CLASS_INFO_BEGIN()
+#undef META_CLASS_INFO_TARGET
+#define META_CLASS_INFO_TARGET TestCtor
+META_CLASS_INFO_BEGIN(0)
 	BINDERS(CTOR_BINDER(0)),
 	BINDERS(PROPERTY_BINDER(number_)),
 	BINDERS(METHOD_BINDER(IsEven))
@@ -166,31 +167,28 @@ enum TestEnum
 
 META_TYPE_BINDER_DEFAULT_NO_TO_STRING(TestEnum)
 
-namespace Meta
-{
-template<>
-struct EnumInfo::Rebinder<TestEnum>: Binder<TestEnum>
-{
-	static auto Pairs()
-	{
-		return eastl::vector<eastl::pair<eastl::string_view, Int64>>{{{"eNone", TestEnum::eNone},
-																	  {"eFirst", TestEnum::eFirst},
-																	  {"eSecond", TestEnum::eSecond},
-																	  {"eThird", TestEnum::eThird}}};
-	}
-};
-} // namespace Meta
+#undef META_ENUM_INFO_TARGET
+#define META_ENUM_INFO_TARGET TestEnum
+META_ENUM_INFO_BINDER_BEGIN(0)
+	ENUM_VALUE(eNone),
+	ENUM_VALUE(eFirst),
+	ENUM_VALUE(eSecond),
+	ENUM_VALUE(eThird)
+META_ENUM_INFO_BINDER_END();
 
 struct ASDB
 {
 	char v[256];
 };
-META_TYPE_BINDER_DEFAULT_NO_TO_STRING(ASDB)
+META_TYPE_BINDER_BEGIN(ASDB)
+	META_TYPE_BINDER_NO_OPERATIONS()
+META_TYPE_BINDER_END()
+META_TYPE_AUTO_REGISTER(ASDB);
 
 int main(int argc, char** argv)
 {
 #if USE_RESULT
-	Result** result = nullptr;
+	Result result = eResultOk;
 	(void)result;
 #endif
 
@@ -218,6 +216,16 @@ int main(int argc, char** argv)
 	{
 		printf("EVEN\n");
 	}
+
+	//l_asset_reg.Import<Asset::Object>("./test.txt" RESULT_ARG_PASS);
+	Asset::Registry::Instance(&RESULT_ARG_PASS);
+
+	RESULT_VALUE_ENSURE_CALL(Asset::Registry::Instance().Load<Asset::Object>("./test.txt", &RESULT_ARG_PASS), -1);
+
+	RESULT_VALUE_ENSURE_CALL(const auto& l_test_asset = 
+		Asset::Registry::Instance().Get<Asset::Object>("./test.txt", &RESULT_ARG_PASS), -1);
+	(void)l_test_asset;
+	printf("%s\n", l_test_asset->ToString(256).c_str());
 
 	// const auto& l_test_enum_info = Meta::Enumof<TestEnum>();
 	// TestEnum t = eSecond;

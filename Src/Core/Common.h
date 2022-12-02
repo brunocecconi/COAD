@@ -19,9 +19,11 @@
 #include "Core/Compiler.h"
 #include "Core/Platform.h"
 #include "Core/Types.h"
+#include "Core/Assert.h"
 #include "Core/Log.h"
 #include "Core/Memory.h"
 #include "Core/Lang.h"
 #include "Core/TypeTraits.h"
+#include "Core/Hash.h"
 
 #endif

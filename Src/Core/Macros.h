@@ -16,6 +16,7 @@
 #define CSTR_PASS(X)	  (char*)#X,
 #define PASS(X)			  X
 #define EMPTY
+#define UNUSED(X) (void)X
 
 #define _NUM_ARGS(X100, X99, X98, X97, X96, X95, X94, X93, X92, X91, X90, X89, X88, X87, X86, X85, X84, X83, X82, X81, \
 				  X80, X79, X78, X77, X76, X75, X74, X73, X72, X71, X70, X69, X68, X67, X66, X65, X64, X63, X62, X61,  \

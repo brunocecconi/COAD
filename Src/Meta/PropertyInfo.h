@@ -48,7 +48,7 @@ public:
 	 * @tparam Id Target id.
 	 *
 	 */
-	template<Hash::fnv1a_t Id>
+	template<id_t Id>
 	struct Rebinder;
 
 	/**
@@ -61,7 +61,7 @@ public:
 	 * @tparam Flags
 	 * @tparam Id
 	 */
-	template<Hash::fnv1a_t Id, typename Owner, typename T, Uint32 Flags = 0>
+	template<id_t Id, typename Owner, typename T, Uint32 Flags = 0>
 	struct Binder
 	{
 		using owner_t	   = Owner;
@@ -103,7 +103,7 @@ public:
 	NODISCARD const TypeInfo& OwnerType() const;
 	NODISCARD const TypeInfo& Type() const;
 	NODISCARD const char*	  Name() const;
-	NODISCARD Hash::fnv1a_t Id() const;
+	NODISCARD id_t Id() const;
 	NODISCARD Uint32		Flags() const;
 	NODISCARD eastl::string ToString(Uint64 capacity = 256) const;
 
@@ -111,7 +111,7 @@ private:
 	const TypeInfo&		  owner_type_info_;
 	const TypeInfo&		  type_info_;
 	const char*			  name_;
-	Hash::fnv1a_t		  id_;
+	id_t		  id_;
 	Uint32				  flags_;
 	binder_set_function_t set_function_;
 	binder_get_function_t get_function_;
@@ -138,63 +138,5 @@ PropertyInfo::PropertyInfo(RebinderType)
 }
 
 } // namespace Meta
-
-#define META_REBINDER_PROPERTY(OWNER, PROPERTY)                                                                        \
-public:                                                                                                                \
-	static constexpr auto Property_##PROPERTY##_ID = #OWNER "::" #PROPERTY##_fnv1a;                                    \
-                                                                                                                       \
-private:                                                                                                               \
-	friend struct Meta::PropertyInfo::Rebinder<Property_##PROPERTY##_ID>
-
-#define META_PROPERTY_INFO_BINDER(OWNER, TYPE, NAME_SYMBOL, FLAGS)                                                     \
-	template<>                                                                                                         \
-	struct Meta::PropertyInfo::Rebinder<OWNER::Property_##NAME_SYMBOL##_ID>                                            \
-		: Binder<OWNER::Property_##NAME_SYMBOL##_ID, OWNER, TYPE, FLAGS>
-
-#define META_PROPERTY_INFO_BINDER_BODY(OWNER, NAME_SYMBOL)                                                             \
-	static constexpr char NAME[64]	 = {#OWNER "::" #NAME_SYMBOL};                                                     \
-	static constexpr auto MEMBER_PTR = &OWNER::NAME_SYMBOL;
-
-#define META_PROPERTY_INFO_BINDER_SET_CUSTOM(BODY)                                                                     \
-	static void Set(const body_t& body)                                                                                \
-	{                                                                                                                  \
-		if constexpr (FLAGS & (Meta::PropertyInfo::eWriteOnly | Meta::PropertyInfo::eReadWrite))                       \
-		{                                                                                                              \
-			BODY                                                                                                       \
-		}                                                                                                              \
-	}
-
-#define META_PROPERTY_INFO_BINDER_GET_CUSTOM(BODY)                                                                     \
-	static void* Get(const body_t& body)                                                                               \
-	{                                                                                                                  \
-		if constexpr (FLAGS & (Meta::PropertyInfo::eReadOnly | Meta::PropertyInfo::eReadWrite))                        \
-		{                                                                                                              \
-			BODY                                                                                                       \
-		}                                                                                                              \
-		else                                                                                                           \
-		{                                                                                                              \
-			return nullptr;                                                                                            \
-		}                                                                                                              \
-	}
-
-#define META_PROPERTY_INFO_BINDER_SET_DEFAULT()                                                                        \
-	META_PROPERTY_INFO_BINDER_SET_CUSTOM(                                                                              \
-		if constexpr (FLAGS & (Meta::PropertyInfo::eWriteOnly | Meta::PropertyInfo::eReadWrite)) {                     \
-			static_cast<owner_t*>(body.owner)->*MEMBER_PTR = *static_cast<type_t*>(body.value);                        \
-		})
-
-#define META_PROPERTY_INFO_BINDER_GET_DEFAULT()                                                                        \
-	META_PROPERTY_INFO_BINDER_GET_CUSTOM(return &(static_cast<owner_t*>(body.owner)->*MEMBER_PTR);)
-
-#define META_PROPERTY_INFO_BINDER_DEFAULT(OWNER, TYPE, NAME_SYMBOL, FLAGS)                                             \
-	namespace Meta                                                                                                     \
-	{                                                                                                                  \
-	META_PROPERTY_INFO_BINDER(OWNER, TYPE, NAME_SYMBOL, FLAGS)                                                         \
-	{                                                                                                                  \
-		META_PROPERTY_INFO_BINDER_BODY(OWNER, NAME_SYMBOL);                                                            \
-		META_PROPERTY_INFO_BINDER_SET_DEFAULT();                                                                       \
-		META_PROPERTY_INFO_BINDER_GET_DEFAULT();                                                                       \
-	};                                                                                                                 \
-	}
 
 #endif

@@ -12,7 +12,7 @@
 
 #include "Core/common.h"
 
-#if defined(RELEASE)
+#ifdef RELEASE
 #undef USE_SAFE_PTR
 #define USE_SAFE_PTR 0
 #endif
@@ -22,32 +22,32 @@
 template<typename T, typename = void>
 struct PtrTransferUnderlyng
 {
-	using Type = T;
+	using type_t = T;
 };
 
 template<typename T>
 struct PtrTransferUnderlyng<T, eastl::void_t<typename T::underlyng_t>>
 {
-	using Type = typename T::underlyng_t;
+	using type_t = typename T::underlyng_t;
 };
 
 template<typename T, bool IsPointer = true>
 struct PtrTransfer
 {
-	using Type = eastl::remove_pointer_t<T>;
+	using type_t = eastl::remove_pointer_t<T>;
 };
 
 template<typename T>
 struct PtrTransfer<T, false>
 {
-	using Type = typename PtrTransferUnderlyng<T>::Type;
+	using type_t = typename PtrTransferUnderlyng<T>::Type;
 };
 
 template<typename T>
-using PtrTransferType = typename PtrTransfer<T, eastl::is_pointer_v<T>>::Type;
+using ptr_transfer_type_t = typename PtrTransfer<T, eastl::is_pointer_v<T>>::type_t;
 
 template<typename T>
-static PtrTransferType<T>* AssertIfPtrInvalid(PtrTransferType<T>* value, const char* function, const char* file,
+static ptr_transfer_type_t<T>* AssertIfPtrInvalid(ptr_transfer_type_t<T>* value, const char* function, const char* file,
 											  const Uint32 line)
 {
 	if (!value)
@@ -64,7 +64,7 @@ static PtrTransferType<T>* AssertIfPtrInvalid(PtrTransferType<T>* value, const c
 }
 
 template<typename T>
-static PtrTransferType<T>* WarnIfPtrInvalid(PtrTransferType<T>* value, const char* function, const char* file,
+static ptr_transfer_type_t<T>* WarnIfPtrInvalid(ptr_transfer_type_t<T>* value, const char* function, const char* file,
 											const Uint32 line)
 {
 	if (!value)
@@ -93,7 +93,7 @@ static PtrTransferType<T>* WarnIfPtrInvalid(PtrTransferType<T>* value, const cha
 	}
 
 #define PTR(VALUE)                                                                                                     \
-	Ptr<PtrTransferType<decltype(VALUE)>>                                                                              \
+	Ptr<ptr_transfer_type_t<decltype(VALUE)>>                                                                              \
 	{                                                                                                                  \
 		VALUE, (const char*)__FUNCSIG__, (const char*)__FILE__, (Uint32)__LINE__                                       \
 	}
@@ -119,7 +119,7 @@ public:
 	~Ptr();
 
 public:
-	using UnderlyngType = T;
+	using underlyng_t = T;
 
 	Ptr(T* value, const char* function = nullptr, const char* file = nullptr, Uint32 line = 0u);
 
