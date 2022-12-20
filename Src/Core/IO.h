@@ -20,7 +20,7 @@ namespace Io
 {
 
 #if PLATFORM_OS_DESKTOP
-typedef FILE* FileHandle;
+typedef FILE* file_handle_t;
 
 #define PLATFORM_FS_MAX_PATH MAX_PATH
 
@@ -35,16 +35,16 @@ class Path
 	CLASS_BODY(Path)
 
 public:
-	EXPLICIT Path(const char* file_path = "", RESULT_PARAM_DEFINE);
+	EXPLICIT Path(const char* FilePath = "", RESULT_PARAM_DEFINE);
 	~Path();
 
 public:
-	static constexpr Uint32 MAX = PLATFORM_FS_MAX_PATH;
+	static constexpr uint32_t MAX = PLATFORM_FS_MAX_PATH;
 
 public:
 	NODISCARD bool Exists() const;
 	NODISCARD Path FullPath() const;
-	NODISCARD Path RelativePath(const char* to, RESULT_PARAM_DEFINE) const;
+	NODISCARD Path RelativePath(const char* To, RESULT_PARAM_DEFINE) const;
 	NODISCARD eastl::string Extension();
 	void					RemoveExtension(RESULT_PARAM_DEFINE);
 
@@ -53,10 +53,10 @@ public:
 	bool IsDirectory(RESULT_PARAM_DEFINE) const;
 
 public:
-	const char* data(RESULT_PARAM_DEFINE) const;
+	const char* Data(RESULT_PARAM_DEFINE) const;
 
 private:
-	char value_[MAX] = {};
+	char mValue[MAX] = {};
 };
 
 /**
@@ -68,7 +68,7 @@ class File
 	CLASS_BODY_NON_COPYABLE(File)
 
 public:
-	enum FlagType : Uint32
+	enum EFlagType : uint32_t
 	{
 		eFtNone	  = 0,
 		eFtWrite  = 1,
@@ -76,7 +76,7 @@ public:
 		eFtAppend = 4
 	};
 
-	enum SeekType : Uint32
+	enum ESeekType : uint32_t
 	{
 		eStBegin,
 		eStCurrent,
@@ -85,56 +85,56 @@ public:
 
 public:
 	File();
-	File(const char* file_path, Uint32 flags, RESULT_PARAM_DEFINE);
+	File(const char* FilePath, uint32_t Flags, RESULT_PARAM_DEFINE);
 	~File();
 
 public:
-	void Open(const char* file_path, Uint32 flags, RESULT_PARAM_DEFINE);
-	void OpenRead(const char* file_path, RESULT_PARAM_DEFINE);
-	void OpenWrite(const char* file_path, RESULT_PARAM_DEFINE);
-	void OpenReadWrite(const char* file_path, RESULT_PARAM_DEFINE);
-	void Read(void* data, Uint64 size, RESULT_PARAM_DEFINE) const;
-	void Write(const void* data, Uint64 size, RESULT_PARAM_DEFINE) const;
-	void Seek(Uint64 value, SeekType origin, RESULT_PARAM_DEFINE) const;
-	Uint64 Tell(RESULT_PARAM_DEFINE) const;
-	Uint64 Size(RESULT_PARAM_DEFINE) const;
-	void Flush(RESULT_PARAM_DEFINE) const;
-	void Close(RESULT_PARAM_DEFINE);
+	void	 Open(const char* FilePath, uint32_t Flags, RESULT_PARAM_DEFINE);
+	void	 OpenRead(const char* FilePath, RESULT_PARAM_DEFINE);
+	void	 OpenWrite(const char* FilePath, RESULT_PARAM_DEFINE);
+	void	 OpenReadWrite(const char* FilePath, RESULT_PARAM_DEFINE);
+	void	 Read(void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
+	void	 Write(const void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
+	void	 Seek(uint64_t Value, ESeekType Origin, RESULT_PARAM_DEFINE) const;
+	uint64_t Tell(RESULT_PARAM_DEFINE) const;
+	uint64_t Size(RESULT_PARAM_DEFINE) const;
+	void	 Flush(RESULT_PARAM_DEFINE) const;
+	void	 Close(RESULT_PARAM_DEFINE);
 
-	static void Read(const char* file_path, void* data, Uint64 size, RESULT_PARAM_DEFINE);
-	static void Write(const char* file_path, const void* data, Uint64 size, RESULT_PARAM_DEFINE);
+	static void Read(const char* FilePath, void* Data, uint64_t Size, RESULT_PARAM_DEFINE);
+	static void Write(const char* FilePath, const void* Data, uint64_t Size, RESULT_PARAM_DEFINE);
 
-	template < typename T >
-	static void ReadAll(T& container, const char* file_path, RESULT_PARAM_DEFINE);
+	template<typename T>
+	static void ReadAll(T& Container, const char* FilePath, RESULT_PARAM_DEFINE);
 
 public:
 	template<typename T>
-	File& operator<<(const T& value)
+	File& operator<<(const T& Value)
 	{
-		Write(value);
+		Write(Value);
 		return *this;
 	}
 	template<typename T>
-	File& operator>>(T& value)
+	File& operator>>(T& Value)
 	{
-		Read(value);
+		Read(Value);
 		return *this;
 	}
 
 private:
-	FileHandle handle_;
+	file_handle_t mHandle;
 };
 
 template<typename T>
-void File::ReadAll(T& container, const char* file_path, RESULT_PARAM_IMPL)
+void File::ReadAll(T& Container, const char* FilePath, RESULT_PARAM_IMPL)
 {
 	static_assert(sizeof(typename T::value_type) == 1, "Invalid value_type sizeof.");
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_ENSURE_CALL_NOLOG(const File l_file(file_path, eFtRead, RESULT_ARG_PASS));
-	RESULT_ENSURE_CALL_NOLOG(const auto l_size = l_file.Size(RESULT_ARG_PASS));
-	RESULT_CONDITION_ENSURE_NOLOG(l_size > 0, eResultErrorZeroSize);
-	container.resize(l_size);
-	RESULT_ENSURE_CALL_NOLOG(l_file.Read(container.data(), l_size, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(const File lFile(FilePath, eFtRead, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(const auto lSize = lFile.Size(RESULT_ARG_PASS));
+	RESULT_CONDITION_ENSURE_NOLOG(lSize > 0, eResultErrorZeroSize);
+	Container.resize(lSize);
+	RESULT_ENSURE_CALL_NOLOG(lFile.Read(Container.data(), lSize, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 

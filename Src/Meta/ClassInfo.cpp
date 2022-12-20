@@ -16,12 +16,12 @@ const TypeInfo& ClassInfo::Type() const
 	return *type_info_;
 }
 
-Uint32 ClassInfo::Flags() const
+uint32_t ClassInfo::Flags() const
 {
 	return flags_;
 }
 
-const CtorInfo& ClassInfo::GetCtorInfo(const Uint64 index) const
+const CtorInfo& ClassInfo::GetCtorInfo(const uint64_t index) const
 {
 	return ctors_[index];
 }
@@ -36,7 +36,7 @@ const MethodInfo& ClassInfo::GetMethodInfo(const id_t id) const
 	return methods_.at(id);
 }
 
-bool ClassInfo::HasCtorInfo(const Uint64 index) const
+bool ClassInfo::HasCtorInfo(const uint64_t index) const
 {
 	return index < ctors_.size();
 }

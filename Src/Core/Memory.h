@@ -26,8 +26,8 @@
 namespace Memory
 {
 
-template<Uint64 Index, Uint64 Size>
-void CtClearMemory(Uint8* data)
+template<uint64_t Index, uint64_t Size>
+void CtClearMemory(uint8_t* data)
 {
 	if constexpr (Index < Size)
 	{
@@ -39,7 +39,7 @@ void CtClearMemory(Uint8* data)
 template<typename T>
 void ClearMemoryType(T* value)
 {
-	CtClearMemory<0, sizeof(T)>(reinterpret_cast<Uint8*>(value));
+	CtClearMemory<0, sizeof(T)>(reinterpret_cast<uint8_t*>(value));
 }
 
 } // namespace Memory

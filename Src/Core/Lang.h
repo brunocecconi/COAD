@@ -15,11 +15,11 @@
 #include <EASTL/vector.h>
 #include <EASTL/set.h>
 
-#define NO_BODY
-
 template<typename T>
 concept is_coad_class =
 	eastl::is_same_v<void, eastl::void_t<typename T::CoadClass>> && eastl::is_same_v<typename T::this_t, T>;
+
+#define NO_BODY
 
 #define CLASS_BODY_ONLY_HEADER(CLASS_NAME)                                                                             \
 public:                                                                                                                \
@@ -49,7 +49,8 @@ public:                                                                         
 	CLASS_MOVEABLE(CLASS_NAME)                                                                                         \
 	CLASS_COPYABLE(CLASS_NAME)
 
-#define CLASS_BODY_NON_MOVEABLE_COPYABLE(CLASS_NAME) CLASS_BODY_CUSTOM(CLASS_NAME, NO_BODY, NO_BODY)
+#define CLASS_BODY_NON_MOVEABLE_COPYABLE(CLASS_NAME)                                                                   \
+	CLASS_BODY_CUSTOM(CLASS_NAME, CLASS_NON_MOVEABLE(CLASS_NAME), CLASS_NON_COPYABLE(CLASS_NAME))
 
 #define CLASS_BODY_NON_MOVEABLE(CLASS_NAME)                                                                            \
 	CLASS_BODY_CUSTOM(CLASS_NAME, CLASS_NON_MOVEABLE(CLASS_NAME), CLASS_COPYABLE(CLASS_NAME))
@@ -87,18 +88,20 @@ public:
 	CLASS_NAME(const CLASS_NAME&) noexcept			  = delete;                                                        \
 	CLASS_NAME& operator=(const CLASS_NAME&) noexcept = delete;
 
-#define CLASS_VALIDATION(CLASS_NAME, ...)                                                                                   \
-	template<> struct ClassValidation<CLASS_NAME>	\
-	{	\
-		static_assert(is_coad_class<CLASS_NAME>,                                                                           \
-				  "Invalid COAD class. Hint: You need to put CLASS_BODY() macro inside the class.");                   \
-		static_assert(!eastl::is_polymorphic_v<CLASS_NAME>, "The class cannot be polymorphic.");                           \
-		static_assert(!eastl::is_trivially_constructible_v<CLASS_NAME>, "The class cannot be trivially constructible.");   \
-		static_assert(!eastl::is_trivially_destructible_v<CLASS_NAME>, "The class cannot be trivially destructible.");	\
-		__VA_ARGS__	\
+#define CLASS_VALIDATION(CLASS_NAME, ...)                                                                              \
+	template<>                                                                                                         \
+	struct ClassValidation<CLASS_NAME>                                                                                 \
+	{                                                                                                                  \
+		static_assert(is_coad_class<CLASS_NAME>,                                                                       \
+					  "Invalid COAD class. Hint: You need to put CLASS_BODY() macro inside the class.");               \
+		static_assert(!eastl::is_polymorphic_v<CLASS_NAME>, "The class cannot be polymorphic.");                       \
+		static_assert(!eastl::is_trivially_constructible_v<CLASS_NAME>,                                                \
+					  "The class cannot be trivially constructible.");                                                 \
+		static_assert(!eastl::is_trivially_destructible_v<CLASS_NAME>, "The class cannot be trivially destructible."); \
+		__VA_ARGS__                                                                                                    \
 	}
 
-template < typename ... >
+template<typename...>
 struct ClassValidation;
 
 #endif

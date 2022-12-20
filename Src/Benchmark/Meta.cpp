@@ -49,19 +49,19 @@ void operator delete[](void* ptr)
 }
 void operator delete(void* ptr, std::align_val_t al)
 {
-	mi_free_aligned(ptr, (Uint64)al);
+	mi_free_aligned(ptr, (uint64_t)al);
 }
 
 void operator delete[](void* ptr, std::align_val_t al)
 {
-	mi_free_aligned(ptr, (Uint64)al);
+	mi_free_aligned(ptr, (uint64_t)al);
 }
 
 static void TypeInfo_GetByTypename(benchmark::State& state)
 {
 	for (auto _ : state)
 	{
-		(void)Meta::Typeof<Int64>();
+		(void)Meta::Typeof<int64_t>();
 	}
 }
 

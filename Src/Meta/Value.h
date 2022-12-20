@@ -72,16 +72,16 @@ public:
 public:
 	NODISCARD const void*	 AsGeneric() const;
 	NODISCARD const bool&	 AsBool() const;
-	NODISCARD const Int8&	 AsInt8() const;
-	NODISCARD const Int16&	 AsInt16() const;
-	NODISCARD const Int32&	 AsInt32() const;
-	NODISCARD const Int64&	 AsInt64() const;
-	NODISCARD const Uint8&	 AsUint8() const;
-	NODISCARD const Uint16&	 AsUint16() const;
-	NODISCARD const Uint32&	 AsUint32() const;
-	NODISCARD const Uint64&	 AsUint64() const;
-	NODISCARD const Float32& AsFloat32() const;
-	NODISCARD const Float64& AsFloat64() const;
+	NODISCARD const int8_t&	 AsInt8() const;
+	NODISCARD const int16_t&	 AsInt16() const;
+	NODISCARD const int32_t&	 AsInt32() const;
+	NODISCARD const int64_t&	 AsInt64() const;
+	NODISCARD const uint8_t&	 AsUint8() const;
+	NODISCARD const uint16_t&	 AsUint16() const;
+	NODISCARD const uint32_t&	 AsUint32() const;
+	NODISCARD const uint64_t&	 AsUint64() const;
+	NODISCARD const float32_t& AsFloat32() const;
+	NODISCARD const float64_t& AsFloat64() const;
 
 	/*NODISCARD const glm::vec2& AsVec2() const;
 	NODISCARD const glm::vec3& AsVec3() const;
@@ -110,7 +110,7 @@ private:
 	T* GetStoragePtr() const;
 
 private:
-	mutable eastl::aligned_storage_t<sizeof(IntPtr) * 4, PLATFORM_ALIGNMENT> iptr_{};
+	mutable eastl::aligned_storage_t<sizeof(intptr_t) * 4, PLATFORM_ALIGNMENT> iptr_{};
 	mutable TypeInfo*														 type_info_{};
 	mutable void*															 eptr_{};
 };

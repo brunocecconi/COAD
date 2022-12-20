@@ -61,7 +61,7 @@ public:
 	 * @tparam Flags
 	 * @tparam Id
 	 */
-	template<id_t Id, typename Owner, typename T, Uint32 Flags = 0>
+	template<id_t Id, typename Owner, typename T, uint32_t Flags = 0>
 	struct Binder
 	{
 		using owner_t	   = Owner;
@@ -104,15 +104,15 @@ public:
 	NODISCARD const TypeInfo& Type() const;
 	NODISCARD const char*	  Name() const;
 	NODISCARD id_t Id() const;
-	NODISCARD Uint32		Flags() const;
-	NODISCARD eastl::string ToString(Uint64 capacity = 256) const;
+	NODISCARD uint32_t		Flags() const;
+	NODISCARD eastl::string ToString(uint64_t capacity = 256) const;
 
 private:
 	const TypeInfo&		  owner_type_info_;
 	const TypeInfo&		  type_info_;
 	const char*			  name_;
 	id_t		  id_;
-	Uint32				  flags_;
+	uint32_t				  flags_;
 	binder_set_function_t set_function_;
 	binder_get_function_t get_function_;
 };

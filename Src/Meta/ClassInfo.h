@@ -12,7 +12,7 @@ namespace Meta
 namespace Detail
 {
 
-template<Uint64 Index, typename Tuple, typename T>
+template<uint64_t Index, typename Tuple, typename T>
 void ApplyVectorTypeList(eastl::vector<T>& vector)
 {
 	if constexpr (Index < eastl::tuple_size_v<Tuple>)
@@ -22,7 +22,7 @@ void ApplyVectorTypeList(eastl::vector<T>& vector)
 	}
 }
 
-template<Uint64 Index, typename Tuple, typename T>
+template<uint64_t Index, typename Tuple, typename T>
 void ApplyHashMapTypeList(eastl::hash_map<id_t, T>& hash_map)
 {
 	if constexpr (Index < eastl::tuple_size_v<Tuple>)
@@ -33,7 +33,7 @@ void ApplyHashMapTypeList(eastl::hash_map<id_t, T>& hash_map)
 	}
 }
 
-template<Size N>
+template<size_t N>
 FORCEINLINE CtorInfo* FindCompatibleCtor(const eastl::span<CtorInfo>&			 ctors,
 										 const eastl::array<const TypeInfo*, N>& params_info)
 {
@@ -75,7 +75,7 @@ public:
 	struct Rebinder;
 
 	template<typename T, typename CtorBindersTypeList, typename PropertyBindersTypeList, typename MethodBindersTypeList,
-			 Uint32 Flags = 0>
+			 uint32_t Flags = 0>
 	struct Binder
 	{
 		using owner_t					  = T;
@@ -101,26 +101,26 @@ public:
 
 public:
 	NODISCARD const TypeInfo& Type() const;
-	NODISCARD Uint32		  Flags() const;
+	NODISCARD uint32_t		  Flags() const;
 
 public:
-	NODISCARD const CtorInfo& GetCtorInfo(Uint64 index) const;
+	NODISCARD const CtorInfo& GetCtorInfo(uint64_t index) const;
 
-	template<Size N>
+	template<size_t N>
 	NODISCARD const PropertyInfo& GetPropertyInfo(const char (&name)[N]) const;
 	NODISCARD const PropertyInfo& GetPropertyInfo(id_t id) const;
 
-	template<Size N>
+	template<size_t N>
 	NODISCARD const MethodInfo& GetMethodInfo(const char (&name)[N]) const;
 	NODISCARD const MethodInfo& GetMethodInfo(id_t id) const;
 
-	NODISCARD bool HasCtorInfo(Uint64 index) const;
+	NODISCARD bool HasCtorInfo(uint64_t index) const;
 
-	template<Size N>
+	template<size_t N>
 	NODISCARD bool HasPropertyInfo(const char (&name)[N]) const;
 	NODISCARD bool HasPropertyInfo(id_t id) const;
 
-	template<Size N>
+	template<size_t N>
 	NODISCARD bool HasMethodInfo(const char (&name)[N]) const;
 	NODISCARD bool HasMethodInfo(id_t id) const;
 
@@ -150,17 +150,17 @@ public:
 	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
 								 Value p6, Value p7, Value p8) const;
 
-	template<Size N, typename... Args>
+	template<size_t N, typename... Args>
 	NODISCARD Value InvokeMethod(const char (&name)[N], const void* owner, Args&&... args) const;
 
 public:
 	void			SetProperty(id_t id, void* owner, Value value) const;
 	NODISCARD Value GetProperty(id_t id, const void* owner) const;
 
-	template<Size N>
+	template<size_t N>
 	void SetProperty(const char (&name)[N], void* owner, Value value) const;
 
-	template<Size N>
+	template<size_t N>
 	NODISCARD Value GetProperty(const char (&name)[N], const void* owner) const;
 
 public:
@@ -168,7 +168,7 @@ public:
 
 private:
 	const TypeInfo*								 type_info_;
-	Uint32										 flags_;
+	uint32_t										 flags_;
 	eastl::vector<CtorInfo>						 ctors_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
 	eastl::hash_map<id_t, PropertyInfo> properties_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
 	eastl::hash_map<id_t, MethodInfo>	 methods_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
@@ -208,43 +208,43 @@ ClassInfo::ClassInfo(TypeTag<T>) : type_info_{&Typeof<typename Rebinder<T>::owne
 		0, typename TypeTraits::TlToTuple<typename Rebinder<T>::method_binder_type_list_t>::type_t>(methods_);
 }
 
-template<Size N>
+template<size_t N>
 const PropertyInfo& ClassInfo::GetPropertyInfo(const char (&name)[N]) const
 {
 	return GetPropertyInfo(Hash::Fnv1A(name));
 }
 
-template<Size N>
+template<size_t N>
 const MethodInfo& ClassInfo::GetMethodInfo(const char (&name)[N]) const
 {
 	return GetMethodInfo(Hash::Fnv1A(name));
 }
 
-template<Size N>
+template<size_t N>
 bool ClassInfo::HasPropertyInfo(const char (&name)[N]) const
 {
 	return HasPropertyInfo(Hash::Fnv1A(name));
 }
 
-template<Size N>
+template<size_t N>
 bool ClassInfo::HasMethodInfo(const char (&name)[N]) const
 {
 	return HasMethodInfo(Hash::Fnv1A(name));
 }
 
-template<Size N, typename... Args>
+template<size_t N, typename... Args>
 Value ClassInfo::InvokeMethod(const char (&name)[N], const void* owner, Args&&... args) const
 {
 	return InvokeMethod(Hash::Fnv1A(name), owner, eastl::forward<Args>(args)...);
 }
 
-template<Size N>
+template<size_t N>
 void ClassInfo::SetProperty(const char (&name)[N], void* owner, Value value) const
 {
 	SetProperty(Hash::Fnv1A(name), owner, value);
 }
 
-template<Size N>
+template<size_t N>
 Value ClassInfo::GetProperty(const char (&name)[N], const void* owner) const
 {
 	return GetProperty(Hash::Fnv1A(name), owner);

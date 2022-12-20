@@ -18,8 +18,9 @@
 #define LOG_DEFINE(NAME)                                                                                               \
 	namespace Log                                                                                                      \
 	{                                                                                                                  \
-	struct NAME                                                                                                        \
+	struct Name##NAME                                                                                                  \
 	{                                                                                                                  \
+		static constexpr auto VALUE = CONSOLE_COLOR_BOLD "{" #NAME "}" CONSOLE_COLOR_DEFAULT;                          \
 	};                                                                                                                 \
 	}
 
@@ -29,7 +30,7 @@
 	struct Category##NAME                                                                                              \
 	{                                                                                                                  \
 		static constexpr auto VERBOSITY = VERBOSITY_SYMBOL;                                                            \
-		static constexpr auto VALUE		= " - " COLORS "[" #NAME "]: ";                                                \
+		static constexpr auto VALUE		= COLORS "[" #NAME "]";                                                        \
 		static void			  Apply()                                                                                  \
 		{                                                                                                              \
 			__VA_ARGS__                                                                                                \
@@ -40,12 +41,16 @@
 namespace Log
 {
 
-Uint64 Verbosity();
-void   SetVerbosity(Uint64 value);
+uint64_t Verbosity();
+void	 SetVerbosity(uint64_t Value);
 
 } // namespace Log
 
-#define LOG(CATEGORY, MSG, ...)                                                                                        \
+LOG_DEFINE(Core);
+
+#define LOG(CATEGORY, MSG, ...) LOGC(CATEGORY, Core, MSG, __VA_ARGS__)
+
+#define LOGC(CATEGORY, NAME, MSG, ...)                                                                                 \
 	if (Log::Category##CATEGORY::VERBOSITY <= Log::Verbosity())                                                        \
 	{                                                                                                                  \
 		time_t l_time = time(NULL);                                                                                    \
@@ -53,19 +58,18 @@ void   SetVerbosity(Uint64 value);
 		char   l_time_string[64];                                                                                      \
 		strftime(l_time_string, sizeof(l_time_string), "%c", l_tm);                                                    \
 		printf(CONSOLE_COLOR_WHITE CONSOLE_COLOR_BOLD "[%s]" CONSOLE_COLOR_DEFAULT, l_time_string);                    \
-		printf("%s" MSG "%s\n", Log::Category##CATEGORY::VALUE, __VA_ARGS__, CONSOLE_COLOR_DEFAULT);                   \
+		printf(" - %s - %s : " MSG "%s\n", Log::Category##CATEGORY::VALUE, Log::Name##NAME::VALUE, __VA_ARGS__,        \
+			   CONSOLE_COLOR_DEFAULT);                                                                                 \
 		Log::Category##CATEGORY::Apply();                                                                              \
 	}
 
 #define LOG_SET_VERBOSITY(CATEGORY) Log::SetVerbosity(Log::Category##CATEGORY::VERBOSITY)
 
-LOG_CATEGORY_DEFINE(0, error, CONSOLE_COLOR_LIGHT_RED)
-LOG_CATEGORY_DEFINE(1, warning, CONSOLE_COLOR_LIGHT_YELLOW)
-LOG_CATEGORY_DEFINE(0, fatal, CONSOLE_COLOR_RED, abort();)
-LOG_CATEGORY_DEFINE(3, info, CONSOLE_COLOR_DEFAULT)
-LOG_CATEGORY_DEFINE(4, verbose, CONSOLE_COLOR_LIGHT_CYAN)
-
-LOG_DEFINE(core)
+LOG_CATEGORY_DEFINE(0, Error, CONSOLE_COLOR_LIGHT_RED)
+LOG_CATEGORY_DEFINE(1, Warning, CONSOLE_COLOR_LIGHT_YELLOW)
+LOG_CATEGORY_DEFINE(0, Fatal, CONSOLE_COLOR_RED, abort();)
+LOG_CATEGORY_DEFINE(3, Info, CONSOLE_COLOR_DEFAULT)
+LOG_CATEGORY_DEFINE(4, Verbose, CONSOLE_COLOR_LIGHT_CYAN)
 
 #else
 
@@ -74,6 +78,12 @@ LOG_DEFINE(core)
 #define LOG(CATEGORY, MSG, ...)
 #define LOG_SET_VERBOSITY(CATEGORY)
 
+#endif
+
+#if PLATFORM_WINDOWS
+#define LOG_INIT() SetConsoleOutputCP(65001);
+#else
+#define LOG_INIT()
 #endif
 
 #endif

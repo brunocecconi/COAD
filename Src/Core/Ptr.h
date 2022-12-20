@@ -48,7 +48,7 @@ using ptr_transfer_type_t = typename PtrTransfer<T, eastl::is_pointer_v<T>>::typ
 
 template<typename T>
 static ptr_transfer_type_t<T>* AssertIfPtrInvalid(ptr_transfer_type_t<T>* value, const char* function, const char* file,
-											  const Uint32 line)
+											  const uint32_t line)
 {
 	if (!value)
 	{
@@ -65,7 +65,7 @@ static ptr_transfer_type_t<T>* AssertIfPtrInvalid(ptr_transfer_type_t<T>* value,
 
 template<typename T>
 static ptr_transfer_type_t<T>* WarnIfPtrInvalid(ptr_transfer_type_t<T>* value, const char* function, const char* file,
-											const Uint32 line)
+											const uint32_t line)
 {
 	if (!value)
 	{
@@ -79,8 +79,8 @@ static ptr_transfer_type_t<T>* WarnIfPtrInvalid(ptr_transfer_type_t<T>* value, c
 	return value;
 }
 
-#define PTRA(X) AssertIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (Uint32)__LINE__)
-#define PTRW(X) WarnIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (Uint32)__LINE__)
+#define PTRA(X) AssertIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (uint32_t)__LINE__)
+#define PTRW(X) WarnIfPtrInvalid<decltype(X)>(X, (const char*)__FUNCSIG__, (const char*)__FILE__, (uint32_t)__LINE__)
 
 #ifndef NDEBUG
 #define PTR_ASSERT()                                                                                                   \
@@ -95,7 +95,7 @@ static ptr_transfer_type_t<T>* WarnIfPtrInvalid(ptr_transfer_type_t<T>* value, c
 #define PTR(VALUE)                                                                                                     \
 	Ptr<ptr_transfer_type_t<decltype(VALUE)>>                                                                              \
 	{                                                                                                                  \
-		VALUE, (const char*)__FUNCSIG__, (const char*)__FILE__, (Uint32)__LINE__                                       \
+		VALUE, (const char*)__FUNCSIG__, (const char*)__FILE__, (uint32_t)__LINE__                                       \
 	}
 #define PTRC(X) PTR(X)
 #else
@@ -121,14 +121,14 @@ public:
 public:
 	using underlyng_t = T;
 
-	Ptr(T* value, const char* function = nullptr, const char* file = nullptr, Uint32 line = 0u);
+	Ptr(T* value, const char* function = nullptr, const char* file = nullptr, uint32_t line = 0u);
 
 	template<typename Y,
 			 typename = eastl::enable_if_t<!eastl::is_pointer_v<Y> ||
 										   eastl::is_same_v<void, eastl::void_t<typename Y::underlyng_t>>>>
-	Ptr(Y& value, const char* function = nullptr, const char* file = nullptr, Uint32 line = 0u);
+	Ptr(Y& value, const char* function = nullptr, const char* file = nullptr, uint32_t line = 0u);
 
-	Ptr(const Ptr& value, const char* function = nullptr, const char* file = nullptr, Uint32 line = 0u);
+	Ptr(const Ptr& value, const char* function = nullptr, const char* file = nullptr, uint32_t line = 0u);
 
 	NODISCARD T& operator*();
 	NODISCARD T* operator->();
@@ -154,7 +154,7 @@ private:
 #ifndef NDEBUG
 	char*  function_{};
 	char*  file_{};
-	Uint32 line_{};
+	uint32_t line_{};
 #endif
 };
 
@@ -170,7 +170,7 @@ template<typename T>
 Ptr<T>::~Ptr() = default;
 
 template<typename T>
-Ptr<T>::Ptr(T* value, const char* function, const char* file, const Uint32 line)
+Ptr<T>::Ptr(T* value, const char* function, const char* file, const uint32_t line)
 	: value_{value}
 #ifndef NDEBUG
 	  ,
@@ -186,7 +186,7 @@ Ptr<T>::Ptr(T* value, const char* function, const char* file, const Uint32 line)
 
 template<typename T>
 template<typename Y, typename>
-Ptr<T>::Ptr(Y& value, const char* function, const char* file, const Uint32 line)
+Ptr<T>::Ptr(Y& value, const char* function, const char* file, const uint32_t line)
 	: value_{(T*)value.operator->()}
 #ifndef NDEBUG
 	  ,
@@ -196,7 +196,7 @@ Ptr<T>::Ptr(Y& value, const char* function, const char* file, const Uint32 line)
 }
 
 template<typename T>
-Ptr<T>::Ptr(const Ptr& value, const char* function, const char* file, const Uint32 line)
+Ptr<T>::Ptr(const Ptr& value, const char* function, const char* file, const uint32_t line)
 	: value_{value.value_}
 #ifndef NDEBUG
 	  ,

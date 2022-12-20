@@ -101,7 +101,7 @@
 	eastl::destroy_at(static_cast<this_t*>(eastl::get<0>(l_default_args_tuple)));
 
 #define META_TYPE_BINDER_DEFAULT_OPERATION_TO_STRING()                                                                 \
-	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, void*, Uint64>*>(body.args_tuple);        \
+	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, void*, uint64_t>*>(body.args_tuple);        \
 	*eastl::get<0>(l_to_string_args_tuple) =                                                                           \
 		Algorithm::ToString(*static_cast<this_t*>(eastl::get<1>(l_to_string_args_tuple)), {DEBUG_NAME("Meta")},        \
 							eastl::get<2>(l_to_string_args_tuple));
@@ -539,7 +539,7 @@ struct NAME##ClassAutoRegister	\
 	{                                                                                                                  \
 		static auto Pairs()                                                                                            \
 		{                                                                                                              \
-			return eastl::vector<eastl::pair<eastl::string_view, Int64>>                                               \
+			return eastl::vector<eastl::pair<eastl::string_view, int64_t>>                                               \
 			{                                                                                                          \
 				{
 

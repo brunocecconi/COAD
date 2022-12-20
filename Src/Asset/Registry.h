@@ -24,19 +24,19 @@ public:
 	 * @brief A hash map that holds the type info to a vector of memory in bytes.
 	 *
 	 */
-	using assets_data_hash_map_t = eastl::hash_map<Meta::id_t, eastl::vector<Byte>>;
+	using assets_data_hash_map_t = eastl::hash_map<Meta::id_t, eastl::vector<byte_t>>;
 
 	/**
 	 * @brief A hash map that holds an asset id as key and an index to the data.
 	 *
 	 */
-	using assets_index_map_t = eastl::hash_map<id_t, Uint64>;
+	using assets_index_map_t = eastl::hash_map<id_t, uint64_t>;
 
 	/**
 	 * @brief A hash map that holds an asset id as key and an cursor index of a file.
 	 *
 	 */
-	using assets_data_cursor_t = eastl::hash_map<id_t, Uint64>;
+	using assets_data_cursor_t = eastl::hash_map<id_t, uint64_t>;
 
 public:
 	EXPLICIT Registry(RESULT_PARAM_DEFINE);
@@ -52,40 +52,40 @@ public:
 
 public:
 	template<typename Asset>
-	MAYBEUNUSED bool Export(const char* path, const char* dst_path, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED bool Export(const char* Path, const char* DstPath, RESULT_PARAM_DEFINE);
 
 	template<typename Asset>
-	MAYBEUNUSED bool Load(const char* path, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED bool Load(const char* Path, RESULT_PARAM_DEFINE);
 
 	template<typename Asset>
-	MAYBEUNUSED bool Unload(const char* path, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED bool Unload(const char* Path, RESULT_PARAM_DEFINE);
 
 	template<typename Asset>
-	NODISCARD Ptr<Asset> Get(const char* path, RESULT_PARAM_DEFINE);
+	NODISCARD Ptr<Asset> Get(const char* Path, RESULT_PARAM_DEFINE);
 
 	template<typename Asset>
-	NODISCARD Ptr<Asset> Get(id_t id, RESULT_PARAM_DEFINE);
+	NODISCARD Ptr<Asset> Get(id_t Id, RESULT_PARAM_DEFINE);
 
 public:
-	void Reserve(Size new_capacity, RESULT_PARAM_DEFINE);
+	void Reserve(size_t NewCapacity, RESULT_PARAM_DEFINE);
 
 private:
 	template<typename AssetType>
-	AssetType* AddOrGet(const char* path);
+	AssetType* AddOrGet(const char* Path);
 
 	template<typename AssetType>
-	AssetType* AddOrGetUninitialized(const char* path);
+	AssetType* AddOrGetUninitialized(const char* Path);
 
 private:
-	assets_data_hash_map_t data_map_{DEBUG_NAME_VAL("Asset")};
-	assets_index_map_t	   index_map_{DEBUG_NAME_VAL("Asset")};
-	assets_data_cursor_t   cursor_map_{DEBUG_NAME_VAL("Asset")};
-	Stream::File		   stream_file_{};
-	static Registry*	   instance_;
+	assets_data_hash_map_t mDataMap{DEBUG_NAME_VAL("Asset")};
+	assets_index_map_t	   mIndexMap{DEBUG_NAME_VAL("Asset")};
+	assets_data_cursor_t   mCursorMap{DEBUG_NAME_VAL("Asset")};
+	Stream::File		   mStreamFile{};
+	static Registry*	   mInstance;
 };
 
 template<typename Asset>
-bool Registry::Export(const char* path, const char* dst_path, RESULT_PARAM_IMPL)
+bool Registry::Export(const char* Path, const char* DstPath, RESULT_PARAM_IMPL)
 {
 	ClassValidation<Asset>{};
 
@@ -102,19 +102,19 @@ bool Registry::Export(const char* path, const char* dst_path, RESULT_PARAM_IMPL)
 }
 
 template<typename Asset>
-bool Registry::Load(const char* path, RESULT_PARAM_IMPL)
+bool Registry::Load(const char* Path, RESULT_PARAM_IMPL)
 {
 	ClassValidation<Asset>{};
 
 	RESULT_ENSURE_LAST_NOLOG(false);
 
-	auto l_ptr = AddOrGet<Asset>(path);
+	auto l_ptr = AddOrGet<Asset>(Path);
 
 	RESULT_CONDITION_ENSURE_NOLOG(l_ptr, eResultErrorAssetFailedToAdd, false);
-	RESULT_ENSURE_CALL_NOLOG(Stream::Dynamic l_ar(DEBUG_NAME_VAL("Asset"), RESULT_ARG_PASS), false);
-	RESULT_ENSURE_CALL_NOLOG(Io::File::ReadAll(l_ar.Container(), path, RESULT_ARG_PASS), false);
-	RESULT_CONDITION_ENSURE_NOLOG(!l_ar.BufferIsEmpty(), eResultErrorAssetLoadFailedInvalidFile, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_ar.Read(*l_ptr, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
+	RESULT_ENSURE_CALL_NOLOG(Stream::Dynamic lAr(DEBUG_NAME_VAL("Asset"), RESULT_ARG_PASS), false);
+	RESULT_ENSURE_CALL_NOLOG(Io::File::ReadAll(lAr.Container(), Path, RESULT_ARG_PASS), false);
+	RESULT_CONDITION_ENSURE_NOLOG(!lAr.BufferIsEmpty(), eResultErrorAssetLoadFailedInvalidFile, false);
+	RESULT_CONDITION_ENSURE_NOLOG(lAr.Read(*l_ptr, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
 	RESULT_CONDITION_ENSURE_NOLOG(l_ptr->OnLoad(), eResultErrorAssetObjectLoadFailed, false);
 	RESULT_OK();
 
@@ -122,7 +122,7 @@ bool Registry::Load(const char* path, RESULT_PARAM_IMPL)
 }
 
 template<typename Asset>
-bool Registry::Unload(const char* path, RESULT_PARAM_IMPL)
+bool Registry::Unload(const char* Path, RESULT_PARAM_IMPL)
 {
 	ClassValidation<Asset>{};
 	RESULT_ENSURE_LAST_NOLOG(false);
@@ -131,54 +131,54 @@ bool Registry::Unload(const char* path, RESULT_PARAM_IMPL)
 }
 
 template<typename Asset>
-Ptr<Asset> Registry::Get(const char* path, RESULT_PARAM_IMPL)
+Ptr<Asset> Registry::Get(const char* Path, RESULT_PARAM_IMPL)
 {
-	return Get<Asset>(MakeId(path, strlen(path)), RESULT_ARG_PASS);
+	return Get<Asset>(MakeId(Path, strlen(Path)), RESULT_ARG_PASS);
 }
 
 template<typename Asset>
-Ptr<Asset> Registry::Get(const id_t id, RESULT_PARAM_IMPL)
+Ptr<Asset> Registry::Get(const id_t Id, RESULT_PARAM_IMPL)
 {
 	ClassValidation<Asset>{};
 
 	RESULT_ENSURE_LAST_NOLOG(PTR((Asset*)nullptr));
 
-	const auto& l_type		 = Meta::Typeof<Asset>();
-	auto&		l_data_array = data_map_[l_type.Id()];
-	if (index_map_.find(id) != index_map_.cend())
+	const auto& lType		 = Meta::Typeof<Asset>();
+	auto&		lDataArray = mDataMap[lType.Id()];
+	if (mIndexMap.find(Id) != mIndexMap.cend())
 	{
-		return PTR(reinterpret_cast<Asset*>(l_data_array.data() + index_map_[id]));
+		return PTR(reinterpret_cast<Asset*>(lDataArray.data() + mIndexMap[Id]));
 	}
 	return PTR((Asset*)nullptr);
 }
 
 template<typename AssetType>
-AssetType* Registry::AddOrGet(const char* path)
+AssetType* Registry::AddOrGet(const char* Path)
 {
-	const id_t l_id			= Asset::MakeId(path, strlen(path));
-	auto&	   l_data_array = data_map_[Meta::Typeof<AssetType>().Id()];
-	if (index_map_.find(l_id) == index_map_.cend())
+	const id_t lId			= Asset::MakeId(Path, strlen(Path));
+	auto&	   lDataArray = mDataMap[Meta::Typeof<AssetType>().Id()];
+	if (mIndexMap.find(lId) == mIndexMap.cend())
 	{
-		Stream::Dynamic l_stream{};
-		AssetType l_asset{l_stream, path};
-		index_map_[l_id] = l_data_array.size();
-		l_data_array.insert(l_data_array.cend(), reinterpret_cast<Uint8*>(&l_asset),
-							reinterpret_cast<Uint8*>(&l_asset) + sizeof(AssetType));
+		Stream::Dynamic lStream{};
+		AssetType lAsset{lStream, Path};
+		mIndexMap[lId] = lDataArray.size();
+		lDataArray.insert(lDataArray.cend(), reinterpret_cast<uint8_t*>(&lAsset),
+							reinterpret_cast<uint8_t*>(&lAsset) + sizeof(AssetType));
 	}
-	return reinterpret_cast<AssetType*>(l_data_array.data() + index_map_[l_id]);
+	return reinterpret_cast<AssetType*>(lDataArray.data() + mIndexMap[lId]);
 }
 
 template<typename AssetType>
-AssetType* Registry::AddOrGetUninitialized(const char* path)
+AssetType* Registry::AddOrGetUninitialized(const char* Path)
 {
-	const id_t l_id			= Asset::MakeId(path, strlen(path));
-	auto&	   l_data_array = data_map_[Meta::Typeof<AssetType>().Id()];
-	if (index_map_.find(l_id) == index_map_.cend())
+	const id_t lId			= Asset::MakeId(Path, strlen(Path));
+	auto&	   lDataArray = mDataMap[Meta::Typeof<AssetType>().Id()];
+	if (mIndexMap.find(lId) == mIndexMap.cend())
 	{
-		index_map_[l_id] = l_data_array.size();
-		l_data_array.insert(l_data_array.cend(), sizeof(AssetType), 0);
+		mIndexMap[lId] = lDataArray.size();
+		lDataArray.insert(lDataArray.cend(), sizeof(AssetType), 0);
 	}
-	return reinterpret_cast<AssetType*>(l_data_array.data() + index_map_[l_id]);
+	return reinterpret_cast<AssetType*>(lDataArray.data() + mIndexMap[lId]);
 }
 
 } // namespace Asset

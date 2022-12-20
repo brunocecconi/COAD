@@ -31,15 +31,15 @@ concept is_asset_class = eastl::is_same_v<void, eastl::void_t<typename T::AssetC
 
 using id_t = Hash::fnv1a_t;
 
-template<Size N>
-constexpr id_t MakeId(const char (&path)[N])
+template<size_t N>
+constexpr id_t MakeId(const char (&Path)[N])
 {
-	return Hash::Fnv1A(path);
+	return Hash::Fnv1A(Path);
 }
 
-constexpr id_t MakeId(const char* path, const Size size)
+constexpr id_t MakeId(const char* Path, const size_t Size)
 {
-	return Hash::Fnv1A(size, path);
+	return Hash::Fnv1A(Size, Path);
 }
 
 /**
@@ -58,8 +58,8 @@ public:
 	~Object();
 
 private:
-	EXPLICIT Object(Stream::Dynamic& source_archive, const char* path, RESULT_PARAM_DEFINE);
-	EXPLICIT Object(Stream::Dynamic& source_archive, const char* path, id_t id, RESULT_PARAM_DEFINE);
+	EXPLICIT Object(Stream::Dynamic& SourceArchive, const char* Path, RESULT_PARAM_DEFINE);
+	EXPLICIT Object(Stream::Dynamic& SourceArchive, const char* Path, id_t Id, RESULT_PARAM_DEFINE);
 
 private:
 	MAYBEUNUSED bool OnLoad(RESULT_PARAM_DEFINE);
@@ -69,28 +69,28 @@ public:
 	NODISCARD eastl::string_view Path() const;
 	NODISCARD id_t				 Id() const;
 	NODISCARD bool				 IsLoaded() const;
-	NODISCARD Size				 SourceSize() const;
+	NODISCARD size_t				 SourceSize() const;
 
 public:
-	NODISCARD eastl::string ToString(Uint64 capacity = 256) const;
+	NODISCARD eastl::string ToString(uint64_t Capacity = 256) const;
 
 public:
-	MAYBEUNUSED bool AddPreLoadDelegate(eastl::function<load_delegate_t>&& function, RESULT_PARAM_DEFINE);
-	MAYBEUNUSED bool AddPostLoadDelegate(eastl::function<load_delegate_t>&& function, RESULT_PARAM_DEFINE);
-	MAYBEUNUSED bool AddPreUnloadDelegate(eastl::function<unload_delegate_t>&& function, RESULT_PARAM_DEFINE);
-	MAYBEUNUSED bool AddPostUnloadDelegate(eastl::function<unload_delegate_t>&& function, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED bool AddPreLoadDelegate(eastl::function<load_delegate_t>&& Function, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED bool AddPostLoadDelegate(eastl::function<load_delegate_t>&& Function, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED bool AddPreUnloadDelegate(eastl::function<unload_delegate_t>&& Function, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED bool AddPostUnloadDelegate(eastl::function<unload_delegate_t>&& Function, RESULT_PARAM_DEFINE);
 
 private:
 	STREAM_IMPL_FRIEND();
 
-	eastl::string									  path_{DEBUG_NAME_VAL("Asset")};
-	id_t											  id_{};
-	bool											  is_loaded_{};
-	Size											  source_size_{};
-	eastl::vector<eastl::function<load_delegate_t>>	  preload_delegate_{DEBUG_NAME_VAL("Asset")};
-	eastl::vector<eastl::function<load_delegate_t>>	  postload_delegate_{DEBUG_NAME_VAL("Asset")};
-	eastl::vector<eastl::function<unload_delegate_t>> preunload_delegate_{DEBUG_NAME_VAL("Asset")};
-	eastl::vector<eastl::function<unload_delegate_t>> postunload_delegate_{DEBUG_NAME_VAL("Asset")};
+	eastl::string									  mPath{DEBUG_NAME_VAL("Asset")};
+	id_t											  mId{};
+	bool											  mIsLoaded{};
+	size_t											  mSourceSize{};
+	eastl::vector<eastl::function<load_delegate_t>>	  mPreloadDelegate{DEBUG_NAME_VAL("Asset")};
+	eastl::vector<eastl::function<load_delegate_t>>	  mPostloadDelegate{DEBUG_NAME_VAL("Asset")};
+	eastl::vector<eastl::function<unload_delegate_t>> mPreunloadDelegate{DEBUG_NAME_VAL("Asset")};
+	eastl::vector<eastl::function<unload_delegate_t>> mPostunloadDelegate{DEBUG_NAME_VAL("Asset")};
 
 private:
 	META_REBINDER_TYPE_INFO();
@@ -112,12 +112,12 @@ META_TYPE_AUTO_REGISTER_NS(Asset::Object, AssetObject);
 
 STREAM_IMPL_BEGIN(Asset::Object)
 	STREAM_WRITE_IMPL_VALUE_FUNCTION_BEGIN()
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.id_, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite, false);
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.path_, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mId, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mPath, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite, false);
 	STREAM_IMPL_VALUE_FUNCTION_END()
 	STREAM_READ_IMPL_VALUE_FUNCTION_BEGIN()
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.id_, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.path_, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mId, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mPath, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
 	STREAM_IMPL_VALUE_FUNCTION_END()
 STREAM_IMPL_END()
 

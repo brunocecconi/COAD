@@ -20,12 +20,12 @@ const TypeInfo& EnumInfo::Type() const
 
 eastl::string EnumInfo::ToString() const
 {
-	eastl::string l_str{Allocators::Default{DEBUG_NAME_VAL("Meta")}};
-	l_str.reserve(1024);
-	l_str = "EnumInfo(TypeInfo=" + type_info_.ToString() + ',';
-	l_str += Algorithm::ToString(entries_, l_str.get_allocator());
-	l_str += ')';
-	return l_str;
+	eastl::string lStr{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+	lStr.reserve(1024);
+	lStr = "EnumInfo(TypeInfo=" + type_info_.ToString() + ',';
+	lStr += Algorithm::ToString(entries_, lStr.get_allocator());
+	lStr += ')';
+	return lStr;
 }
 
 const EnumInfo& EnumInfo::None()
@@ -37,7 +37,7 @@ const EnumInfo& EnumInfo::None()
 	return *g_enum_info_none;
 }
 
-const char* EnumInfo::ToNameGeneric(Int64 value) const
+const char* EnumInfo::ToNameGeneric(int64_t value) const
 {
 	const auto l_it =
 		eastl::find_if(entries_.begin(), entries_.end(), [&value](const auto& v) { return v.second == value; });
@@ -45,7 +45,7 @@ const char* EnumInfo::ToNameGeneric(Int64 value) const
 	return l_it->first.data();
 }
 
-Int64 EnumInfo::ToValueGeneric(const char* name) const
+int64_t EnumInfo::ToValueGeneric(const char* name) const
 {
 	const auto l_it =
 		eastl::find_if(entries_.begin(), entries_.end(), [&name](const auto& v) { return v.first == name; });
@@ -58,7 +58,7 @@ bool EnumInfo::IsBitmask() const
 	return flags_ & eBitmask;
 }
 
-bool EnumInfo::HasFlags(const Int64 value) const
+bool EnumInfo::HasFlags(const int64_t value) const
 {
 	return IsBitmask() ? flags_ & value : false;
 }

@@ -13,7 +13,7 @@ namespace Meta
 namespace Detail
 {
 
-template<Uint32 Index, Uint32 Max, typename Tuple, typename Bitset>
+template<uint32_t Index, uint32_t Max, typename Tuple, typename Bitset>
 constexpr void ApplyParamsSignature(Bitset& signature)
 {
 	static_assert(Bitset::count >= Max, "Bitset size is lower than specified max value.");
@@ -25,7 +25,7 @@ constexpr void ApplyParamsSignature(Bitset& signature)
 	}
 }
 
-template<Uint32 Index, typename Tuple, Uint32 ArraySize>
+template<uint32_t Index, typename Tuple, uint32_t ArraySize>
 constexpr void GetParamsSignatureFromTuple(eastl::array<const TypeInfo*, ArraySize>& arr, Tuple& tuple)
 {
 	if constexpr (Index < eastl::tuple_size_v<Tuple>)
@@ -64,7 +64,7 @@ public:
 	{
 		const void* info;
 		void*		memory;
-		Uint32		args_tuple_size;
+		uint32_t		args_tuple_size;
 		void*		args_tuple;
 	};
 
@@ -86,12 +86,12 @@ public:
 
 		EXPLICIT BodyAdapter(body_t& structure);
 
-		template<Size Index>
+		template<size_t Index>
 		const auto& Get();
 
 		const CtorInfo&		  info;
 		void*				  memory;
-		Uint32&				  args_tuple_count;
+		uint32_t&				  args_tuple_count;
 		generic_tuple_args_t& args_tuple;
 	};
 
@@ -116,7 +116,7 @@ public:
 	 * @tparam OptionalParamCount Number of optional arguments. Later used for heuristics.
 	 *
 	 */
-	template<id_t Id, typename CtorFunction, Uint32 OptionalParamCount>
+	template<id_t Id, typename CtorFunction, uint32_t OptionalParamCount>
 	struct Binder
 	{
 		using owner_t		 = typename TypeTraits::FunctionTraits<CtorFunction>::return_t;
@@ -142,10 +142,10 @@ public:
 public:
 	NODISCARD const TypeInfo&				   OwnerType() const;
 	NODISCARD const method_params_signature_t& ParamsSignature() const;
-	NODISCARD Uint32						   NeededParamCount() const;
+	NODISCARD uint32_t						   NeededParamCount() const;
 	NODISCARD id_t Id() const;
-	NODISCARD Uint32		TotalParamCount() const;
-	NODISCARD Uint32		OptionalParamCount() const;
+	NODISCARD uint32_t		TotalParamCount() const;
+	NODISCARD uint32_t		OptionalParamCount() const;
 
 public:
 	NODISCARD Value Invoke() const;
@@ -173,8 +173,8 @@ private:
 	method_params_signature_t params_signature_{};
 	binder_invoke_function_t  function_;
 	id_t			  id_;
-	Uint32					  total_param_count_;
-	Uint32					  optional_param_count_;
+	uint32_t					  total_param_count_;
+	uint32_t					  optional_param_count_;
 };
 
 template<typename TypeList>
@@ -185,7 +185,7 @@ CtorInfo::BodyAdapter<TypeList>::BodyAdapter(body_t& structure)
 }
 
 template<typename TypeList>
-template<Size Index>
+template<size_t Index>
 const auto& CtorInfo::BodyAdapter<TypeList>::Get()
 {
 	return eastl::get<Index>(args_tuple).template As<eastl::tuple_element_t<Index, tuple_args_t>>();

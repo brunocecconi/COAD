@@ -18,7 +18,7 @@ Dynamic::Dynamic(const void* data, const container_t::size_type size, const Allo
 	RESULT_CONDITION_ENSURE_NOLOG(data, eResultErrorNullPtr);
 	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize);
 	data_.reserve(size);
-	eastl::uninitialized_move_n(static_cast<const Byte*>(data), size, data_.data());
+	eastl::uninitialized_move_n(static_cast<const byte_t*>(data), size, data_.data());
 	RESULT_OK();
 }
 
@@ -125,12 +125,12 @@ bool Dynamic::Validate() const NOEXCEPT
 	return data_.validate();
 }
 
-Uint64 Dynamic::WriteCursor() const
+uint64_t Dynamic::WriteCursor() const
 {
 	return data_.size();
 }
 
-Uint64 Dynamic::ReadCursor() const
+uint64_t Dynamic::ReadCursor() const
 {
 	return read_cursor_;
 }
@@ -141,7 +141,7 @@ bool Dynamic::WriteGeneric(const void* data, const container_t::size_type size, 
 	RESULT_CONDITION_ENSURE_NOLOG(data, eResultErrorNullPtr, false);
 	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize, false);
 	data_.reserve(data_.size() + size);
-	data_.insert(data_.cend(), static_cast<const Byte*>(data), static_cast<const Byte*>(data) + size);
+	data_.insert(data_.cend(), static_cast<const byte_t*>(data), static_cast<const byte_t*>(data) + size);
 	RESULT_OK();
 	return true;
 }
@@ -158,13 +158,13 @@ bool Dynamic::ReadGeneric(void* data, const container_t::size_type size, RESULT_
 	return true;
 }
 
-File::File(const char* file_path, const Uint32 flags, RESULT_PARAM_IMPL) : file_{file_path, flags, RESULT_ARG_PASS}
+File::File(const char* file_path, const uint32_t flags, RESULT_PARAM_IMPL) : file_{file_path, flags, RESULT_ARG_PASS}
 {
 	RESULT_ENSURE_LAST_NOLOG();
 	RESULT_OK();
 }
 
-bool File::Open(const char* file_path, const Uint32 flags, RESULT_PARAM_IMPL)
+bool File::Open(const char* file_path, const uint32_t flags, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
 	RESULT_ENSURE_CALL_NOLOG(file_.Open(file_path, flags, RESULT_ARG_PASS), false);
@@ -204,17 +204,17 @@ bool File::Flush(RESULT_PARAM_IMPL) const
 	return true;
 }
 
-Uint64 File::WriteCursor(RESULT_PARAM_IMPL) const
+uint64_t File::WriteCursor(RESULT_PARAM_IMPL) const
 {
 	return file_.Tell(RESULT_ARG_PASS);
 }
 
-Uint64 File::ReadCursor(RESULT_PARAM_IMPL) const
+uint64_t File::ReadCursor(RESULT_PARAM_IMPL) const
 {
 	return file_.Tell(RESULT_ARG_PASS);
 }
 
-bool File::WriteGeneric(const void* data, const Size size, RESULT_PARAM_IMPL) const
+bool File::WriteGeneric(const void* data, const size_t size, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
 	RESULT_ENSURE_CALL_NOLOG(file_.Write(data, size, RESULT_ARG_PASS), false);
@@ -222,7 +222,7 @@ bool File::WriteGeneric(const void* data, const Size size, RESULT_PARAM_IMPL) co
 	return true;
 }
 
-bool File::ReadGeneric(void* data, const Size size, RESULT_PARAM_IMPL) const
+bool File::ReadGeneric(void* data, const size_t size, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
 	RESULT_ENSURE_CALL_NOLOG(file_.Read(data, size, RESULT_ARG_PASS), false);

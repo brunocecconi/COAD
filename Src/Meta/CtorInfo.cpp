@@ -16,7 +16,7 @@ const CtorInfo::method_params_signature_t& CtorInfo::ParamsSignature() const
 	return params_signature_;
 }
 
-Uint32 CtorInfo::NeededParamCount() const
+uint32_t CtorInfo::NeededParamCount() const
 {
 	return total_param_count_ - optional_param_count_;
 }
@@ -26,12 +26,12 @@ id_t CtorInfo::Id() const
 	return id_;
 }
 
-Uint32 CtorInfo::TotalParamCount() const
+uint32_t CtorInfo::TotalParamCount() const
 {
 	return total_param_count_;
 }
 
-Uint32 CtorInfo::OptionalParamCount() const
+uint32_t CtorInfo::OptionalParamCount() const
 {
 	return optional_param_count_;
 }

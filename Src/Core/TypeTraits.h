@@ -21,7 +21,7 @@ namespace TypeTraits
 template<typename... Types>
 struct TypeList
 {
-	static constexpr Uint64 SIZE = sizeof...(Types);
+	static constexpr uint64_t SIZE = sizeof...(Types);
 };
 
 template<typename TypeList>
@@ -33,7 +33,7 @@ struct TlGetFirstElement<TypeList<Head, Tail...>>
 	using type_t = Head;
 };
 
-template<typename TypeList, Uint64 Index>
+template<typename TypeList, uint64_t Index>
 struct TlGetByIndex;
 
 template<typename Head, typename... Tail>
@@ -42,7 +42,7 @@ struct TlGetByIndex<TypeList<Head, Tail...>, 0>
 	using type_t = Head;
 };
 
-template<typename Head, typename... Tail, Uint64 N>
+template<typename Head, typename... Tail, uint64_t N>
 struct TlGetByIndex<TypeList<Head, Tail...>, N>
 {
 	using type_t = typename TlGetByIndex<TypeList<Tail...>, N - 1>::type_t;
@@ -107,7 +107,7 @@ struct TlPushBack<NewType, TypeList<Types...>>
 	using type_t = TypeList<Types..., NewType>;
 };
 
-template<typename T, Uint64 Size>
+template<typename T, uint64_t Size>
 struct TlCreateTypeList
 {
 	using type_t = typename TlPushFront<T, typename TlCreateTypeList<T, Size - 1>::type_t>::type_t;
@@ -145,8 +145,8 @@ struct TlHasType<T, eastl::tuple<T, Ts...>>: eastl::true_type
 
 namespace Detail
 {
-template<Uint64 Index, typename T, typename Tuple>
-static constexpr Uint64 FindTupleType()
+template<uint64_t Index, typename T, typename Tuple>
+static constexpr uint64_t FindTupleType()
 {
 	if constexpr (Index < eastl::tuple_size<Tuple>::value)
 	{
@@ -164,7 +164,7 @@ static constexpr Uint64 FindTupleType()
 } // namespace Detail
 
 template<typename T, typename Tuple>
-static constexpr Uint64 FindTupleType()
+static constexpr uint64_t FindTupleType()
 {
 	static_assert(TlHasType<T, Tuple>::value, "Type does not contain in tuple.");
 	return Detail::FindTupleType<0, T, Tuple>();

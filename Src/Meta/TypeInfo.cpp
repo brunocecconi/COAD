@@ -55,12 +55,12 @@ TypeRegistry& TypeRegistry::Instance()
 	return *instance_;
 }
 
-Uint64 TypeInfo::Id() const
+uint64_t TypeInfo::Id() const
 {
 	return id_;
 }
 
-Uint64 TypeInfo::Size() const
+uint64_t TypeInfo::Size() const
 {
 	return size_;
 }
@@ -106,14 +106,14 @@ bool TypeInfo::IsBoolean() const
 
 bool TypeInfo::IsIntegral() const
 {
-	return id_ == Typeof<Int8>().id_ || id_ == Typeof<Int16>().id_ || id_ == Typeof<Int32>().id_ ||
-		   id_ == Typeof<Int64>().id_ || id_ == Typeof<Uint8>().id_ || id_ == Typeof<Uint16>().id_ ||
-		   id_ == Typeof<Uint32>().id_ || id_ == Typeof<Uint64>().id_;
+	return id_ == Typeof<int8_t>().id_ || id_ == Typeof<int16_t>().id_ || id_ == Typeof<int32_t>().id_ ||
+		   id_ == Typeof<int64_t>().id_ || id_ == Typeof<uint8_t>().id_ || id_ == Typeof<uint16_t>().id_ ||
+		   id_ == Typeof<uint32_t>().id_ || id_ == Typeof<uint64_t>().id_;
 }
 
 bool TypeInfo::IsFloatingPoint() const
 {
-	return id_ == Typeof<Float32>().id_ || id_ == Typeof<Float64>().id_;
+	return id_ == Typeof<float32_t>().id_ || id_ == Typeof<float64_t>().id_;
 }
 
 bool TypeInfo::IsConvertibleTo(const TypeInfo& value) const
@@ -121,14 +121,14 @@ bool TypeInfo::IsConvertibleTo(const TypeInfo& value) const
 	return (IsIntegral() && value.IsIntegral()) || (IsFloatingPoint() && value.IsFloatingPoint());
 }
 
-eastl::string TypeInfo::ToString(const Uint64 capacity) const
+eastl::string TypeInfo::ToString(const uint64_t capacity) const
 {
 	RawBuffer<char> l_str{capacity, DEBUG_NAME_VAL("Meta")};
-	sprintf(l_str.Get(), "TypeInfo(Name=%s,Id=%llu,Size=%llu)", name_, id_, size_);
-	return eastl::string{l_str.Get(), EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+	sprintf(l_str.Data(), "TypeInfo(Name=%s,Id=%llu,Size=%llu)", name_, id_, size_);
+	return eastl::string{l_str.Data(), EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
 }
 
-eastl::string TypeInfo::ToValueString(void* value, const Uint64 capacity) const
+eastl::string TypeInfo::ToValueString(void* value, const uint64_t capacity) const
 {
 	ENFORCE_MSG(operation_function_, "Operations function is marked as not implemented for '%s' type, and it is needed to properly "
 									 "apply the value string operation.", name_);
@@ -150,16 +150,16 @@ eastl::string TypeInfo::ToValueString(void* value, const Uint64 capacity) const
 void RegistryBaseTypes()
 {
 	Typeof<bool>();
-	Typeof<Int8>();
-	Typeof<Int16>();
-	Typeof<Int32>();
-	Typeof<Int64>();
-	Typeof<Uint8>();
-	Typeof<Uint16>();
-	Typeof<Uint32>();
-	Typeof<Uint64>();
-	Typeof<Float32>();
-	Typeof<Float64>();
+	Typeof<int8_t>();
+	Typeof<int16_t>();
+	Typeof<int32_t>();
+	Typeof<int64_t>();
+	Typeof<uint8_t>();
+	Typeof<uint16_t>();
+	Typeof<uint32_t>();
+	Typeof<uint64_t>();
+	Typeof<float32_t>();
+	Typeof<float64_t>();
 	Typeof<eastl::string>();
 	Typeof<eastl::string_view>();
 }

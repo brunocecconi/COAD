@@ -12,38 +12,13 @@
 
 #include "Core/Platform.h"
 
+#include <cstdint>
 #include <climits>
 #include <cfloat>
 
-using Int8	  = signed char;
-using Int16	  = signed short;
-using Int32	  = signed int;
-using Byte	  = unsigned char;
-using Uint8	  = unsigned char;
-using Uint16  = unsigned short;
-using Uint32  = unsigned int;
-using Float32 = float;
-using Float64 = double;
-
-#if PLATFORM_WINDOWS
-using Int64	 = long long;
-using Uint64 = unsigned long long;
-#else
-using Int64	  = long;
-using Uint64  = unsigned long;
-#endif
-
-#if ARCH_64BIT == 64
-using Size	  = Uint64;
-using DiffPtr = Int64;
-using IntPtr  = Int64;
-#else
-using Size	  = Uint32;
-using DiffPtr = Int32;
-using IntPtr  = Int32;
-#endif
-
-template<typename T>
-static T g_type_default_value = T();
+using byte_t = uint8_t;
+using float32_t = float;
+using float64_t = double;
+using float128_t = long double;
 
 #endif

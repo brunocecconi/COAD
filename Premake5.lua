@@ -33,7 +33,10 @@ project "COAD"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
+	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", 
+		"USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0",
+		"PRINT_ALLOCATIONS=0", "PRINT_DEALLOCATIONS=0"
+	}
 
 	includedirs
 	{

@@ -9,7 +9,7 @@
 #include <EASTL/array.h>
 #include <EASTL/utility.h>
 
-template < typename Key, typename Value, Size Size >
+template < typename Key, typename Value, size_t Size >
 struct ConstMap
 {
 	eastl::array<eastl::pair<Key, Value>, Size> data;

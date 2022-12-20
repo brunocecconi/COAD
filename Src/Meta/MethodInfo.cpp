@@ -24,7 +24,7 @@ id_t MethodInfo::Id() const
 	return id_;
 }
 
-Uint32 MethodInfo::Flags() const
+uint32_t MethodInfo::Flags() const
 {
 	return flags_;
 }
@@ -34,17 +34,17 @@ NODISCARD const MethodInfo::method_params_signature_t& MethodInfo::ParamsSignatu
 	return params_signature_;
 }
 
-NODISCARD Uint32 MethodInfo::NeededParamCount() const
+NODISCARD uint32_t MethodInfo::NeededParamCount() const
 {
 	return total_param_count_ - optional_param_count_;
 }
 
-NODISCARD Uint32 MethodInfo::TotalParamCount() const
+NODISCARD uint32_t MethodInfo::TotalParamCount() const
 {
 	return total_param_count_;
 }
 
-NODISCARD Uint32 MethodInfo::OptionalParamCount() const
+NODISCARD uint32_t MethodInfo::OptionalParamCount() const
 {
 	return optional_param_count_;
 }

@@ -26,7 +26,7 @@
 LOG_DEFINE(Ecs)
 
 #ifndef ENTITY_ID_TYPE
-#define ENTITY_ID_TYPE	Uint64
+#define ENTITY_ID_TYPE	uint64_t
 #endif
 
 #if _MSC_VER
@@ -64,7 +64,7 @@ class Registry final
 public:
 	using components_t = TypeList;
 	using signature_t = eastl::bitset<components_t::SIZE>;
-	static constexpr entity_id_t INVALID_ENTITY_ID = eastl::numeric_limits<Uint64>::max();
+	static constexpr entity_id_t INVALID_ENTITY_ID = eastl::numeric_limits<uint64_t>::max();
 
 private:
 	/**
@@ -90,7 +90,7 @@ private:
 	template < typename Component >
 	class ComponentArray final
 	{
-		static_assert(alignof(Component) >= sizeof(IntPtr), "Invalid min component size to be able to be wrapped by free list.");
+		static_assert(alignof(Component) >= sizeof(intptr_t), "Invalid min component size to be able to be wrapped by free list.");
 
 		friend class Registry;
 
@@ -99,14 +99,14 @@ private:
 			CursorFreeList* next{};
 		};
 
-		EXPLICIT ComponentArray(Uint64 capacity);
+		EXPLICIT ComponentArray(uint64_t capacity);
 
 	private:
 		void Add(entity_id_t id, Component&& component, RESULT_PARAM_DEFINE);
 		void Remove(entity_id_t id, RESULT_PARAM_DEFINE);
 		void Each(void (*function)(Component&))
 		{
-			eastl::for_each(eindex_, eindex_end_, [&](Uint64& e)
+			eastl::for_each(eindex_, eindex_end_, [&](uint64_t& e)
 			{
 				if(e != INVALID_COMPONENT_ID)
 				{
@@ -119,7 +119,7 @@ private:
 		NODISCARD bool Contains(entity_id_t id) const;
 
 	public:
-		static constexpr Uint64 INVALID_COMPONENT_ID = eastl::numeric_limits<Uint64>::max();
+		static constexpr uint64_t INVALID_COMPONENT_ID = eastl::numeric_limits<uint64_t>::max();
 
 		ComponentArray(ComponentArray&& other) NOEXCEPT = delete;
 		ComponentArray(const ComponentArray&) = delete;
@@ -130,7 +130,7 @@ private:
 	private:
 		CursorFreeList *cursor_fl_{};
 		Component* data_{}, *dcursor_{};
-		Uint64* eindex_{}, *eindex_end_{};
+		uint64_t* eindex_{}, *eindex_end_{};
 	};
 
 	template < typename Component >
@@ -146,7 +146,7 @@ private:
 		ComponentArrayElement();
 
 	public:
-		void ConstructIfAllowed(Uint64 capacity);
+		void ConstructIfAllowed(uint64_t capacity);
 		void DestroyIfAllowed();
 		ComponentArrayType* Get();
 	};
@@ -154,18 +154,18 @@ private:
 	using component_map_tuple_t = typename TypeTraits::TlToTupleTransfer<ComponentArrayElement, components_t>::type_t;
 
 	template < typename Component >
-	static constexpr Uint64 GetComponentId();
+	static constexpr uint64_t GetComponentId();
 
 	template < typename Component >
 	ComponentArrayElement<Component>& GetComponentArrayElement();
 
-	template < Uint64 Index >
+	template < uint64_t Index >
 	void ConstructComponentsMap();
 
-	template < Uint64 Index >
+	template < uint64_t Index >
 	void MoveComponentsMap(component_map_tuple_t&& map);
 
-	template < Uint64 Index >
+	template < uint64_t Index >
 	void DestroyComponentsMap();
 
 	template < typename Component >
@@ -197,7 +197,7 @@ private:
 	};
 
 public:
-	EXPLICIT Registry(Uint64 capacity = 10000ull, RESULT_PARAM_DEFINE);
+	EXPLICIT Registry(uint64_t capacity = 10000ull, RESULT_PARAM_DEFINE);
 
 	Registry(Registry&& other) NOEXCEPT;
 	Registry(const Registry&) = delete;
@@ -234,7 +234,7 @@ public:
 	void Each(void (*function)(Component&), RESULT_PARAM_DEFINE);
 
 public:
-	NODISCARD Uint64 Capacity(RESULT_PARAM_DEFINE) const;
+	NODISCARD uint64_t Capacity(RESULT_PARAM_DEFINE) const;
 	NODISCARD bool Contains(const entity_id_t* ptr, RESULT_PARAM_DEFINE) const;
 	void Clear(RESULT_PARAM_DEFINE);
 
@@ -250,11 +250,11 @@ private:
 
 template <typename TypeList>
 template <typename Component>
-Registry<TypeList>::ComponentArray<Component>::ComponentArray(const Uint64 capacity)
+Registry<TypeList>::ComponentArray<Component>::ComponentArray(const uint64_t capacity)
 {
 	data_ = static_cast<Component*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(Component)));
 	dcursor_ = data_;
-	eindex_ = static_cast<Uint64*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(Uint64)));
+	eindex_ = static_cast<uint64_t*>(EASTLAllocatorType("Ecs").allocate(capacity*sizeof(uint64_t)));
 	eastl::uninitialized_fill_n(eindex_, capacity, INVALID_COMPONENT_ID);
 	eindex_end_ = eindex_ + capacity;
 }
@@ -269,7 +269,7 @@ Registry<TypeList>::ComponentArray<Component>::~ComponentArray()
 	data_ = dcursor_ = nullptr;
 	cursor_fl_ = nullptr;
 
-	EASTLAllocatorType("Ecs").deallocate(eindex_, sizeof(Uint64));
+	EASTLAllocatorType("Ecs").deallocate(eindex_, sizeof(uint64_t));
 	eindex_ = eindex_end_ = nullptr;
 }
 
@@ -349,7 +349,7 @@ Registry<TypeList>::ComponentArrayElement<Component>::ComponentArrayElement() : 
 
 template <typename TypeList>
 template <typename Component>
-void Registry<TypeList>::ComponentArrayElement<Component>::ConstructIfAllowed(Uint64 capacity)
+void Registry<TypeList>::ComponentArrayElement<Component>::ConstructIfAllowed(uint64_t capacity)
 {
 	if(!constructed)
 	{
@@ -379,7 +379,7 @@ ComponentArrayElement<Component>::Get()
 
 template <typename TypeList>
 template <typename Component>
-constexpr Uint64 Registry<TypeList>::GetComponentId()
+constexpr uint64_t Registry<TypeList>::GetComponentId()
 {
 	return TypeTraits::FindTupleType<ComponentArrayElement<Component>, component_map_tuple_t>();
 }
@@ -392,7 +392,7 @@ typename Registry<TypeList>::template ComponentArrayElement<Component>& Registry
 }
 
 template <typename TypeList>
-template <Uint64 Index>
+template <uint64_t Index>
 void Registry<TypeList>::ConstructComponentsMap()
 {
 	if constexpr(Index < components_t::SIZE)
@@ -404,7 +404,7 @@ void Registry<TypeList>::ConstructComponentsMap()
 }
 
 template <typename TypeList>
-template <Uint64 Index>
+template <uint64_t Index>
 void Registry<TypeList>::MoveComponentsMap(component_map_tuple_t&& map)
 {
 	if constexpr(Index < components_t::SIZE)
@@ -415,7 +415,7 @@ void Registry<TypeList>::MoveComponentsMap(component_map_tuple_t&& map)
 }
 
 template <typename TypeList>
-template <Uint64 Index>
+template <uint64_t Index>
 void Registry<TypeList>::DestroyComponentsMap()
 {
 	if constexpr(Index < components_t::SIZE)
@@ -487,7 +487,7 @@ Registry<TypeList>::ComponentPtr<Component>::operator bool() const
 }
 
 template <typename TypeList>
-Registry<TypeList>::Registry(const Uint64 capacity, RESULT_PARAM_IMPL)
+Registry<TypeList>::Registry(const uint64_t capacity, RESULT_PARAM_IMPL)
 {
 	ValidateComponentTuple<typename TypeTraits::TlToTuple<TypeList>::type_t>();
 
@@ -613,7 +613,7 @@ void Registry<TypeList>::Add(const entity_id_t id, Component&& component, RESULT
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
 	}
 
-	constexpr Uint64 l_id = GetComponentId<Component>();
+	constexpr uint64_t l_id = GetComponentId<Component>();
 	auto& l_component_element = GetComponentArrayElement<Component>();
 
 	// Enable component inline
@@ -637,7 +637,7 @@ void Registry<TypeList>::Remove(const entity_id_t id, RESULT_PARAM_IMPL)
 	{
 		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
 	}
-	constexpr Uint64 l_id = GetComponentId<Component>();
+	constexpr uint64_t l_id = GetComponentId<Component>();
 	signatures_[id].set(l_id, false);
 	GetComponentArrayElement<Component>().Get()->Remove(id);
 	RESULT_OK();
@@ -674,7 +674,7 @@ template<typename TypeList> template<typename Component> void Registry<TypeList>
 }
 
 template <typename TypeList>
-Uint64 Registry<TypeList>::Capacity(RESULT_PARAM_IMPL) const
+uint64_t Registry<TypeList>::Capacity(RESULT_PARAM_IMPL) const
 {
 	return eend_ - ebegin_;
 }
@@ -704,7 +704,7 @@ template <typename Component>
 void Registry<TypeList>::SetEnabledInternal(const entity_id_t id, const bool value, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	constexpr Uint64 l_id = GetComponentId<Component>();
+	constexpr uint64_t l_id = GetComponentId<Component>();
 	if(signatures_[id].test(l_id))
 	{
 		RESULT_ERROR(eResultErrorEcsComponentAlreadyEnabled);

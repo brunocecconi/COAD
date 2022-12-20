@@ -14,16 +14,16 @@
 namespace Log
 {
 
-Uint64 g_verbosity{};
+uint64_t gVerbosity{};
 
-Uint64 Verbosity()
+uint64_t Verbosity()
 {
-	return g_verbosity;
+	return gVerbosity;
 }
 
-void SetVerbosity(const Uint64 value)
+void SetVerbosity(const uint64_t Value)
 {
-	g_verbosity = value;
+	gVerbosity = Value;
 }
 
 }

@@ -35,6 +35,8 @@
 #include "Core/RawBuffer.h"
 #include "Meta/MethodInfo.h"
 #include "Asset/Registry.h"
+#include "Engine/Manager.h"
+#include "Engine/ProgramArgs.h"
 
 int Vsnprintf8(char* pDestination, size_t n, const char* pFormat, va_list arguments)
 {
@@ -71,7 +73,7 @@ struct TestCtor
 
 	float pi = 3.14f;
 
-	NODISCARD bool IsEven(const Int32 value) const
+	NODISCARD bool IsEven(const int32_t value) const
 	{
 		return value % 2 == 0;
 	}
@@ -79,7 +81,7 @@ struct TestCtor
 private:
 	int number_ = 6;
 
-	TestCtor(const Int64 index, Float32 pi = 3.14f) : pi{pi}
+	TestCtor(const int64_t index, float32_t pi = 3.14f) : pi{pi}
 	{
 		printf("Index: %lld - Pi: %f\n", index, pi);
 	}
@@ -104,7 +106,7 @@ META_TYPE_BINDER_SPECIALIZATION(TestCtor)
 {
 #undef TO_STRING
 #define TO_STRING                                                                                                      \
-	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, TestCtor*, Uint64>*>(body.args_tuple);    \
+	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, TestCtor*, uint64_t>*>(body.args_tuple);    \
 	eastl::get<0>(l_to_string_args_tuple)->resize(256);                                                                \
 	sprintf(eastl::get<0>(l_to_string_args_tuple)->data(), "TestCtor(pi=%f)",                                          \
 			eastl::get<1>(l_to_string_args_tuple)->pi);
@@ -119,7 +121,7 @@ META_TYPE_BINDER_SPECIALIZATION(TestCtor)
 META_TYPE_AUTO_REGISTER(TestCtor);
 
 META_METHOD_INFO_BINDER_DEFAULT(TestCtor, IsEven, bool, 0, Meta::MethodInfo::eCallable,
-								META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS1, Int32);
+								META_METHOD_INFO_BINDER_INVOKE_DEFAULT_ARGS1, int32_t);
 
 META_PROPERTY_INFO_BINDER_DEFAULT(TestCtor, int, number_, Meta::PropertyInfo::eReadOnly);
 
@@ -131,7 +133,7 @@ META_CTOR_INFO_BINDER(TestCtor, 0, 0)
 	META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS0();
 };
 
-META_CTOR_INFO_BINDER(TestCtor, 1, 1, Int64, Float32)
+META_CTOR_INFO_BINDER(TestCtor, 1, 1, int64_t, float32_t)
 // struct TestCtor_Ctor1: Meta::CtorInfo::Binder<TestCtor(Int64, Float32), 1>
 {
 	META_CTOR_INFO_BINDER_INVOKE_DEFAULT_ARGS2();
@@ -185,20 +187,38 @@ META_TYPE_BINDER_BEGIN(ASDB)
 META_TYPE_BINDER_END()
 META_TYPE_AUTO_REGISTER(ASDB);
 
-int main(int argc, char** argv)
+LOG_DEFINE(Main);
+
+int32_t ProcessGame(const int32_t argc, char** argv)
 {
-#if USE_RESULT
+	RESULT_VALUE_VAR(result);
+	LOG_SET_VERBOSITY(Info);
+	LOGC(Warning, Main, "Preparing to run the game...");
+	auto& l_engine = Engine::Manager::Instance();
+	RESULT_VALUE_ENSURE_CALL(l_engine.Initialize(argc, argv, RESULT_ARG_VALUE_PASS), EXIT_FAILURE);
+	RESULT_VALUE_ENSURE_CALL(l_engine.Run(RESULT_ARG_VALUE_PASS), EXIT_FAILURE);
+	return EXIT_SUCCESS;
+}
+
+int32_t main(int32_t argc, char** argv)
+{
+	LOG_INIT();
+	const Engine::ProgramArgs l_args{argc, argv};
+	if(l_args.Has("--Game"))
+	{
+		return ProcessGame(argc, argv);
+	}
+
 	Result result = eResultOk;
 	(void)result;
-#endif
 
 	(void)argc;
 	(void)argv;
-	LOG_SET_VERBOSITY(info);
+	LOG_SET_VERBOSITY(Info);
 
 	Meta::RegistryBaseTypes();
 
-	LOG(warning, "#################");
+	LOG(Warning, "#################");
 
 	const Meta::Value l_v1 = 3.4f;
 	Meta::Value		  l_v2 = l_v1;

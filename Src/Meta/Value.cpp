@@ -126,54 +126,54 @@ const bool& Value::AsBool() const
 	return As<bool>();
 }
 
-const Int8& Value::AsInt8() const
+const int8_t& Value::AsInt8() const
 {
-	return As<Int8>();
+	return As<int8_t>();
 }
 
-const Int16& Value::AsInt16() const
+const int16_t& Value::AsInt16() const
 {
-	return As<Int16>();
+	return As<int16_t>();
 }
 
-const Int32& Value::AsInt32() const
+const int32_t& Value::AsInt32() const
 {
-	return As<Int32>();
+	return As<int32_t>();
 }
 
-const Int64& Value::AsInt64() const
+const int64_t& Value::AsInt64() const
 {
-	return As<Int64>();
+	return As<int64_t>();
 }
 
-const Uint8& Value::AsUint8() const
+const uint8_t& Value::AsUint8() const
 {
-	return As<Uint8>();
+	return As<uint8_t>();
 }
 
-const Uint16& Value::AsUint16() const
+const uint16_t& Value::AsUint16() const
 {
-	return As<Uint16>();
+	return As<uint16_t>();
 }
 
-const Uint32& Value::AsUint32() const
+const uint32_t& Value::AsUint32() const
 {
-	return As<Uint32>();
+	return As<uint32_t>();
 }
 
-const Uint64& Value::AsUint64() const
+const uint64_t& Value::AsUint64() const
 {
-	return As<Uint64>();
+	return As<uint64_t>();
 }
 
-const Float32& Value::AsFloat32() const
+const float32_t& Value::AsFloat32() const
 {
-	return As<Float32>();
+	return As<float32_t>();
 }
 
-const Float64& Value::AsFloat64() const
+const float64_t& Value::AsFloat64() const
 {
-	return As<Float64>();
+	return As<float64_t>();
 }
 
 //const glm::vec2& Value::AsVec2() const

@@ -42,12 +42,12 @@ void operator delete[](void* ptr)
 }
 void operator delete(void* ptr, std::align_val_t al)
 {
-	mi_free_aligned(ptr, (Uint64)al);
+	mi_free_aligned(ptr, (uint64_t)al);
 }
 
 void operator delete[](void* ptr, std::align_val_t al)
 {
-	mi_free_aligned(ptr, (Uint64)al);
+	mi_free_aligned(ptr, (uint64_t)al);
 }
 
 static void EnttCtor10000(benchmark::State& state)
@@ -129,7 +129,7 @@ static void EnttCreateEntity1000ForLoopAddLocationComponent(benchmark::State& st
 		for (size_t i = 0; i < 1000; i++)
 		{
 			const auto l_id = l_reg.create();
-			l_reg.emplace<Ecs::LocationComponent>(l_id, glm::vec3{static_cast<Float32>(i)});
+			l_reg.emplace<Ecs::LocationComponent>(l_id, glm::vec3{static_cast<float32_t>(i)});
 			//l_reg.emplace<RotationComponent>(l_id, glm::vec3{static_cast<Float32>(i)*2});
 		}
 	}
@@ -145,7 +145,7 @@ static void COADEntityCreateEntity1000ForLoopAddLocationComponent(benchmark::Sta
 		for (size_t i = 0; i < 1000; i++)
 		{
 			const auto l_id = l_reg.Create();
-			l_reg.Add(l_id, Ecs::LocationComponent{glm::vec3{static_cast<Float32>(i)}});
+			l_reg.Add(l_id, Ecs::LocationComponent{glm::vec3{static_cast<float32_t>(i)}});
 		}
 	}
 }
@@ -196,7 +196,7 @@ static void EnttRemoveComponent1000ForLoop(benchmark::State& state)
 
 		for (size_t i = 0; i < 1000; i++)
 		{
-			l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<Float32>(i)});
+			l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<float32_t>(i)});
 		}
 		for (size_t i = 0; i < 1000; i++)
 		{
@@ -214,7 +214,7 @@ static void COADRemoveComponent1000ForLoop(benchmark::State& state)
 		Ecs::Registry<AllComponentTypes> l_reg{10000ull};
 		for (size_t i = 0; i < 1000; i++)
 		{
-			l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<Float32>(i)}});
+			l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<float32_t>(i)}});
 		}
 		for (size_t i = 0; i < 1000; i++)
 		{
@@ -234,7 +234,7 @@ static void EnttGetEntity10000ForLoop(benchmark::State& state)
 	entt::registry l_reg{10000ull};
 	for (size_t i = 0; i < 10000; i++)
 	{
-		l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<Float32>(i)});
+		l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<float32_t>(i)});
 	}
 	for (auto _ : state)
 	{
@@ -253,7 +253,7 @@ static void COADGetEntity10000ForLoop(benchmark::State& state)
 	Ecs::Registry<AllComponentTypes> l_reg{10000ull};
 	for (size_t i = 0; i < 10000; i++)
 	{
-		l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<Float32>(i)}});
+		l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<float32_t>(i)}});
 	}
 	for (auto _ : state)
 	{
@@ -272,7 +272,7 @@ static void EnttEach10000(benchmark::State& state)
 	entt::registry l_reg{10000ull};
 	for (size_t i = 0; i < 10000; i++)
 	{
-		l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<Float32>(i)});
+		l_reg.emplace<Ecs::LocationComponent>(l_reg.create(), glm::vec3{static_cast<float32_t>(i)});
 	}
 	for (auto _ : state)
 	{
@@ -290,7 +290,7 @@ static void COADEach10000(benchmark::State& state)
 	Ecs::Registry<AllComponentTypes> l_reg{10000ull};
 	for (size_t i = 0; i < 10000; i++)
 	{
-		l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<Float32>(i)}});
+		l_reg.Add(l_reg.Create(), Ecs::LocationComponent{glm::vec3{static_cast<float32_t>(i)}});
 	}
 	for (auto _ : state)
 	{

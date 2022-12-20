@@ -35,7 +35,7 @@ public:
 	{
 		const void* info;
 		void*		owner;
-		Uint32		args_tuple_size;
+		uint32_t		args_tuple_size;
 		void*		args_tuple;
 	};
 
@@ -58,12 +58,12 @@ public:
 
 		EXPLICIT BodyAdapter(body_t& body);
 
-		template<Size Index>
+		template<size_t Index>
 		const auto& Get();
 
 		const MethodInfo&	  info;
 		Owner&				  owner;
-		Uint32&				  args_tuple_size;
+		uint32_t&				  args_tuple_size;
 		generic_tuple_args_t& args_tuple;
 	};
 
@@ -91,8 +91,8 @@ public:
 	 * @tparam Id Hash name id.
 	 * 
 	*/
-	template<id_t Id, typename Owner, typename Return, typename TypeListArgs, Uint32 OptionalParamCount = 0,
-			 Uint32 Flags = eCallable>
+	template<id_t Id, typename Owner, typename Return, typename TypeListArgs, uint32_t OptionalParamCount = 0,
+			 uint32_t Flags = eCallable>
 	struct Binder
 	{
 		using owner_t		 = Owner;
@@ -116,11 +116,11 @@ public:
 	NODISCARD const TypeInfo& ReturnType() const;
 	NODISCARD const char*	  Name() const;
 	NODISCARD id_t					   Id() const;
-	NODISCARD Uint32						   Flags() const;
+	NODISCARD uint32_t						   Flags() const;
 	NODISCARD const method_params_signature_t& ParamsSignature() const;
-	NODISCARD Uint32						   NeededParamCount() const;
-	NODISCARD Uint32						   TotalParamCount() const;
-	NODISCARD Uint32						   OptionalParamCount() const;
+	NODISCARD uint32_t						   NeededParamCount() const;
+	NODISCARD uint32_t						   TotalParamCount() const;
+	NODISCARD uint32_t						   OptionalParamCount() const;
 
 public:
 	NODISCARD Value Invoke(const void* owner) const;
@@ -152,11 +152,11 @@ private:
 	const TypeInfo&			  return_type_;
 	const char*				  name_;
 	id_t			  id_;
-	Uint32					  flags_;
+	uint32_t					  flags_;
 	method_params_signature_t params_signature_;
 	binder_invoke_function_t  function_;
-	Uint32					  total_param_count_;
-	Uint32					  optional_param_count_;
+	uint32_t					  total_param_count_;
+	uint32_t					  optional_param_count_;
 };
 
 template<typename Owner, typename TypeList>
@@ -167,7 +167,7 @@ MethodInfo::BodyAdapter<Owner, TypeList>::BodyAdapter(body_t& body)
 }
 
 template<typename Owner, typename TypeList>
-template<Size Index>
+template<size_t Index>
 const auto& MethodInfo::BodyAdapter<Owner, TypeList>::Get()
 {
 	return eastl::get<Index>(args_tuple).template As<eastl::tuple_element_t<Index, tuple_args_t>>();

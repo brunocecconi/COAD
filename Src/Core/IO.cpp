@@ -17,112 +17,112 @@
 namespace Io
 {
 
-File::File() : handle_{}
+File::File() : mHandle{}
 {
 }
 
-File::File(const char* file_path, const Uint32 flags, RESULT_PARAM_IMPL)
+File::File(const char* FilePath, const uint32_t Flags, RESULT_PARAM_IMPL)
 {
-	RESULT_ENSURE_CALL_NOLOG(Open(file_path, flags, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(Open(FilePath, Flags, RESULT_ARG_PASS));
 }
 
 File::~File()
 {
-	fclose(handle_);
-	handle_ = nullptr;
+	fclose(mHandle);
+	mHandle = nullptr;
 }
 
-void File::Open(const char* file_path, const Uint32 flags, RESULT_PARAM_IMPL)
+void File::Open(const char* FilePath, const uint32_t Flags, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
 
-	RESULT_CONDITION_ENSURE_NOLOG(!handle_, eResultErrorPtrIsNotNull);
-	RESULT_CONDITION_ENSURE_NOLOG(file_path, eResultErrorNullPtr);
-	RESULT_ENSURE_CALL_NOLOG(Path l_path{file_path});
-	RESULT_ENSURE_CALL_NOLOG(Path l_full_path = l_path.FullPath());
+	RESULT_CONDITION_ENSURE_NOLOG(!mHandle, eResultErrorPtrIsNotNull);
+	RESULT_CONDITION_ENSURE_NOLOG(FilePath, eResultErrorNullPtr);
+	RESULT_ENSURE_CALL_NOLOG(const Path lPath{FilePath});
+	RESULT_ENSURE_CALL_NOLOG(Path lFullPath = lPath.FullPath());
 
-	RESULT_CONDITION_ENSURE_NOLOG(flags != eFtNone, eResultErrorIoFileInvalidFlags);
+	RESULT_CONDITION_ENSURE_NOLOG(Flags != eFtNone, eResultErrorIoFileInvalidFlags);
 
-	char l_mode[64] = {};
-	if (flags & eFtWrite && !(flags & eFtRead))
+	char lMode[64] = {};
+	if (Flags & eFtWrite && !(Flags & eFtRead))
 	{
-		strcat(l_mode, "w");
+		strcat(lMode, "w");
 	}
-	else if (flags & eFtWrite && flags & eFtRead)
+	else if (Flags & eFtWrite && Flags & eFtRead)
 	{
-		strcat(l_mode, "w+");
+		strcat(lMode, "w+");
 	}
-	else if (flags & eFtRead && !(flags & eFtWrite))
+	else if (Flags & eFtRead && !(Flags & eFtWrite))
 	{
-		strcat(l_mode, "r");
+		strcat(lMode, "r");
 	}
-	else if (flags & eFtRead && flags & eFtWrite)
+	else if (Flags & eFtRead && Flags & eFtWrite)
 	{
-		strcat(l_mode, "r+");
+		strcat(lMode, "r+");
 	}
-	else if (flags & eFtAppend)
+	else if (Flags & eFtAppend)
 	{
-		strcat(l_mode, "a");
+		strcat(lMode, "a");
 	}
 
-	handle_ = fopen(file_path, l_mode);
-	RESULT_CONDITION_ENSURE_NOLOG(handle_, eResultErrorIoFileOpenFailed);
+	mHandle = fopen(FilePath, lMode);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle, eResultErrorIoFileOpenFailed);
 	RESULT_OK();
 }
 
-void File::OpenRead(const char* file_path, RESULT_PARAM_IMPL)
+void File::OpenRead(const char* FilePath, RESULT_PARAM_IMPL)
 {
-	Open(file_path, eFtRead, RESULT_ARG_PASS);
+	Open(FilePath, eFtRead, RESULT_ARG_PASS);
 }
 
-void File::OpenWrite(const char* file_path, RESULT_PARAM_IMPL)
+void File::OpenWrite(const char* FilePath, RESULT_PARAM_IMPL)
 {
-	Open(file_path, eFtWrite, RESULT_ARG_PASS);
+	Open(FilePath, eFtWrite, RESULT_ARG_PASS);
 }
 
-void File::OpenReadWrite(const char* file_path, RESULT_PARAM_IMPL)
+void File::OpenReadWrite(const char* FilePath, RESULT_PARAM_IMPL)
 {
-	Open(file_path, eFtRead|eFtWrite, RESULT_ARG_PASS);
+	Open(FilePath, eFtRead|eFtWrite, RESULT_ARG_PASS);
 }
 
-void File::Read(void* data, const Uint64 size, RESULT_PARAM_IMPL) const
+void File::Read(void* Data, const uint64_t Size, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(handle_ && data, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle && Data, eResultErrorNullPtr);
 
-	if (size == 0)
+	if (Size == 0)
 	{
 		RESULT_ERROR(eResultErrorZeroSize);
 	}
-	if (fread(data, 1, size, handle_) > size)
+	if (fread(Data, 1, Size, mHandle) > Size)
 	{
 		RESULT_ERROR(eResultErrorIoFileReadFailed);
 	}
 	RESULT_OK();
 }
 
-void File::Write(const void* data, const Uint64 size, RESULT_PARAM_IMPL) const
+void File::Write(const void* Data, const uint64_t Size, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(handle_ && data, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle && Data, eResultErrorNullPtr);
 
-	if (size == 0)
+	if (Size == 0)
 	{
 		RESULT_ERROR(eResultErrorZeroSize);
 	}
-	if (fwrite(data, 1, size, handle_) != size)
+	if (fwrite(Data, 1, Size, mHandle) != Size)
 	{
 		RESULT_ERROR(eResultErrorIoFileWriteFailed);
 	}
 	RESULT_OK();
 }
 
-void File::Seek(const Uint64 value, const SeekType origin, RESULT_PARAM_IMPL) const
+void File::Seek(const uint64_t Value, const ESeekType Origin, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(handle_, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle, eResultErrorNullPtr);
 
-	if (_fseeki64(handle_, value, origin) != 0)
+	if (_fseeki64(mHandle, Value, Origin) != 0)
 	{
 		RESULT_ERROR(eResultErrorIoFileSeekFailed);
 	}
@@ -130,18 +130,18 @@ void File::Seek(const Uint64 value, const SeekType origin, RESULT_PARAM_IMPL) co
 	RESULT_OK();
 }
 
-Uint64 File::Tell(RESULT_PARAM_IMPL) const
+uint64_t File::Tell(RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG(0);
-	RESULT_CONDITION_ENSURE_NOLOG(handle_, eResultErrorNullPtr, 0);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle, eResultErrorNullPtr, 0);
 	RESULT_OK();
-	return static_cast<Uint64>(_ftelli64(handle_));
+	return static_cast<uint64_t>(_ftelli64(mHandle));
 }
 
-Uint64 File::Size(RESULT_PARAM_IMPL) const
+uint64_t File::Size(RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG(0);
-	RESULT_CONDITION_ENSURE_NOLOG(handle_, eResultErrorNullPtr, 0);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle, eResultErrorNullPtr, 0);
 	RESULT_ENSURE_CALL_NOLOG(const auto l_current_cursor = Tell(RESULT_ARG_PASS), 0);
 	RESULT_ENSURE_CALL_NOLOG(Seek(0, eStEnd, RESULT_ARG_PASS), 0);
 	RESULT_ENSURE_CALL_NOLOG(const auto l_size = Tell(RESULT_ARG_PASS), 0);
@@ -153,9 +153,9 @@ Uint64 File::Size(RESULT_PARAM_IMPL) const
 void File::Flush(RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(handle_, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle, eResultErrorNullPtr);
 
-	if (fflush(handle_) != 0)
+	if (fflush(mHandle) != 0)
 	{
 		RESULT_ERROR(eResultErrorIoFileFlushFailed);
 	}
@@ -166,48 +166,48 @@ void File::Flush(RESULT_PARAM_IMPL) const
 void File::Close(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(handle_, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle, eResultErrorNullPtr);
 
-	if (fclose(handle_) != 0)
+	if (fclose(mHandle) != 0)
 	{
 		RESULT_ERROR(eResultErrorIoFileCloseFailed);
 	}
 
-	handle_ = nullptr;
+	mHandle = nullptr;
 	RESULT_OK();
 }
 
-void File::Read(const char* file_path, void* data, const Uint64 size, RESULT_PARAM_IMPL)
+void File::Read(const char* FilePath, void* Data, const uint64_t Size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_ENSURE_CALL_NOLOG(const File l_file(file_path, eFtRead, RESULT_ARG_PASS));
-	RESULT_ENSURE_CALL_NOLOG(l_file.Read(data, size, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(const File l_file(FilePath, eFtRead, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(l_file.Read(Data, Size, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
-void File::Write(const char* file_path, const void* data, const Uint64 size, RESULT_PARAM_IMPL)
+void File::Write(const char* FilePath, const void* Data, const uint64_t Size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_ENSURE_CALL_NOLOG(const File l_file(file_path, eFtWrite, RESULT_ARG_PASS));
-	RESULT_ENSURE_CALL_NOLOG(l_file.Write(data, size, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(const File l_file(FilePath, eFtWrite, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(l_file.Write(Data, Size, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
-Path::Path(const char* file_path, RESULT_PARAM_IMPL)
+Path::Path(const char* FilePath, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
 
-	if (file_path == nullptr)
+	if (FilePath == nullptr)
 	{
 		RESULT_ENSURE_NOLOG(eResultErrorNullPtr);
 	}
 
-	if (const auto l_size = std::strlen(file_path); l_size > MAX)
+	if (const auto lSize = std::strlen(FilePath); lSize > MAX)
 	{
 		RESULT_ENSURE_NOLOG(eResultErrorIoExceededMaxPathLength);
 	}
 
-	strcpy(value_, file_path);
+	strcpy(mValue, FilePath);
 }
 
 Path::~Path()
@@ -216,32 +216,32 @@ Path::~Path()
 
 bool Path::Exists() const
 {
-	const Path& l_path = FullPath();
-	return PathFileExistsA(l_path.value_) == TRUE;
+	const Path& lPath = FullPath();
+	return PathFileExistsA(lPath.mValue) == TRUE;
 }
 
 Path Path::FullPath() const
 {
-	Path l_path;
-	GetFullPathNameA(value_, MAX, l_path.value_, nullptr);
-	return l_path;
+	Path lPath;
+	GetFullPathNameA(mValue, MAX, lPath.mValue, nullptr);
+	return lPath;
 }
 
-Path Path::RelativePath(const char* to, RESULT_PARAM_IMPL) const
+Path Path::RelativePath(const char* To, RESULT_PARAM_IMPL) const
 {
-	Path l_path{};
-	RESULT_ENSURE_LAST_NOLOG(l_path);
+	Path lPath{};
+	RESULT_ENSURE_LAST_NOLOG(lPath);
 
-	if (!to)
+	if (!To)
 	{
-		RESULT_ENSURE_NOLOG(eResultErrorNullPtr, l_path);
+		RESULT_ENSURE_NOLOG(eResultErrorNullPtr, lPath);
 	}
-	if (strlen(to) > MAX)
+	if (strlen(To) > MAX)
 	{
-		RESULT_ENSURE_NOLOG(eResultErrorIoExceededMaxPathLength, l_path);
+		RESULT_ENSURE_NOLOG(eResultErrorIoExceededMaxPathLength, lPath);
 	}
-	PathRelativePathToA(l_path.value_, value_, FILE_ATTRIBUTE_DIRECTORY, to, FILE_ATTRIBUTE_NORMAL);
-	return l_path;
+	PathRelativePathToA(lPath.mValue, mValue, FILE_ATTRIBUTE_DIRECTORY, To, FILE_ATTRIBUTE_NORMAL);
+	return lPath;
 }
 
 eastl::string Path::Extension()
@@ -263,9 +263,9 @@ bool Path::IsDirectory(RESULT_PARAM_IMPL) const
 	return false;
 }
 
-const char* Path::data(RESULT_PARAM_IMPL) const
+const char* Path::Data(RESULT_PARAM_IMPL) const
 {
-	return value_;
+	return mValue;
 }
 
 } // namespace Io

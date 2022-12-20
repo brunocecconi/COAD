@@ -49,7 +49,7 @@ struct IsComponent<T, eastl::void_t<typename T::EcsComponentType>>
 namespace Detail
 {
 
-template < Uint64 Index, typename Tuple >
+template < uint64_t Index, typename Tuple >
 void ValidateComponentTuple()
 {
 	if constexpr(Index < eastl::tuple_size_v<Tuple>)

@@ -10,11 +10,17 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+#if DEBUG
 #define DEBUG_NAME(X)	  EASTL_NAME(X)
 #define DEBUG_NAME_VAL(X) EASTL_NAME_VAL(X)
-#define CSTR(X)			  (char*)#X
-#define CSTR_PASS(X)	  (char*)#X,
-#define PASS(X)			  X
+#else
+#define DEBUG_NAME(X)
+#define DEBUG_NAME_VAL(X) ((const char*)nullptr)
+#endif
+
+#define CSTR(X)		 (char*)#X
+#define CSTR_PASS(X) (char*)#X,
+#define PASS(X)		 X
 #define EMPTY
 #define UNUSED(X) (void)X
 

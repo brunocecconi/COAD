@@ -12,26 +12,28 @@
 
 #include "Core/Common.h"
 
-namespace Threading
-{
-
 #if PLATFORM_WINDOWS
-using NativeThreadParamsType = void*;
-using NativeThreadHandleType = HANDLE;
-using NativeMutexHandleType	 = HANDLE;
+using thread_native_params_t = void*;
+using thread_native_handle_t = HANDLE;
+using mutex_native_handle_t	 = HANDLE;
 #endif
 
-using ThreadFunctionType = Uint32 (*)(NativeThreadParamsType);
+using thread_function_t = uint32_t (*)(thread_native_params_t);
 
-namespace NativeThreadCiFlags
+namespace ThreadNativeCiFlags
 {
 enum Type
 {
 	eNone,
-	eCreateSuspended
+	eCreateSuspended,
+	eAutoDestroy
 };
-} // namespace NativeThreadCiFlags
+} // namespace ThreadNativeCiFlags
 
+/**
+ * @brief Thread class.
+ *
+ */
 class Thread
 {
 	CLASS_BODY_NON_COPYABLE(Thread)
@@ -43,73 +45,91 @@ public:
 	 */
 	struct Handle
 	{
-		NativeThreadHandleType ptr;
-		NativeThreadParamsType params;
+		thread_native_handle_t Ptr;
+		thread_native_params_t Params;
 	};
 
 	/**
 	 * @brief Structure to thread create info.
 	 *
 	 */
-	struct Ci
+	struct CreateInfo
 	{
-		ThreadFunctionType		  function;
-		NativeThreadParamsType	  params;
-		Uint64					  params_size;
-		NativeThreadCiFlags::Type flags;
+		thread_function_t		  Function{};
+		thread_native_params_t	  Params{};
+		uint64_t					  ParamsSize{};
+		ThreadNativeCiFlags::Type Flags{};
+		bool					  DestroyOnDtor{true};
 	};
 
 public:
 	Thread(RESULT_PARAM_DEFINE);
-	EXPLICIT Thread(const Ci& ci, RESULT_PARAM_DEFINE);
-	EXPLICIT Thread(ThreadFunctionType function, RESULT_PARAM_DEFINE);
-
-	template<typename TypeArgs>
-	EXPLICIT Thread(ThreadFunctionType function, TypeArgs& args, RESULT_PARAM_DEFINE);
-
+	EXPLICIT Thread(const CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
 	~Thread();
 
 public:
-	MAYBEUNUSED void Create(const Ci& ci, RESULT_PARAM_DEFINE);
-	MAYBEUNUSED void Sleep(Uint32 ms, RESULT_PARAM_DEFINE) const;
-	MAYBEUNUSED void Suspend(RESULT_PARAM_DEFINE) const;
-	MAYBEUNUSED void Resume(RESULT_PARAM_DEFINE) const;
-	MAYBEUNUSED void Destroy(RESULT_PARAM_DEFINE);
+	void		Create(const CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
+	void		Sleep(uint32_t Milliseconds, RESULT_PARAM_DEFINE) const;
+	static void SleepCurrent(uint32_t Milliseconds, RESULT_PARAM_DEFINE);
+	void		Suspend(RESULT_PARAM_DEFINE) const;
+	void		Resume(RESULT_PARAM_DEFINE) const;
+	void		Destroy(RESULT_PARAM_DEFINE);
+	void		SetAffinity(uint64_t Index, RESULT_PARAM_DEFINE) const;
+	void		Wait(RESULT_PARAM_DEFINE) const;
+	void		Wait(uint32_t Milliseconds, RESULT_PARAM_DEFINE) const;
 
 private:
-	Handle handle_{};
+	Handle mHandle{};
+	bool   mDestroyOnDtor{};
 };
 
-template<typename TypeArgs>
-Thread::Thread(const ThreadFunctionType function, TypeArgs& args, RESULT_PARAM_IMPL)
-{
-	Create(Ci{function, &args, sizeof(TypeArgs)});
-}
+NODISCARD bool IsThread(const Thread& Thread);
 
+/**
+ * @brief Mutex class.
+ *
+ */
 class Mutex
 {
 	CLASS_BODY_NON_COPYABLE(Mutex)
 
 public:
-	struct Handle
+	struct Scope
 	{
-		NativeMutexHandleType ptr;
-		const char*			  name;
+		Mutex*	 Mtx;
+		Result*	 result;
+		EXPLICIT Scope(Mutex* Mutex, RESULT_PARAM_DEFINE);
+		~Scope();
 	};
 
-	struct Ci
+	template<typename TOwner>
+	struct ScopeFromOwner
 	{
-		const char* name;
+		TOwner*	 Owner;
+		Result*	 result;
+		EXPLICIT ScopeFromOwner(TOwner* Owner, RESULT_PARAM_DEFINE);
+		~ScopeFromOwner();
+	};
+
+	struct Handle
+	{
+		mutex_native_handle_t Ptr;
+		const char*			  Name;
+	};
+
+	struct CreateInfo
+	{
+		const char* Name;
 	};
 
 public:
-	Mutex(RESULT_PARAM_DEFINE);
-	EXPLICIT Mutex(const Ci& ci, RESULT_PARAM_DEFINE);
-	EXPLICIT Mutex(const char* name, RESULT_PARAM_DEFINE);
+	EXPLICIT Mutex(RESULT_PARAM_DEFINE);
+	EXPLICIT Mutex(const CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
+	EXPLICIT Mutex(const char* Name, RESULT_PARAM_DEFINE);
 	~Mutex();
 
 public:
-	MAYBEUNUSED void Create(const Ci& ci, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED void Create(const CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
 	MAYBEUNUSED void Lock(RESULT_PARAM_DEFINE) const;
 	MAYBEUNUSED void Unlock(RESULT_PARAM_DEFINE) const;
 	MAYBEUNUSED void Destroy(RESULT_PARAM_DEFINE);
@@ -118,11 +138,26 @@ private:
 	Handle handle_{};
 };
 
+template<typename OwnerClass>
+Mutex::ScopeFromOwner<OwnerClass>::ScopeFromOwner(OwnerClass* Owner, RESULT_PARAM_IMPL)
+	: Owner{Owner}, result{RESULT_ARG_PASS}
+{
+	RESULT_ENSURE_LAST();
+	Owner->mMutex.Lock();
+	RESULT_OK();
+}
+
+template<typename OwnerClass>
+Mutex::ScopeFromOwner<OwnerClass>::~ScopeFromOwner()
+{
+	RESULT_ENSURE_LAST();
+	Owner->mMutex.Unlock();
+	RESULT_OK();
+}
+
 #define thread_lambda [](native_thread_params_t)
 
-} // namespace Threading
-
-CLASS_VALIDATION(Threading::Thread);
-CLASS_VALIDATION(Threading::Mutex);
+CLASS_VALIDATION(Thread);
+CLASS_VALIDATION(Mutex);
 
 #endif

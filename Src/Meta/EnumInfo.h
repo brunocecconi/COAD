@@ -29,7 +29,7 @@ public:
 	template<typename EnumType>
 	struct Rebinder;
 
-	template<typename EnumType, Uint32 Flags = 0>
+	template<typename EnumType, uint32_t Flags = 0>
 	struct Binder
 	{
 		using owner_t				= EnumType;
@@ -48,8 +48,8 @@ public:
 	NODISCARD static const EnumInfo& None();
 
 public:
-	NODISCARD const char* ToNameGeneric(Int64 value) const;
-	NODISCARD Int64		  ToValueGeneric(const char* name) const;
+	NODISCARD const char* ToNameGeneric(int64_t value) const;
+	NODISCARD int64_t		  ToValueGeneric(const char* name) const;
 
 	template<typename T>
 	NODISCARD const char* ToName(T value) const;
@@ -59,12 +59,12 @@ public:
 
 public:
 	NODISCARD bool IsBitmask() const;
-	NODISCARD bool HasFlags(Int64 value) const;
+	NODISCARD bool HasFlags(int64_t value) const;
 
 private:
 	const TypeInfo&										  type_info_;
-	eastl::vector<eastl::pair<eastl::string_view, Int64>> entries_{DEBUG_NAME_VAL("Meta")};
-	Uint64												  flags_;
+	eastl::vector<eastl::pair<eastl::string_view, int64_t>> entries_{DEBUG_NAME_VAL("Meta")};
+	uint64_t												  flags_;
 };
 
 template<typename T>
@@ -77,7 +77,7 @@ template<typename T>
 const char* EnumInfo::ToName(const T value) const
 {
 	static_assert(eastl::is_enum_v<T>, "Invalid enum type.");
-	return ToNameGeneric(static_cast<Int64>(value));
+	return ToNameGeneric(static_cast<int64_t>(value));
 }
 
 template<typename T>

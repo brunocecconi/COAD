@@ -21,7 +21,7 @@ namespace Algorithm
 namespace Detail
 {
 
-template<Uint32 Index, Uint32 Size, typename T>
+template<uint32_t Index, uint32_t Size, typename T>
 constexpr void PrintArray(const eastl::array<T, Size>& arr)
 {
 	if constexpr (Index < Size)
@@ -61,68 +61,68 @@ constexpr void PrintArray(const eastl::array<T, Size>& arr)
 
 } // namespace Detail
 
-template < typename Function, typename ... Args >
-void Call(Function function, Args&&... args)
+template < typename TFunction, typename ... TArgs >
+void Call(TFunction Function, TArgs&&... Args)
 {
-	return function(eastl::forward<Args>(args)...);
+	return Function(eastl::forward<TArgs>(Args)...);
 }
 
-template < typename Function, typename ... Args >
-void Call(eastl::vector<Function>& functions,
-	Args&&... args)
+template < typename TFunction, typename ... TArgs >
+void Call(eastl::vector<TFunction>& Functions,
+	TArgs&&... Args)
 {
-	eastl::for_each(functions.begin(), functions.end(), [&](Function& f) {
-		f(eastl::forward<Args>(args)...);
+	eastl::for_each(Functions.begin(), Functions.end(), [&](TFunction& f) {
+		f(eastl::forward<TArgs>(Args)...);
 	});
 }
 
 template<typename ForwardIterator>
-Uint64 MaxElementIndex(ForwardIterator first, ForwardIterator last)
+uint64_t MaxElementIndex(ForwardIterator First, ForwardIterator Last)
 {
-	if (first != last)
+	if (First != Last)
 	{
-		ForwardIterator l_current_max = first;
-		Uint64			l_index{};
-		while (++first != last)
+		ForwardIterator lCurrentMax = First;
+		uint64_t			lIndex{};
+		while (++First != Last)
 		{
-			if (*l_current_max < *first)
+			if (*lCurrentMax < *First)
 			{
-				l_current_max = first;
-				++l_index;
+				lCurrentMax = First;
+				++lIndex;
 			}
 		}
-		return l_index;
+		return lIndex;
 	}
 	return 0ull;
 }
 
 template<typename ForwardIterator>
-Uint64 MinElementIndex(ForwardIterator first, ForwardIterator last)
+uint64_t MinElementIndex(ForwardIterator First, ForwardIterator Last)
 {
-	if (first != last)
+	if (First != Last)
 	{
-		ForwardIterator l_current_min = first;
-		Uint64			l_index{};
-		while (++first != last)
+		ForwardIterator lCurrentMin = First;
+		uint64_t			lIndex{};
+		while (++First != Last)
 		{
-			if (*l_current_min > *first)
+			if (*lCurrentMin > *First)
 			{
-				l_current_min = first;
-				++l_index;
+				lCurrentMin = First;
+				++lIndex;
 			}
 		}
-		return l_index;
+		return lIndex;
 	}
 	return 0ull;
 }
 
-template < Size Index, typename Tuple >
-constexpr void CtContainerTupleReserve(Tuple& tuple, Size new_capacity)
+template < size_t Index, typename TTuple >
+constexpr void CtContainerTupleReserve(TTuple& Tuple, size_t NewCapacity)
 {
-	if constexpr (Index < eastl::tuple_size_v<Tuple>)
+	if constexpr (Index < eastl::tuple_size_v<TTuple>)
 	{
-		eastl::get<Index>(tuple).reserve(new_capacity);
-		CtContainerTupleReserve<Index+1>(tuple, new_capacity);
+		eastl::get<Index>(Tuple).reserve(NewCapacity);
+		CtContainerTupleReserve<Index+1>(Tuple, NewCapacity);
 	}
 }
 

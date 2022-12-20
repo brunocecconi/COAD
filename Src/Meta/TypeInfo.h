@@ -13,8 +13,8 @@
 #include <EASTL/utility.h>
 
 #if _MSC_VER
-// Disable warning C4702: unreachable code 
-#pragma warning (disable:4702)
+// Disable warning C4702: unreachable code
+#pragma warning(disable : 4702)
 #endif
 
 namespace Meta
@@ -68,7 +68,7 @@ public:
 	struct OperationBody
 	{
 		OperationType type;
-		Uint64		  args_tuple_size;
+		uint64_t	  args_tuple_size;
 		void*		  args_tuple;
 	};
 	using operation_function_t = void (*)(OperationBody&);
@@ -92,8 +92,8 @@ public:
 	template<typename T>
 	struct Binder
 	{
-		using type_t				 = T;
-		static constexpr Uint64 SIZE = sizeof(T);
+		using type_t				   = T;
+		static constexpr uint64_t SIZE = sizeof(T);
 	};
 
 private:
@@ -112,12 +112,12 @@ public:
 	~TypeInfo() = default;
 
 public:
-	NODISCARD Uint64	  Id() const;
-	NODISCARD Uint64	  Size() const;
+	NODISCARD uint64_t	  Id() const;
+	NODISCARD uint64_t	  Size() const;
 	NODISCARD const char* Name() const;
 
-	NODISCARD eastl::string ToString(Uint64 capacity = 256) const;
-	NODISCARD eastl::string ToValueString(void* value, Uint64 capacity = 256) const;
+	NODISCARD eastl::string ToString(uint64_t capacity = 256) const;
+	NODISCARD eastl::string ToValueString(void* value, uint64_t capacity = 256) const;
 
 	NODISCARD static const TypeInfo& None();
 
@@ -164,7 +164,7 @@ public:
 
 private:
 	id_t				 id_;
-	Uint64				 size_;
+	uint64_t			 size_;
 	const char*			 name_;
 	operation_function_t operation_function_;
 };
@@ -305,78 +305,78 @@ namespace Algorithm
  *
  * @tparam T Target type.
  * @tparam Size Target size.
- * @param arr Target array.
+ * @param Arr Target array.
  *
  */
-template<typename T, Uint32 Size>
-constexpr void PrintArray(const eastl::array<T, Size>& arr)
+template<typename T, uint32_t Size>
+constexpr void PrintArray(const eastl::array<T, Size>& Arr)
 {
 	printf("eastl::array<%s, %u>( ", TypeInfo::Rebinder<T>::NAME.data(), Size);
-	::Algorithm::Detail::PrintArray<0>(arr);
+	::Algorithm::Detail::PrintArray<0>(Arr);
 	printf(")\n");
 }
 
 template<typename T>
-eastl::string ToString(const T& value, const EASTLAllocatorType& allocator = {DEBUG_NAME_VAL("Algorithm")},
-					   Uint64 str_size_hint = 512)
+eastl::string ToString(const T& Value, const EASTLAllocatorType& Allocator = {DEBUG_NAME_VAL("Algorithm")},
+					   uint64_t StrSizeHint = 512)
 {
 	if constexpr (eastl::is_fundamental_v<T>)
 	{
-		RawBuffer<char> l_buffer{str_size_hint, allocator};
-		sprintf(l_buffer.Get(), "%s(%s)", TypeInfo::Rebinder<T>::NAME.data(), eastl::to_string(value).c_str());
-		return eastl::string{l_buffer.Get(), allocator};
+		RawBuffer<char> lBuffer{StrSizeHint, Allocator};
+		sprintf(lBuffer.Data(), "%s(%s)", TypeInfo::Rebinder<T>::NAME.data(), eastl::to_string(Value).c_str());
+		return eastl::string{lBuffer.Data(), Allocator};
 	}
-	else if constexpr(is_coad_class<T>)
+	else if constexpr (is_coad_class<T>)
 	{
-		return value.ToString(str_size_hint);
+		return Value.ToString(StrSizeHint);
 	}
 	ENFORCE_MSG(false, "Invalid to string implementation.");
-	return eastl::string{allocator};
+	return eastl::string{Allocator};
 }
 
-INLINE eastl::string ToString(const eastl::string_view& value,
-							  const EASTLAllocatorType& allocator	  = {DEBUG_NAME_VAL("Algorithm")},
-							  const Uint64				str_size_hint = 0)
+INLINE eastl::string ToString(const eastl::string_view& Value,
+							  const EASTLAllocatorType& Allocator	= {DEBUG_NAME_VAL("Algorithm")},
+							  const uint64_t			StrSizeHint = 0)
 {
-	RawBuffer<char> l_buffer{value.size() + 32 + str_size_hint, allocator};
-	sprintf(l_buffer.Get(), "eastl::string_view(%s)", value.data());
-	return eastl::string{l_buffer.Get(), allocator};
+	RawBuffer<char> lBuffer{Value.size() + 32 + StrSizeHint, Allocator};
+	sprintf(lBuffer.Data(), "eastl::string_view(%s)", Value.data());
+	return eastl::string{lBuffer.Data(), Allocator};
 }
 
 template<typename T, typename Y>
-eastl::string ToString(const eastl::pair<T, Y>&	 pair,
-					   const EASTLAllocatorType& allocator	   = {DEBUG_NAME_VAL("Algorithm")},
-					   const Uint64				 str_size_hint = 512)
+eastl::string ToString(const eastl::pair<T, Y>&	 Pair,
+					   const EASTLAllocatorType& Allocator	 = {DEBUG_NAME_VAL("Algorithm")},
+					   const uint64_t			 StrSizeHint = 512)
 {
-	RawBuffer<char> l_buffer{str_size_hint + 32, allocator};
-	sprintf(l_buffer.Get(), "eastl::pair<%s, %s>(%s, %s)", TypeInfo::Rebinder<T>::NAME.data(),
-			TypeInfo::Rebinder<Y>::NAME.data(), ToString(pair.first, allocator).c_str(),
-			ToString(pair.second, allocator).c_str());
-	return eastl::string{l_buffer.Get(), allocator};
+	RawBuffer<char> lBuffer{StrSizeHint + 32, Allocator};
+	sprintf(lBuffer.Data(), "eastl::pair<%s, %s>(%s, %s)", TypeInfo::Rebinder<T>::NAME.data(),
+			TypeInfo::Rebinder<Y>::NAME.data(), ToString(Pair.first, Allocator).c_str(),
+			ToString(Pair.second, Allocator).c_str());
+	return eastl::string{lBuffer.Data(), Allocator};
 }
 
 template<typename T>
-eastl::string ToString(const eastl::vector<T>&	 vector,
-					   const EASTLAllocatorType& allocator	   = {DEBUG_NAME_VAL("Algorithm")},
-					   const Uint64				 str_size_hint = 0)
+eastl::string ToString(const eastl::vector<T>&	 Vector,
+					   const EASTLAllocatorType& Allocator	   = {DEBUG_NAME_VAL("Algorithm")},
+					   const uint64_t			 StrSizeHint = 0)
 {
-	if (vector.empty())
+	if (Vector.empty())
 	{
-		return eastl::string{allocator};
+		return eastl::string{Allocator};
 	}
 
-	eastl::string l_str{allocator};
-	l_str.reserve(vector.size() * 32);
-	l_str += "eastl::vector<";
-	l_str += TypeInfo::Rebinder<T>::NAME.data();
-	l_str += ">(";
-	for (const auto& l_v: vector)
+	eastl::string lStr{Allocator};
+	lStr.reserve(Vector.size() * 32);
+	lStr += "eastl::vector<";
+	lStr += TypeInfo::Rebinder<T>::NAME.data();
+	lStr += ">(";
+	for (const auto& l_v: Vector)
 	{
-		l_str += ToString(l_v) + ',';
+		lStr += ToString(l_v) + ',';
 	}
-	l_str.pop_back();
-	l_str += ')';
-	return l_str;
+	lStr.pop_back();
+	lStr += ')';
+	return lStr;
 }
 
 } // namespace Algorithm
@@ -384,9 +384,9 @@ eastl::string ToString(const eastl::vector<T>&	 vector,
 namespace Detail
 {
 
-FORCEINLINE bool CompareTypeInfoArray(const TypeInfo* const* arr1, const TypeInfo* const* arr2, const Uint32 size)
+FORCEINLINE bool CompareTypeInfoArray(const TypeInfo* const* arr1, const TypeInfo* const* arr2, const uint32_t size)
 {
-	for (Uint32 i = 0; i < size; i++)
+	for (uint32_t i = 0; i < size; i++)
 	{
 		if (arr1[i] != arr2[i])
 		{
@@ -404,21 +404,21 @@ FORCEINLINE bool CompareTypeInfoArray(const TypeInfo* const* arr1, const TypeInf
 
 // META_TYPE_BINDER_DEFAULT(void*)
 META_TYPE_BINDER_DEFAULT(bool)
-META_TYPE_BINDER_DEFAULT(Int8)
-META_TYPE_BINDER_DEFAULT(Int16)
-META_TYPE_BINDER_DEFAULT(Int32)
-META_TYPE_BINDER_DEFAULT(Int64)
-META_TYPE_BINDER_DEFAULT(Uint8)
-META_TYPE_BINDER_DEFAULT(Uint16)
-META_TYPE_BINDER_DEFAULT(Uint32)
-META_TYPE_BINDER_DEFAULT(Uint64)
-META_TYPE_BINDER_DEFAULT(Float32)
-META_TYPE_BINDER_DEFAULT(Float64)
+META_TYPE_BINDER_DEFAULT(int8_t)
+META_TYPE_BINDER_DEFAULT(int16_t)
+META_TYPE_BINDER_DEFAULT(int32_t)
+META_TYPE_BINDER_DEFAULT(int64_t)
+META_TYPE_BINDER_DEFAULT(uint8_t)
+META_TYPE_BINDER_DEFAULT(uint16_t)
+META_TYPE_BINDER_DEFAULT(uint32_t)
+META_TYPE_BINDER_DEFAULT(uint64_t)
+META_TYPE_BINDER_DEFAULT(float32_t)
+META_TYPE_BINDER_DEFAULT(float64_t)
 META_TYPE_BINDER_DEFAULT(eastl::string)
 META_TYPE_BINDER_DEFAULT(eastl::string_view)
-META_TYPE_BINDER_DEFAULT_TEMPLATE(eastl::pair, "eastl::pair<eastl::string_view, Int64>", eastl::string_view, Int64)
+META_TYPE_BINDER_DEFAULT_TEMPLATE(eastl::pair, "eastl::pair<eastl::string_view, Int64>", eastl::string_view, int64_t)
 META_TYPE_BINDER_DEFAULT_TEMPLATE(eastl::vector, "eastl::vector<eastl::pair<eastl::string_view, Int64>>",
-								  eastl::pair<eastl::string_view, Int64>)
+								  eastl::pair<eastl::string_view, int64_t>)
 
 // META_TYPE_BINDER_DEFAULT(glm::vec2)
 // META_TYPE_BINDER_DEFAULT(glm::vec3)

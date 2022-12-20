@@ -5,7 +5,7 @@
 namespace Asset
 {
 
-Registry* Registry::instance_ = nullptr;
+Registry* Registry::mInstance = nullptr;
 
 Registry::Registry(RESULT_PARAM_IMPL)
 {
@@ -26,19 +26,19 @@ Registry::Registry(RESULT_PARAM_IMPL)
 
 Registry& Registry::Instance(RESULT_PARAM_IMPL)
 {
-	if (!instance_)
+	if (!mInstance)
 	{
-		instance_ =
+		mInstance =
 			new (Allocators::Default{DEBUG_NAME_VAL("Asset")}.allocate(sizeof(Registry))) Registry{RESULT_ARG_PASS};
 	}
-	return *instance_;
+	return *mInstance;
 }
 
-void Registry::Reserve(const Size new_capacity, RESULT_PARAM_IMPL)
+void Registry::Reserve(const size_t NewCapacity, RESULT_PARAM_IMPL)
 {
-	RESULT_CONDITION_ENSURE_NOLOG(new_capacity > 0ull, eResultErrorZeroSize);
-	data_map_.reserve(new_capacity);
-	index_map_.reserve(new_capacity);
+	RESULT_CONDITION_ENSURE_NOLOG(NewCapacity > 0ull, eResultErrorZeroSize);
+	mDataMap.reserve(NewCapacity);
+	mIndexMap.reserve(NewCapacity);
 }
 
 } // namespace Asset

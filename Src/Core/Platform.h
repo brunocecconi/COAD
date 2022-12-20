@@ -374,6 +374,8 @@
 #endif // ARCH_
 
 #if PLATFORM_WINDOWS
+#undef UNICODE
+//#define UNICODE 0
 #include <Windows.h>
 #include <shlwapi.h>
 

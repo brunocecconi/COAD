@@ -19,30 +19,46 @@
 #define RESULT Result
 #define RESULT_VAR(NAME)                                                                                               \
 	RESULT* NAME = nullptr;                                                                                            \
-	(void)result
+	(void)NAME
+
+#define RESULT_VALUE_VAR(NAME)                                                                                               \
+	RESULT NAME = eResultOk;                                                                                            \
+	(void)NAME
 #define RESULT_SET_VAR(NAME, VALUE) NAME = (Result)(VALUE)
 #define RESULT_GET_VAR(NAME)		NAME
 #define RESULT_LAST					RESULT_GET_VAR(result) ? *RESULT_GET_VAR(result) : eResultOk
 #define RESULT_SET(VALUE)                                                                                              \
 	if (result)                                                                                                        \
 	RESULT_SET_VAR(*result, VALUE)
-#define RESULT_GET()  RESULT_GET_VAR(*result)
-#define RESULT_LAST_COMPARE(RESULT)  (RESULT_LAST == RESULT)
-#define RESULT_OK_PTR (Result)(eResultOk)
-#define RESULT_OK()	  RESULT_SET(eResultOk)
+#define RESULT_VALUE_SET(VALUE)                                                                                              \
+	RESULT_SET_VAR(result, VALUE)
+#define RESULT_GET()				RESULT_GET_VAR(*result)
+#define RESULT_LAST_COMPARE(RESULT) (RESULT_LAST == RESULT)
+#define RESULT_OK_PTR				(Result)(eResultOk)
+#define RESULT_OK()					RESULT_SET(eResultOk)
 #define RESULT_ERROR(VALUE, ...)                                                                                       \
 	RESULT_SET(VALUE);                                                                                                 \
 	return __VA_ARGS__
 
-#define RESULT_PARAM_DEFINE			 RESULT* result = nullptr
-#define RESULT_PARAM_IMPL			 RESULT* result
-#define RESULT_ARG_PASS				 result
-#define RESULT_ARG_VALUE_PASS		 &result
+#define RESULT_VALUE_ERROR(VALUE, ...)                                                                                       \
+	RESULT_VALUE_SET(VALUE);                                                                                                 \
+	return __VA_ARGS__
+
+#define RESULT_PARAM_DEFINE	  RESULT* result = nullptr
+#define RESULT_PARAM_IMPL	  RESULT* result
+#define RESULT_ARG_PASS		  result
+#define RESULT_ARG_VALUE_PASS &result
 
 #define RESULT_CONDITION_ENSURE_NOLOG(EXP, RESULT, ...)                                                                \
 	if (!(EXP))                                                                                                        \
 	{                                                                                                                  \
 		RESULT_ERROR(RESULT, __VA_ARGS__);                                                                             \
+	}
+
+#define RESULT_VALUE_CONDITION_ENSURE_NOLOG(EXP, RESULT, ...)                                                                \
+	if (!(EXP))                                                                                                        \
+	{                                                                                                                  \
+		RESULT_VALUE_ERROR(RESULT, __VA_ARGS__);                                                                             \
 	}
 
 #define RESULT_CONDITION_ENSURE(EXP, RESULT, ...)                                                                      \
@@ -213,7 +229,7 @@
  * Contains all Result values.
  *
  */
-enum Result : Uint64
+enum Result : uint64_t
 {
 	/**
 	 * @brief Used to Result pointers.
@@ -249,8 +265,17 @@ enum Result : Uint64
 	 *
 	 */
 	eResultErrorZeroSize,
+	eResultErrorZeroTime,
 
 	eResultErrorNotImplemented,
+
+	/**
+	 * @brief Element not found.
+	 *
+	 * Generic error used to find element in container.
+	 *
+	 */
+	eResultErrorElementNotFound,
 
 	/**
 	 * @brief Out of memory.
@@ -333,6 +358,8 @@ enum Result : Uint64
 	eResultErrorThreadSleepFailed,
 	eResultErrorThreadSuspendFailed,
 	eResultErrorThreadResumeFailed,
+	eResultErrorThreadAffinityFailed,
+	eResultErrorThreadWaitFailed,
 
 	eResultErrorMutexCreateFailed,
 	eResultErrorMutexDestroyFailed,
@@ -369,7 +396,19 @@ enum Result : Uint64
 	eResultErrorAssetAlreadyLoaded,
 	eResultErrorAssetWasNotLoaded,
 	eResultErrorAssetFailedToImport,
-	eResultErrorAssetFailedToOpenRegistryFile
+	eResultErrorAssetFailedToOpenRegistryFile,
+
+	eResultErrorAlreadyInitialized,
+	eResultErrorNotInitialized,
+
+	eResultErrorPlatformRenderUnsupportedExtension,
+	eResultErrorPlatformRenderUnsupportedLayer,
+	eResultErrorPlatformRenderFailedToCreateInstance,
+	eResultErrorPlatformRenderFailedToCreateDebugUtils,
+	eResultErrorPlatformRenderUnsuitableGpu,
+	eResultErrorPlatformRenderFailedToCreateDevice,
+	eResultErrorPlatformRenderFailedToCreateSurface,
+	eResultErrorPlatformRenderFailedToCreateSwapChain
 };
 
 /**
@@ -393,6 +432,7 @@ static constexpr char* ResultString(const Result value)
 		RESULT_STRING_CASE_IMPL(Fail);
 		RESULT_STRING_CASE_IMPL(ErrorNullPtr);
 		RESULT_STRING_CASE_IMPL(ErrorZeroSize);
+		RESULT_STRING_CASE_IMPL(ErrorZeroTime);
 		RESULT_STRING_CASE_IMPL(ErrorPtrIsNotNull);
 
 		RESULT_STRING_CASE_IMPL(ErrorMemoryOutOfMemory);
@@ -424,6 +464,17 @@ static constexpr char* ResultString(const Result value)
 		RESULT_STRING_CASE_IMPL(ErrorAssetWasNotLoaded);
 		RESULT_STRING_CASE_IMPL(ErrorAssetFailedToImport);
 
+		RESULT_STRING_CASE_IMPL(ErrorAlreadyInitialized);
+		RESULT_STRING_CASE_IMPL(ErrorNotInitialized);
+
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderUnsupportedExtension);
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderUnsupportedLayer);
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderFailedToCreateInstance);
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderFailedToCreateDebugUtils);
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderUnsuitableGpu);
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderFailedToCreateDevice);
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderFailedToCreateSurface);
+		RESULT_STRING_CASE_IMPL(ErrorPlatformRenderFailedToCreateSwapChain);
 	default:;
 	}
 	return (char*)"INVALID RESULT";

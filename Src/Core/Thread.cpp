@@ -11,66 +11,63 @@
 #include "Core/Allocator.h"
 #include "Core/Assert.h"
 
-namespace Threading
+struct ThreadNativeParams
 {
+	thread_function_t	   function;
+	thread_native_params_t params;
 
-struct NativeThreadParams
-{
-	ThreadFunctionType	   function;
-	NativeThreadParamsType params;
-
-	static void Create(NativeThreadParams** thread_params, const Thread::Ci& ci, RESULT_PARAM_DEFINE);
-	static void Destroy(NativeThreadParams** thread_params, RESULT_PARAM_DEFINE);
+	static void Create(ThreadNativeParams** ThreadParams, const Thread::CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
+	static void Destroy(ThreadNativeParams** ThreadParams, RESULT_PARAM_DEFINE);
 };
 
-void NativeThreadParams::Create(NativeThreadParams** thread_params, const Thread::Ci& ci, RESULT_PARAM_IMPL)
+void ThreadNativeParams::Create(ThreadNativeParams** ThreadParams, const Thread::CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 {
-	if (!thread_params)
+	if (!ThreadParams)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
-	if (*thread_params)
+	if (*ThreadParams)
 	{
 		RESULT_ERROR(eResultErrorPtrIsNotNull);
 	}
-	*thread_params =
-		static_cast<NativeThreadParams*>(Allocators::Default(DEBUG_NAME("thread")).allocate(sizeof(NativeThreadParams)));
-	(*thread_params)->function = ci.function;
+	*ThreadParams = static_cast<ThreadNativeParams*>(
+		Allocators::Default(DEBUG_NAME("Thread")).allocate(sizeof(ThreadNativeParams)));
+	(*ThreadParams)->function = CreateInfo.Function;
 
-	if (ci.params && ci.params_size)
+	if (CreateInfo.Params && CreateInfo.ParamsSize)
 	{
-		void* l_params = Allocators::Default(DEBUG_NAME("thread")).allocate(ci.params_size);
-		memcpy(l_params, ci.params, ci.params_size);
-		(*thread_params)->params = l_params;
+		void* lParams = Allocators::Default(DEBUG_NAME("Thread")).allocate(CreateInfo.ParamsSize);
+		memcpy(lParams, CreateInfo.Params, CreateInfo.ParamsSize);
+		(*ThreadParams)->params = lParams;
 	}
 
 	RESULT_OK();
 }
 
-void NativeThreadParams::Destroy(NativeThreadParams** thread_params, RESULT_PARAM_IMPL)
+void ThreadNativeParams::Destroy(ThreadNativeParams** ThreadParams, RESULT_PARAM_IMPL)
 {
-	if (!(thread_params && *thread_params))
+	if (!(ThreadParams && *ThreadParams))
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
-	if ((*thread_params)->params)
+	if ((*ThreadParams)->params)
 	{
-		Allocators::Default(DEBUG_NAME("thread")).deallocate((*thread_params)->params, 0);
-		(*thread_params)->params = nullptr;
+		Allocators::Default(DEBUG_NAME("Thread")).deallocate((*ThreadParams)->params, 0);
+		(*ThreadParams)->params = nullptr;
 	}
 	RESULT_OK();
 }
 
 #if PLATFORM_WINDOWS
-static DWORD NativeThreadFunctionCall(void* params)
+static DWORD NativeThreadFunctionCall(void* Params)
 {
-	const auto l_params = static_cast<NativeThreadParams*>(params);
+	const auto l_params = static_cast<ThreadNativeParams*>(Params);
 	return l_params->function(l_params->params);
 }
 
-static DWORD GetCreationFlags(const NativeThreadCiFlags::Type flags)
+static DWORD GetCreationFlags(const ThreadNativeCiFlags::Type flags)
 {
-	return ((flags & NativeThreadCiFlags::eCreateSuspended) ? CREATE_SUSPENDED : 0);
+	return ((flags & ThreadNativeCiFlags::eCreateSuspended) ? CREATE_SUSPENDED : 0);
 }
 #endif
 
@@ -78,44 +75,40 @@ Thread::Thread(RESULT_PARAM_IMPL)
 {
 }
 
-Thread::Thread(const Ci& ci, RESULT_PARAM_IMPL)
+Thread::Thread(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL) : mDestroyOnDtor{CreateInfo.DestroyOnDtor}
 {
-	Create(eastl::move(ci));
-}
-
-Thread::Thread(const ThreadFunctionType function, RESULT_PARAM_IMPL)
-{
-	Create(Ci{function, nullptr, 0ull, NativeThreadCiFlags::eNone});
+	Create(eastl::move(CreateInfo));
 }
 
 Thread::~Thread()
 {
-	Destroy();
+	if(mDestroyOnDtor)
+	{
+		Destroy();
+	}
 }
 
-void Thread::Create(const Ci& ci, RESULT_PARAM_IMPL)
+void Thread::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 {
-	if (!handle_.ptr)
-	{
-		RESULT_ERROR(eResultErrorNullPtr);
-	}
-	if (handle_.ptr || handle_.params)
+	RESULT_ENSURE_LAST();
+
+	if (mHandle.Ptr || mHandle.Params)
 	{
 		RESULT_ERROR(eResultErrorPtrIsNotNull);
 	}
 
-	NativeThreadParams* l_thread_params{};
-	RESULT_ENSURE_CALL_NOLOG(NativeThreadParams::Create(&l_thread_params, ci));
+	ThreadNativeParams* lThreadParams{};
+	RESULT_ENSURE_CALL(ThreadNativeParams::Create(&lThreadParams, CreateInfo));
 
 #if PLATFORM_WINDOWS
-	handle_.ptr =
-		CreateThread(nullptr, 0, NativeThreadFunctionCall, l_thread_params, GetCreationFlags(ci.flags), nullptr);
+	mHandle.Ptr =
+		CreateThread(nullptr, 0, NativeThreadFunctionCall, lThreadParams, GetCreationFlags(CreateInfo.Flags), nullptr);
 #else
 #error Not supported yet.
 #endif
-	handle_.params = l_thread_params;
+	mHandle.Params = lThreadParams;
 
-	if (!handle_.ptr)
+	if (!mHandle.Ptr)
 	{
 		RESULT_ERROR(eResultErrorThreadCreateFailed);
 	}
@@ -123,24 +116,32 @@ void Thread::Create(const Ci& ci, RESULT_PARAM_IMPL)
 	RESULT_OK();
 }
 
-void Thread::Sleep(const Uint32 ms, RESULT_PARAM_IMPL) const
+void Thread::Sleep(const uint32_t Milliseconds, RESULT_PARAM_IMPL) const
 {
-	if (WaitForSingleObject(handle_.ptr, ms) != WAIT_TIMEOUT)
+	if (WaitForSingleObject(mHandle.Ptr, Milliseconds) != WAIT_TIMEOUT)
 	{
 		RESULT_ERROR(eResultErrorThreadSleepFailed);
 	}
 	RESULT_OK();
 }
 
+void Thread::SleepCurrent(const uint32_t Milliseconds, RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+	RESULT_CONDITION_ENSURE(Milliseconds > 0, eResultErrorZeroTime);
+	::Sleep(Milliseconds);
+	RESULT_OK();
+}
+
 void Thread::Suspend(RESULT_PARAM_IMPL) const
 {
-	if (!handle_.ptr)
+	if (!mHandle.Ptr)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 #if PLATFORM_WINDOWS
 
-	if (SuspendThread(handle_.ptr) == static_cast<DWORD>(-1))
+	if (SuspendThread(mHandle.Ptr) == static_cast<DWORD>(-1))
 	{
 		RESULT_ERROR(eResultErrorThreadSuspendFailed);
 	}
@@ -154,14 +155,14 @@ void Thread::Suspend(RESULT_PARAM_IMPL) const
 
 void Thread::Resume(RESULT_PARAM_IMPL) const
 {
-	if (!handle_.ptr)
+	if (!mHandle.Ptr)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 
 #if PLATFORM_WINDOWS
 
-	if (ResumeThread(handle_.ptr) == static_cast<DWORD>(-1))
+	if (ResumeThread(mHandle.Ptr) == static_cast<DWORD>(-1))
 	{
 		RESULT_ERROR(eResultErrorThreadResumeFailed);
 	}
@@ -175,14 +176,14 @@ void Thread::Resume(RESULT_PARAM_IMPL) const
 
 void Thread::Destroy(RESULT_PARAM_IMPL)
 {
-	if (!handle_.ptr)
+	if (!mHandle.Ptr)
 	{
 		RESULT_ERROR(eResultErrorNullPtr);
 	}
 
 #if PLATFORM_WINDOWS
 
-	if (CloseHandle(handle_.ptr) == FALSE)
+	if (CloseHandle(mHandle.Ptr) == FALSE)
 	{
 		RESULT_ERROR(eResultErrorThreadDestroyFailed);
 	}
@@ -191,11 +192,57 @@ void Thread::Destroy(RESULT_PARAM_IMPL)
 #error Not supported yet.
 #endif
 
-	RESULT_ENSURE_CALL_NOLOG(NativeThreadParams::Destroy(reinterpret_cast<NativeThreadParams**>(&handle_.params)));
+	RESULT_ENSURE_CALL(ThreadNativeParams::Destroy(reinterpret_cast<ThreadNativeParams**>(&mHandle.Params)));
 
-	handle_.ptr	   = nullptr;
-	handle_.params = nullptr;
+	mHandle.Ptr	   = nullptr;
+	mHandle.Params = nullptr;
 
+	RESULT_OK();
+}
+
+void Thread::SetAffinity(const uint64_t Index, RESULT_PARAM_IMPL) const
+{
+	RESULT_ENSURE_LAST();
+	RESULT_CONDITION_ENSURE(mHandle.Ptr, eResultErrorNullPtr);
+#if PLATFORM_WINDOWS
+	RESULT_CONDITION_ENSURE(SetThreadAffinityMask(mHandle.Ptr, 1ull << Index) != ERROR_INVALID_PARAMETER,
+		eResultErrorThreadAffinityFailed);
+#else
+#error Not supported yet.
+#endif
+	RESULT_OK();
+}
+
+void Thread::Wait(RESULT_PARAM_IMPL) const
+{
+	Wait(eastl::numeric_limits<uint32_t>::max(), RESULT_ARG_PASS);
+}
+
+void Thread::Wait(const uint32_t Milliseconds, RESULT_PARAM_IMPL) const
+{
+	RESULT_ENSURE_LAST();
+	RESULT_CONDITION_ENSURE(mHandle.Ptr, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE(Milliseconds > 0, eResultErrorZeroTime);
+#if PLATFORM_WINDOWS
+	RESULT_CONDITION_ENSURE(WaitForSingleObject(mHandle.Ptr, Milliseconds) != WAIT_FAILED,
+		eResultErrorThreadWaitFailed);
+#else
+#error Not supported yet.
+#endif
+	RESULT_OK();
+}
+
+Mutex::Scope::Scope(Mutex* Mutex, RESULT_PARAM_IMPL) : Mtx{Mutex}, result{RESULT_ARG_PASS}
+{
+	RESULT_ENSURE_LAST();
+	RESULT_ENSURE_CALL(Mutex->Lock(RESULT_ARG_PASS));
+	RESULT_OK();
+}
+
+Mutex::Scope::~Scope()
+{
+	RESULT_ENSURE_LAST();
+	RESULT_ENSURE_CALL(Mtx->Unlock(RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
@@ -203,14 +250,14 @@ Mutex::Mutex(RESULT_PARAM_IMPL)
 {
 }
 
-Mutex::Mutex(const Ci& ci, RESULT_PARAM_IMPL)
+Mutex::Mutex(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 {
-	Create(ci);
+	Create(CreateInfo);
 }
 
-Mutex::Mutex(const char* name, RESULT_PARAM_IMPL)
+Mutex::Mutex(const char* Name, RESULT_PARAM_IMPL)
 {
-	Create(Ci{name});
+	Create(CreateInfo{Name});
 }
 
 Mutex::~Mutex()
@@ -218,17 +265,17 @@ Mutex::~Mutex()
 	Destroy();
 }
 
-void Mutex::Create(const Ci& ci, RESULT_PARAM_IMPL)
+void Mutex::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 {
 	Destroy();
 
 #if PLATFORM_WINDOWS
-	handle_.ptr = CreateMutexA(nullptr, 0, ci.name);
+	handle_.Ptr = CreateMutexA(nullptr, 0, CreateInfo.Name);
 #else
 #error Not supported yet.
 #endif
 
-	if (!handle_.ptr)
+	if (!handle_.Ptr)
 	{
 		RESULT_ERROR(eResultErrorMutexCreateFailed);
 	}
@@ -238,15 +285,9 @@ void Mutex::Create(const Ci& ci, RESULT_PARAM_IMPL)
 
 void Mutex::Lock(RESULT_PARAM_IMPL) const
 {
-	if (!handle_.ptr)
-	{
-		RESULT_ERROR(eResultErrorNullPtr);
-	}
+	RESULT_CONDITION_ENSURE(handle_.Ptr, eResultErrorNullPtr);
 #if PLATFORM_WINDOWS
-	if (WaitForSingleObject(handle_.ptr, INFINITE) != WAIT_OBJECT_0)
-	{
-		RESULT_ERROR(eResultErrorMutexLockFailed);
-	}
+	RESULT_CONDITION_ENSURE(WaitForSingleObject(handle_.Ptr, INFINITE) != WAIT_FAILED, eResultErrorMutexLockFailed);
 #else
 #error Not supported yet.
 #endif
@@ -255,17 +296,9 @@ void Mutex::Lock(RESULT_PARAM_IMPL) const
 
 void Mutex::Unlock(RESULT_PARAM_IMPL) const
 {
-	if (!handle_.ptr)
-	{
-		RESULT_ERROR(eResultErrorNullPtr);
-	}
+	RESULT_CONDITION_ENSURE(handle_.Ptr, eResultErrorNullPtr);
 #if PLATFORM_WINDOWS
-
-	if (ReleaseMutex(handle_.ptr) == FALSE)
-	{
-		RESULT_ERROR(eResultErrorMutexUnlockFailed);
-	}
-
+	RESULT_CONDITION_ENSURE(ReleaseMutex(handle_.Ptr) == TRUE, eResultErrorMutexUnlockFailed);
 	RESULT_OK();
 #else
 #error Not supported yet.
@@ -274,22 +307,12 @@ void Mutex::Unlock(RESULT_PARAM_IMPL) const
 
 void Mutex::Destroy(RESULT_PARAM_IMPL)
 {
-	if (!handle_.ptr)
-	{
-		RESULT_ERROR(eResultErrorNullPtr);
-	}
+	RESULT_CONDITION_ENSURE_NOLOG(handle_.Ptr, eResultErrorNullPtr);
 #if PLATFORM_WINDOWS
-
-	if (CloseHandle(handle_.ptr) == FALSE)
-	{
-		RESULT_ERROR(eResultErrorMutexDestroyFailed);
-	}
-
-	handle_.ptr = nullptr;
+	RESULT_CONDITION_ENSURE(CloseHandle(handle_.Ptr) == TRUE, eResultErrorMutexUnlockFailed);
+	handle_.Ptr = nullptr;
 	RESULT_OK();
 #else
 #error Not supported yet.
 #endif
 }
-
-} // namespace Threading

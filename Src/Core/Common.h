@@ -25,5 +25,6 @@
 #include "Core/Lang.h"
 #include "Core/TypeTraits.h"
 #include "Core/Hash.h"
+#include "Core/Math.h"
 
 #endif
