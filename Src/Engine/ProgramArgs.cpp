@@ -6,8 +6,8 @@ namespace Engine
 ProgramArgs::ProgramArgs(const int32_t argc, char** argv, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(argv, eResultErrorNullPtr);
-	RESULT_CONDITION_ENSURE_NOLOG(argc != 0, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(argv, NullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(argc != 0, ZeroSize);
 	for (auto i = 1; i < argc; i++)
 	{
 		eastl::string l_arg{argv[i], EASTLAllocatorType{DEBUG_NAME_VAL("Engine")}};
@@ -26,7 +26,7 @@ ProgramArgs::ProgramArgs(const int32_t argc, char** argv, RESULT_PARAM_IMPL)
 bool ProgramArgs::Has(const char* name, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
-	RESULT_CONDITION_ENSURE_NOLOG(name, eResultErrorNullPtr, false);
+	RESULT_CONDITION_ENSURE_NOLOG(name, NullPtr, false);
 	RESULT_OK();
 	return args_.find(name) != args_.cend();
 }
@@ -34,8 +34,8 @@ bool ProgramArgs::Has(const char* name, RESULT_PARAM_IMPL) const
 eastl::string_view ProgramArgs::GetString(const char* name, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG({});
-	RESULT_CONDITION_ENSURE_NOLOG(name, eResultErrorNullPtr, {});
-	RESULT_CONDITION_ENSURE_NOLOG(args_.find(name) != args_.cend(), eResultErrorElementNotFound, {});
+	RESULT_CONDITION_ENSURE_NOLOG(name, NullPtr, {});
+	RESULT_CONDITION_ENSURE_NOLOG(args_.find(name) != args_.cend(), ElementNotFound, {});
 	RESULT_OK();
 	return args_.at(name);
 }
@@ -43,8 +43,8 @@ eastl::string_view ProgramArgs::GetString(const char* name, RESULT_PARAM_IMPL) c
 uint64_t ProgramArgs::GetInteger(const char* name, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG({});
-	RESULT_CONDITION_ENSURE_NOLOG(name, eResultErrorNullPtr, {});
-	RESULT_CONDITION_ENSURE_NOLOG(args_.find(name) != args_.cend(), eResultErrorElementNotFound, {});
+	RESULT_CONDITION_ENSURE_NOLOG(name, NullPtr, {});
+	RESULT_CONDITION_ENSURE_NOLOG(args_.find(name) != args_.cend(), ElementNotFound, {});
 	RESULT_OK();
 	return strtoull(args_.at(name).c_str(), nullptr, 10);
 }
@@ -52,8 +52,8 @@ uint64_t ProgramArgs::GetInteger(const char* name, RESULT_PARAM_IMPL) const
 float32_t ProgramArgs::GetFloat(const char* name, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST_NOLOG({});
-	RESULT_CONDITION_ENSURE_NOLOG(name, eResultErrorNullPtr, {});
-	RESULT_CONDITION_ENSURE_NOLOG(args_.find(name) != args_.cend(), eResultErrorElementNotFound, {});
+	RESULT_CONDITION_ENSURE_NOLOG(name, NullPtr, {});
+	RESULT_CONDITION_ENSURE_NOLOG(args_.find(name) != args_.cend(), ElementNotFound, {});
 	RESULT_OK();
 	return strtof(args_.at(name).c_str(), nullptr);
 }

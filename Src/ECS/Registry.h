@@ -280,7 +280,7 @@ void Registry<TypeList>::ComponentArray<Component>::Add(const entity_id_t id, Co
 	RESULT_ENSURE_LAST_NOLOG();
 	if (Contains(id))
 	{
-		RESULT_ERROR(eResultErrorEcsComponentDataAddedMoreThanOnce);
+		RESULT_ERROR(EcsComponentDataAddedMoreThanOnce);
 	}
 
 	Component *l_target_data;
@@ -308,7 +308,7 @@ void Registry<TypeList>::ComponentArray<Component>::Remove(const entity_id_t id,
 	RESULT_ENSURE_LAST_NOLOG();
 	if (!Contains(id))
 	{
-		RESULT_ERROR(eResultErrorEcsComponentDataNotAdded);
+		RESULT_ERROR(EcsComponentDataNotAdded);
 	}
 	const auto l_index_removed_entity = eindex_[id];
 	data_[l_index_removed_entity].~Component();
@@ -540,7 +540,7 @@ entity_id_t Registry<TypeList>::Create(RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST_NOLOG(INVALID_ENTITY_ID);
 	if (!Contains(ecursor_))
 	{
-		RESULT_ERROR(eResultErrorEcsNoEntityAvailable, INVALID_ENTITY_ID);
+		RESULT_ERROR(EcsNoEntityAvailable, INVALID_ENTITY_ID);
 	}
 	if (*ecursor_ >= Capacity())
 	{
@@ -558,7 +558,7 @@ void Registry<TypeList>::Destroy(entity_id_t id, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
-		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+		RESULT_ERROR(EcsInvalidEntityId);
 	}
 	*--ecursor_ = id;
 	signatures_[id].reset();
@@ -572,7 +572,7 @@ void Registry<TypeList>::Enable(const entity_id_t id, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
-		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+		RESULT_ERROR(EcsInvalidEntityId);
 	}
 	(SetEnabledInternal<Components>(id, true), ...);
 	RESULT_OK();
@@ -585,7 +585,7 @@ void Registry<TypeList>::Disable(const entity_id_t id, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
-		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+		RESULT_ERROR(EcsInvalidEntityId);
 	}
 	(SetEnabledInternal<Components>(id, false), ...);
 	RESULT_OK();
@@ -597,7 +597,7 @@ bool Registry<TypeList>::IsEnabled(const entity_id_t id, RESULT_PARAM_IMPL) cons
 {
 	if (id >= Capacity())
 	{
-		RESULT_ERROR(eResultErrorEcsInvalidEntityId, false);
+		RESULT_ERROR(EcsInvalidEntityId, false);
 	}
 	RESULT_OK();
 	return signatures_[id].test(GetComponentId<Component>());
@@ -610,7 +610,7 @@ void Registry<TypeList>::Add(const entity_id_t id, Component&& component, RESULT
 	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
-		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+		RESULT_ERROR(EcsInvalidEntityId);
 	}
 
 	constexpr uint64_t l_id = GetComponentId<Component>();
@@ -635,7 +635,7 @@ void Registry<TypeList>::Remove(const entity_id_t id, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST_NOLOG();
 	if (id >= Capacity())
 	{
-		RESULT_ERROR(eResultErrorEcsInvalidEntityId);
+		RESULT_ERROR(EcsInvalidEntityId);
 	}
 	constexpr uint64_t l_id = GetComponentId<Component>();
 	signatures_[id].set(l_id, false);
@@ -650,7 +650,7 @@ typename Registry<TypeList>::template ComponentPtr<Component> Registry<TypeList>
 	RESULT_ENSURE_LAST_NOLOG(ComponentPtr<Component>{this, nullptr});
 	if (!IsEnabled<Component>(id))
 	{
-		RESULT_ERROR(eResultErrorEcsComponentNotEnabled, ComponentPtr<Component>{this, nullptr});
+		RESULT_ERROR(EcsComponentNotEnabled, ComponentPtr<Component>{this, nullptr});
 	}
 	RESULT_OK();
 	return ComponentPtr<Component>{this, PTR(GetComponentArrayElement<Component>().Get()->Get(id))};
@@ -707,7 +707,7 @@ void Registry<TypeList>::SetEnabledInternal(const entity_id_t id, const bool val
 	constexpr uint64_t l_id = GetComponentId<Component>();
 	if(signatures_[id].test(l_id))
 	{
-		RESULT_ERROR(eResultErrorEcsComponentAlreadyEnabled);
+		RESULT_ERROR(EcsComponentAlreadyEnabled);
 	}
 	signatures_[id].set(l_id, value);
 	if(value)

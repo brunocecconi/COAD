@@ -3,6 +3,7 @@
 #define ENGINE_INPUT_HANDLER_H
 
 #include "Engine/Common.h"
+#include "Meta/EnumInfo.h"
 
 #include <EASTL/bitset.h>
 #include <EASTL/unique_ptr.h>
@@ -31,7 +32,7 @@ enum class EKey : uint32_t
 	eBack,
 	eTab,
 	eClear,
-	eReturn,
+	eEnter,
 	eShift,
 	eControl,
 	eAlt,
@@ -136,13 +137,13 @@ enum class EGamepadButton
 struct KeyboardStates
 {
 	//eastl::bitset<static_cast<Uint32>(AsciiKeys::eMax)>	  ascii_keys;
-	eastl::bitset<512> keys_bitset;
+	eastl::bitset<512> KeysBitset;
 };
 
 struct GamepadStates
 {
-	eastl::bitset<32> buttons_bitset;
-	float32_t axis[16];
+	eastl::bitset<32> ButtonsBitset;
+	float32_t Axis[16];
 };
 
 /**
@@ -162,24 +163,31 @@ public:
 public:
 	void Update(RESULT_PARAM_DEFINE);
 
-	NODISCARD bool IsGamepadButtonDown(EGamepadButton button) const;
-	NODISCARD bool IsGamepadButtonUp(EGamepadButton button) const;
-	NODISCARD bool IsKeyDown(EKey key) const;
-	NODISCARD bool IsKeyUp(EKey key) const;
+	NODISCARD bool IsGamepadButtonDown(EGamepadButton Button) const;
+	NODISCARD bool IsGamepadButtonUp(EGamepadButton Button) const;
+	NODISCARD bool IsVsyncKeyDown(bool AutoReset = true);
+	NODISCARD bool IsFullscreenKeyDown(bool AutoReset = true);
+	NODISCARD bool IsKeyDown(EKey Key, bool AutoReset = false);
+	NODISCARD bool IsKeyUp(EKey Key, bool AutoReset = false);
+
+public:
+	void ResetKeyDown(EKey Key);
+	void ResetFullscreenKeyDown();
+	void ResetVsyncKeyDown();
 
 public:
 	static Handler& Instance();
 
 private:
 #if PLATFORM_WINDOWS
-	static LRESULT WindowProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam);
+	static LRESULT WindowProc(HWND Hwnd, UINT Umsg, WPARAM Wparam, LPARAM Lparam);
 #endif
 
 private:
 	friend class Engine::Window;
-	KeyboardStates					  keydown_states_{};
-	KeyboardStates					  keyup_states_{};
-	static eastl::unique_ptr<Handler> instance_;
+	KeyboardStates					  mKeydownStates{};
+	KeyboardStates					  mKeyupStates{};
+	static eastl::unique_ptr<Handler> mInstance;
 };
 
 } // namespace Input
@@ -187,5 +195,126 @@ private:
 } // namespace Engine
 
 CLASS_VALIDATION(Engine::Input::Handler);
+
+META_TYPE_BINDER_BEGIN(Engine::Input::EKey)
+	META_TYPE_BINDER_DEFAULT_OPERATIONS()
+META_TYPE_BINDER_END()
+
+#undef META_ENUM_INFO_TARGET
+#define META_ENUM_INFO_TARGET Engine::Input::EKey
+META_ENUM_INFO_BINDER_BEGIN(0)
+	ENUM_VALUE(eA),
+	ENUM_VALUE(eB),
+	ENUM_VALUE(eC),
+	ENUM_VALUE(eD),
+	ENUM_VALUE(eE),
+	ENUM_VALUE(eF),
+	ENUM_VALUE(eG),
+	ENUM_VALUE(eH),
+	ENUM_VALUE(eI),
+	ENUM_VALUE(eJ),
+	ENUM_VALUE(eK),
+	ENUM_VALUE(eL),
+	ENUM_VALUE(eM),
+	ENUM_VALUE(eN),
+	ENUM_VALUE(eO),
+	ENUM_VALUE(eP),
+	ENUM_VALUE(eQ),
+	ENUM_VALUE(eR),
+	ENUM_VALUE(eS),
+	ENUM_VALUE(eT),
+	ENUM_VALUE(eU),
+	ENUM_VALUE(eV),
+	ENUM_VALUE(eW),
+	ENUM_VALUE(eX),
+	ENUM_VALUE(eY),
+	ENUM_VALUE(eZ),
+
+	ENUM_VALUE(eLeftButton),
+	ENUM_VALUE(eRightButton),
+	ENUM_VALUE(eCancel),
+	ENUM_VALUE(eMiddleButton),
+
+	ENUM_VALUE(eBack),
+	ENUM_VALUE(eTab),
+	ENUM_VALUE(eClear),
+	ENUM_VALUE(eEnter),
+	ENUM_VALUE(eShift),
+	ENUM_VALUE(eControl),
+	ENUM_VALUE(eAlt),
+	ENUM_VALUE(ePause),
+	ENUM_VALUE(eCapsLock),
+
+	ENUM_VALUE(eEscape),
+
+	ENUM_VALUE(ePrior),
+	ENUM_VALUE(eNext),
+	ENUM_VALUE(eEnd),
+	ENUM_VALUE(eHome),
+	ENUM_VALUE(eLeft),
+	ENUM_VALUE(eUp),
+	ENUM_VALUE(eRight),
+	ENUM_VALUE(eDown),
+	ENUM_VALUE(eSelect),
+	ENUM_VALUE(ePrint),
+	ENUM_VALUE(eExecute),
+	ENUM_VALUE(eSnapshot),
+	ENUM_VALUE(eInsert),
+	ENUM_VALUE(eDelete),
+	ENUM_VALUE(eHelp),
+
+	ENUM_VALUE(eSleep),
+
+	ENUM_VALUE(eNumpad0),
+	ENUM_VALUE(eNumpad1),
+	ENUM_VALUE(eNumpad2),
+	ENUM_VALUE(eNumpad3),
+	ENUM_VALUE(eNumpad4),
+	ENUM_VALUE(eNumpad5),
+	ENUM_VALUE(eNumpad6),
+	ENUM_VALUE(eNumpad7),
+	ENUM_VALUE(eNumpad8),
+	ENUM_VALUE(eNumpad9),
+	ENUM_VALUE(eMultiply),
+	ENUM_VALUE(eAdd),
+	ENUM_VALUE(eSeparator),
+	ENUM_VALUE(eSubtract),
+	ENUM_VALUE(eDecimal),
+	ENUM_VALUE(eDivide),
+	ENUM_VALUE(eF1),
+	ENUM_VALUE(eF2),
+	ENUM_VALUE(eF3),
+	ENUM_VALUE(eF4),
+	ENUM_VALUE(eF5),
+	ENUM_VALUE(eF6),
+	ENUM_VALUE(eF7),
+	ENUM_VALUE(eF8),
+	ENUM_VALUE(eF9),
+	ENUM_VALUE(eF10),
+	ENUM_VALUE(eF11),
+	ENUM_VALUE(eF12),
+	ENUM_VALUE(eF13),
+	ENUM_VALUE(eF14),
+	ENUM_VALUE(eF15),
+	ENUM_VALUE(eF16),
+	ENUM_VALUE(eF17),
+	ENUM_VALUE(eF18),
+	ENUM_VALUE(eF19),
+	ENUM_VALUE(eF20),
+	ENUM_VALUE(eF21),
+	ENUM_VALUE(eF22),
+	ENUM_VALUE(eF23),
+	ENUM_VALUE(eF24),
+
+	ENUM_VALUE(eNumLock),
+	ENUM_VALUE(eScrollLock),
+
+	ENUM_VALUE(eLeftShift),
+	ENUM_VALUE(eRightShift),
+	ENUM_VALUE(eLeftControl),
+	ENUM_VALUE(eRightControl),
+	ENUM_VALUE(eLeftAlt),
+	ENUM_VALUE(eRightAlt)
+META_ENUM_INFO_BINDER_END()
 
 #endif

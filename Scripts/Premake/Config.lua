@@ -62,28 +62,3 @@ filter "configurations:Release"
 	runtime "Release"
 	optimize "On"
 	symbols "Off"
-
-filter "configurations:DebugTool"
-	defines { "DEBUG", "TOOL" }
-	runtime "Debug"
-	optimize "Off"
-	symbols "On"
-
-filter "configurations:DevelopmentTool"
-	defines { "DEBUG", "DEVELOPMENT", "TOOL" }
-	runtime "Debug"
-	optimize "On"
-	symbols "On"
-	
-filter "configurations:ProfileTool"
-	defines { "DEBUG", "PROFILE", "TOOL" }
-	runtime "Debug"
-	optimize "On"
-	symbols "On"
-
-filter "configurations:ReleaseTool"
-	defines { "NDEBUG", "RELEASE", "TOOL" }
-	runtime "Release"
-	optimize "On"
-	symbols "Off"
-	

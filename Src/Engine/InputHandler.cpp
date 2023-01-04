@@ -1,13 +1,24 @@
 
 #include "Engine/InputHandler.h"
 
+#ifndef PRINT_INPUT
+#define PRINT_INPUT	1
+#endif
+
+#ifdef RELEASE
+#undef PRINT_INPUT
+#define PRINT_INPUT	0
+#endif
+
+META_ENUM_AUTO_REGISTER_CUSTOM(Engine::Input::EKey, EngineInputEKey);
+
 namespace Engine
 {
 
 namespace Input
 {
 
-eastl::unique_ptr<Handler> Handler::instance_;
+eastl::unique_ptr<Handler> Handler::mInstance;
 
 #if PLATFORM_WINDOWS
 static constexpr uint32_t WINDOW_KEY_MAP[] =
@@ -115,47 +126,92 @@ void Handler::Update(RESULT_PARAM_IMPL)
 	RESULT_OK();
 }
 
-bool Handler::IsKeyDown(EKey key) const
+bool Handler::IsVsyncKeyDown(bool AutoReset)
 {
-	return keydown_states_.keys_bitset.test(WINDOW_KEY_MAP[static_cast<uint32_t>(key)]);
+	return IsKeyDown(EKey::eV, AutoReset);
 }
 
-bool Handler::IsKeyUp(EKey key) const
+bool Handler::IsFullscreenKeyDown(bool AutoReset)
 {
-	return keyup_states_.keys_bitset.test(WINDOW_KEY_MAP[static_cast<uint32_t>(key)]);
+	return IsKeyDown(EKey::eF11, AutoReset) || IsKeyDown(EKey::eAlt, AutoReset) && IsKeyDown(EKey::eEnter, AutoReset);
+}
+
+bool Handler::IsKeyDown(EKey Key, bool AutoReset)
+{
+	const auto lKeyMapValue = WINDOW_KEY_MAP[static_cast<uint32_t>(Key)];
+	const bool lValue = mKeydownStates.KeysBitset.test(lKeyMapValue);
+	if(AutoReset)
+	{
+		mKeydownStates.KeysBitset.set(lKeyMapValue, false);
+	}
+	return lValue;
+}
+
+bool Handler::IsKeyUp(EKey Key, bool AutoReset)
+{
+	const auto lKeyMapValue = WINDOW_KEY_MAP[static_cast<uint32_t>(Key)];
+	const bool lValue = mKeyupStates.KeysBitset.test(lKeyMapValue);
+	if(AutoReset)
+	{
+		mKeyupStates.KeysBitset.set(lKeyMapValue, false);
+	}
+	return lValue;
+}
+
+void Handler::ResetKeyDown(EKey Key)
+{
+	mKeydownStates.KeysBitset.set(WINDOW_KEY_MAP[static_cast<uint32_t>(Key)], false);
+}
+
+void Handler::ResetFullscreenKeyDown()
+{
+	ResetKeyDown(EKey::eF11);
+	ResetKeyDown(EKey::eAlt);
+	ResetKeyDown(EKey::eEnter);
+}
+
+void Handler::ResetVsyncKeyDown()
+{
+	ResetKeyDown(EKey::eV);
 }
 
 Handler& Handler::Instance()
 {
-	if (!instance_)
+	if (!mInstance)
 	{
-		instance_.reset(new (Allocators::Default{DEBUG_NAME_VAL("Engine::Input")}.allocate(sizeof(Handler))) Handler{});
+		mInstance.reset(new (Allocators::Default{DEBUG_NAME_VAL("Engine::Input")}.allocate(sizeof(Handler))) Handler{});
 	}
-	return *instance_;
+	return *mInstance;
 }
 
 #if PLATFORM_WINDOWS
-LRESULT Handler::WindowProc(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
+LRESULT Handler::WindowProc(const HWND Hwnd, const UINT Umsg, const WPARAM Wparam, const LPARAM Lparam)
 {
-	if(umsg == WM_KEYDOWN)
+	if(Umsg == WM_KEYDOWN || Umsg == WM_SYSKEYDOWN)
 	{
-		if(!Instance().keydown_states_.keys_bitset.test(wparam))
+		if(!Instance().mKeydownStates.KeysBitset.test(Wparam))
 		{
-			Instance().keyup_states_.keys_bitset.set(wparam, false);
-			Instance().keydown_states_.keys_bitset.set(wparam, true);
-			//printf("keydown: wparam: %llu, lparam: %lli\n", wparam, lparam);
+			Instance().mKeyupStates.KeysBitset.set(Wparam, false);
+			Instance().mKeydownStates.KeysBitset.set(Wparam, true);
+#if PRINT_INPUT
+			LOG(Info, "InputHandler: Keydown: %llu", Wparam);
+#endif
+			//printf("keydown: wparam: %llu, lparam: %lli\n", Wparam, Lparam);
 		}
 	}
-	else if(umsg == WM_KEYUP)
+	else if(Umsg == WM_KEYUP || Umsg == WM_SYSKEYUP)
 	{
-		if(!Instance().keyup_states_.keys_bitset.test(wparam))
+		if(!Instance().mKeyupStates.KeysBitset.test(Wparam))
 		{
-			Instance().keydown_states_.keys_bitset.set(wparam, false);
-			Instance().keyup_states_.keys_bitset.set(wparam, true);
-			//printf("keyup: wparam: %llu, lparam: %lli\n", wparam, lparam);
+			Instance().mKeydownStates.KeysBitset.set(Wparam, false);
+			Instance().mKeyupStates.KeysBitset.set(Wparam, true);
+#if PRINT_INPUT
+			LOG(Info, "InputHandler: Keyup: %llu", Wparam);
+#endif
+			//printf("keyup: wparam: %llu, lparam: %lli\n", Wparam, Lparam);
 		}
 	}
-	return DefWindowProc(hwnd, umsg, wparam, lparam);
+	return DefWindowProc(Hwnd, Umsg, Wparam, Lparam);
 }
 #endif
 

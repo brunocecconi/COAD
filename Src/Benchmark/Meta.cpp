@@ -10,6 +10,7 @@
 #include <benchmark/benchmark.h>
 
 #include "Core/Common.h"
+#include "Core/RawBuffer.h"
 
 #include <EASTL/allocator_malloc.h>
 
@@ -67,7 +68,6 @@ static void TypeInfo_GetByTypename(benchmark::State& state)
 
 // Register the function as a benchmark
 BENCHMARK(TypeInfo_GetByTypename);
-//BENCHMARK(TypeInfo_GetByTypename)->Threads(8);
 
 static void TypeInfo_GetByName(benchmark::State& state)
 {
@@ -79,49 +79,36 @@ static void TypeInfo_GetByName(benchmark::State& state)
 
 // Register the function as a benchmark
 BENCHMARK(TypeInfo_GetByName);
-//BENCHMARK(TypeInfo_GetByName)->Threads(8);
 
-struct PodClassType
+static void EastlVector(benchmark::State& state)
 {
-  int a;
-  float b;
-};
-
-FORCEINLINE void Construct(PodClassType& value, int a, float b)
-{
-  value.a = a;
-  value.b = b;
+	for (auto _ : state)
+	{
+		eastl::vector<float32_t> v{10, DEBUG_NAME_VAL("PlatformRender")};
+		v.resize(100ull);
+		v[0] = 3.14f;
+		v[1] = 2.15f;
+		v[2] = 1.16f;
+	}
 }
 
-FORCEINLINE void Destruct(PodClassType& value)
-{
-}
-
-static void PodClass(benchmark::State& state) {
-  for (auto _ : state) {
-    PodClassType v;
-    Construct(v, 4, 2.3f);
-    Destruct(v);
-  }
-}
 // Register the function as a benchmark
-BENCHMARK(PodClass);
+BENCHMARK(EastlVector);
 
-class DefaultClassType
+static void COADRawBuffer(benchmark::State& state)
 {
-public:
-  DefaultClassType(int a, float b) : a{a}, b{b} {}
-
-  int a;
-  float b;
-};
-
-static void DefatulClass(benchmark::State& state) {
-  for (auto _ : state) {
-    DefaultClassType v{4, 2.3f};
-  }
+	for (auto _ : state)
+	{
+		RawBuffer<float32_t> v{10, DEBUG_NAME_VAL("PlatformRender")};
+		v.Resize(100ull);
+		v[0] = 3.14f;
+		v[1] = 2.15f;
+		v[2] = 1.16f;
+	}
 }
-BENCHMARK(DefatulClass);
+
+// Register the function as a benchmark
+BENCHMARK(COADRawBuffer);
 
 BENCHMARK_MAIN();
 

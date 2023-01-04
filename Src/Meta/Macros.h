@@ -545,7 +545,7 @@ struct NAME##ClassAutoRegister	\
 
 #define ENUM_VALUE(V)                                                                                                  \
 	{                                                                                                                  \
-#V, META_ENUM_INFO_TARGET::V                                                                                                          \
+#V, (int64_t)META_ENUM_INFO_TARGET::V                                                                                                          \
 	}
 
 #define META_ENUM_INFO_BINDER_END()                                                                                    \
@@ -561,6 +561,12 @@ struct NAME##ClassAutoRegister	\
 struct NAME##EnumAutoRegister	\
 {	\
 	NAME##EnumAutoRegister(){ Meta::Enumof<NAME>(); }	\
+};  static NAME##EnumAutoRegister g##NAME##EnumAutoRegister
+
+#define META_ENUM_AUTO_REGISTER_CUSTOM(ENUM_TYPE, NAME)	\
+struct NAME##EnumAutoRegister	\
+{	\
+	NAME##EnumAutoRegister(){ Meta::Enumof<ENUM_TYPE>(); }	\
 };  static NAME##EnumAutoRegister g##NAME##EnumAutoRegister
 
 #endif

@@ -29,7 +29,7 @@ bool Object::OnLoad(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
 	DELEGATE_CALL(mPreloadDelegate, false);
-	RESULT_CONDITION_ENSURE_NOLOG(!mIsLoaded, eResultErrorAssetAlreadyLoaded, false);
+	RESULT_CONDITION_ENSURE_NOLOG(!mIsLoaded, AssetAlreadyLoaded, false);
 	DELEGATE_CALL(mPostloadDelegate, false);
 	RESULT_OK();
 	return true;
@@ -39,7 +39,7 @@ bool Object::OnUnload(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
 	DELEGATE_CALL(mPreunloadDelegate, false);
-	RESULT_CONDITION_ENSURE_NOLOG(mIsLoaded, eResultErrorAssetWasNotLoaded, false);
+	RESULT_CONDITION_ENSURE_NOLOG(mIsLoaded, AssetWasNotLoaded, false);
 	DELEGATE_CALL(mPostunloadDelegate, false);
 	RESULT_OK();
 	return true;

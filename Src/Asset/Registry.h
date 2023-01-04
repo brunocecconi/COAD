@@ -92,9 +92,9 @@ bool Registry::Export(const char* Path, const char* DstPath, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST_NOLOG(false);
 
 #ifdef TOOL
-	auto l_ptr = AddOrGet<Asset>(path);
-	l_ptr->Export(dst_path, RESULT_ARG_PASS);
-	return PTR(l_ptr);
+	auto lPtr = AddOrGet<Asset>(Path);
+	lPtr->Export(DstPath, RESULT_ARG_PASS);
+	return PTR(lPtr);
 #else
 	ENFORCE_MSG(false, "Not allowed in current build type.");
 	return PTR((Asset*)nullptr);
@@ -108,14 +108,14 @@ bool Registry::Load(const char* Path, RESULT_PARAM_IMPL)
 
 	RESULT_ENSURE_LAST_NOLOG(false);
 
-	auto l_ptr = AddOrGet<Asset>(Path);
+	auto lPtr = AddOrGet<Asset>(Path);
 
-	RESULT_CONDITION_ENSURE_NOLOG(l_ptr, eResultErrorAssetFailedToAdd, false);
+	RESULT_CONDITION_ENSURE_NOLOG(lPtr, AssetFailedToAdd, false);
 	RESULT_ENSURE_CALL_NOLOG(Stream::Dynamic lAr(DEBUG_NAME_VAL("Asset"), RESULT_ARG_PASS), false);
 	RESULT_ENSURE_CALL_NOLOG(Io::File::ReadAll(lAr.Container(), Path, RESULT_ARG_PASS), false);
-	RESULT_CONDITION_ENSURE_NOLOG(!lAr.BufferIsEmpty(), eResultErrorAssetLoadFailedInvalidFile, false);
-	RESULT_CONDITION_ENSURE_NOLOG(lAr.Read(*l_ptr, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_ptr->OnLoad(), eResultErrorAssetObjectLoadFailed, false);
+	RESULT_CONDITION_ENSURE_NOLOG(!lAr.BufferIsEmpty(), AssetLoadFailedInvalidFile, false);
+	RESULT_CONDITION_ENSURE_NOLOG(lAr.Read(*lPtr, RESULT_ARG_PASS), StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(lPtr->OnLoad(), AssetObjectLoadFailed, false);
 	RESULT_OK();
 
 	return true;

@@ -15,8 +15,8 @@ Dynamic::Dynamic(const void* data, const container_t::size_type size, const Allo
 	: data_{allocator}
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(data, eResultErrorNullPtr);
-	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(data, NullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(size, ZeroSize);
 	data_.reserve(size);
 	eastl::uninitialized_move_n(static_cast<const byte_t*>(data), size, data_.data());
 	RESULT_OK();
@@ -26,7 +26,7 @@ Dynamic::Dynamic(const container_t::size_type size, const Allocators::Default& a
 	: data_{allocator}
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(size, ZeroSize);
 	data_.resize(size);
 	RESULT_OK();
 }
@@ -54,7 +54,7 @@ Dynamic::container_t::size_type Dynamic::BufferCapacity() const NOEXCEPT
 void Dynamic::Resize(const container_t::size_type size, const container_t::value_type& value, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(size, ZeroSize);
 	data_.resize(size, value);
 	RESULT_OK();
 }
@@ -62,7 +62,7 @@ void Dynamic::Resize(const container_t::size_type size, const container_t::value
 void Dynamic::Resize(const container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(size, ZeroSize);
 	data_.resize(size);
 	RESULT_OK();
 }
@@ -70,7 +70,7 @@ void Dynamic::Resize(const container_t::size_type size, RESULT_PARAM_IMPL)
 void Dynamic::Reserve(const container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
-	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(size, ZeroSize);
 	data_.resize(size);
 	RESULT_OK();
 }
@@ -138,8 +138,8 @@ uint64_t Dynamic::ReadCursor() const
 bool Dynamic::WriteGeneric(const void* data, const container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
-	RESULT_CONDITION_ENSURE_NOLOG(data, eResultErrorNullPtr, false);
-	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize, false);
+	RESULT_CONDITION_ENSURE_NOLOG(data, NullPtr, false);
+	RESULT_CONDITION_ENSURE_NOLOG(size, ZeroSize, false);
 	data_.reserve(data_.size() + size);
 	data_.insert(data_.cend(), static_cast<const byte_t*>(data), static_cast<const byte_t*>(data) + size);
 	RESULT_OK();
@@ -149,9 +149,9 @@ bool Dynamic::WriteGeneric(const void* data, const container_t::size_type size, 
 bool Dynamic::ReadGeneric(void* data, const container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
-	RESULT_CONDITION_ENSURE_NOLOG(data, eResultErrorNullPtr, false);
-	RESULT_CONDITION_ENSURE_NOLOG(size, eResultErrorZeroSize, false);
-	RESULT_CONDITION_ENSURE_NOLOG(read_cursor_ + size <= data_.size(), eResultErrorMemoryOutOfMemory, false);
+	RESULT_CONDITION_ENSURE_NOLOG(data, NullPtr, false);
+	RESULT_CONDITION_ENSURE_NOLOG(size, ZeroSize, false);
+	RESULT_CONDITION_ENSURE_NOLOG(read_cursor_ + size <= data_.size(), MemoryOutOfMemory, false);
 	memcpy(data, data_.data() + read_cursor_, size);
 	read_cursor_ += size;
 	RESULT_OK();

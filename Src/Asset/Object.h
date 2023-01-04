@@ -112,12 +112,12 @@ META_TYPE_AUTO_REGISTER_NS(Asset::Object, AssetObject);
 
 STREAM_IMPL_BEGIN(Asset::Object)
 	STREAM_WRITE_IMPL_VALUE_FUNCTION_BEGIN()
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mId, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite, false);
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mPath, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mId, RESULT_ARG_PASS), StreamFailedToWrite, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mPath, RESULT_ARG_PASS), StreamFailedToWrite, false);
 	STREAM_IMPL_VALUE_FUNCTION_END()
 	STREAM_READ_IMPL_VALUE_FUNCTION_BEGIN()
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mId, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mPath, RESULT_ARG_PASS), eResultErrorStreamFailedToRead, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mId, RESULT_ARG_PASS), StreamFailedToRead, false);
+		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mPath, RESULT_ARG_PASS), StreamFailedToRead, false);
 	STREAM_IMPL_VALUE_FUNCTION_END()
 STREAM_IMPL_END()
 

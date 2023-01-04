@@ -26,7 +26,6 @@ public:
 	RawBuffer& operator=(RawBuffer&&) NOEXCEPT;
 	RawBuffer(const RawBuffer&)			   = delete;
 	RawBuffer& operator=(const RawBuffer&) = delete;
-
 	~RawBuffer();
 
 public:
@@ -63,8 +62,10 @@ RawBuffer<T, TAllocator>::RawBuffer(const TAllocator& Allocator) : mAllocator{Al
 
 template<typename T, typename TAllocator>
 RawBuffer<T, TAllocator>::RawBuffer(const uint64_t Size, const TAllocator& Allocator)
-	: mAllocator{Allocator}, mValue{static_cast<T*>(mAllocator.allocate(sizeof(T) * Size))}, mSize{Size}
+	: mAllocator{Allocator}, mValue{}, mSize{Size}
 {
+	constexpr size_t lAlignment = alignof(T) < PLATFORM_ALIGNMENT ? PLATFORM_ALIGNMENT : alignof(T);
+	mValue = static_cast<T*>(mAllocator.allocate(sizeof(T) * Size, lAlignment, 0, 0));
 }
 
 template<typename T, typename TAllocator>
@@ -177,7 +178,8 @@ void RawBuffer<T, TAllocator>::Resize(const size_t NewSize)
 	{
 		mAllocator.deallocate(mValue, sizeof(T) * mSize);
 		mSize  = NewSize;
-		mValue = static_cast<T*>(mAllocator.allocate(sizeof(T) * mSize));
+		constexpr size_t lAlignment = alignof(T) < PLATFORM_ALIGNMENT ? PLATFORM_ALIGNMENT : alignof(T);
+		mValue = static_cast<T*>(mAllocator.allocate(sizeof(T) * mSize, lAlignment, 0, 0));
 	}
 }
 #endif

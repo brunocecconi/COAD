@@ -7,11 +7,14 @@
 #include <glm/vec2.hpp>
 #include <EASTL/unique_ptr.h>
 
+LOG_DEFINE(Window);
+
 namespace Engine
 {
 
 #if PLATFORM_WINDOWS
 using window_handle_t = HWND;
+using window_info_t	  = WNDCLASSA;
 #endif
 
 /**
@@ -65,6 +68,20 @@ public:
 		int32_t		Width, Height;
 	};
 
+	struct Rect
+	{
+		int32_t Left, Top, Right, Bottom;
+	};
+
+	struct State
+	{
+#if PLATFORM_WINDOWS
+		UINT Style, PreviousStyle;
+		RECT Rect, PreviousRect;
+#endif
+		bool Fullscreen;
+	};
+
 private:
 	friend class Manager;
 
@@ -79,10 +96,21 @@ private:
 public:
 	void Show(RESULT_PARAM_DEFINE) const;
 	void Hide(RESULT_PARAM_DEFINE) const;
+	void SetFullscreen(bool Value, RESULT_PARAM_DEFINE);
+	void ToggleFullscreen(RESULT_PARAM_DEFINE);
 
 	NODISCARD bool IsVisible() const;
-	NODISCARD glm::ivec2	  GetSize() const;
+	NODISCARD bool IsFullScreen() const;
+	NODISCARD glm::uvec2 GetSize() const;
+	NODISCARD glm::uvec2	  GetPreviousSize() const;
+	NODISCARD Rect			  GetRect() const;
+	NODISCARD Rect			  GetPreviousRect() const;
 	NODISCARD window_handle_t GetHandle() const;
+
+private:
+#if PLATFORM_WINDOWS
+	static LRESULT WindowProc(HWND Hwnd, UINT Umsg, WPARAM Wparam, LPARAM Lparam);
+#endif
 
 public:
 	static EMessageBoxResult MessageBoxInfo(const char* Text, const char* Caption, uint32_t Types = eMbtNone);
@@ -92,6 +120,7 @@ public:
 
 private:
 	window_handle_t mHandle{};
+	State			mState{};
 };
 
 } // namespace Engine

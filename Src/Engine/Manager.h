@@ -8,13 +8,9 @@
 #include "Core/Manager.h"
 
 #include <EASTL/unique_ptr.h>
+#include <EASTL/chrono.h>
 
 LOG_DEFINE(Engine);
-
-namespace Render
-{
-class PlatformManager;
-}
 
 namespace Engine
 {
@@ -38,21 +34,38 @@ public:
 	~Manager();
 
 public:
-	void			  Initialize(int32_t Argc, char** Argv, RESULT_PARAM_DEFINE);
-	MAYBEUNUSED int32_t Run(RESULT_PARAM_IMPL);
-	void			  Finalize(RESULT_PARAM_IMPL);
+	void				Initialize(int32_t Argc, char** Argv, RESULT_PARAM_DEFINE);
+	MAYBEUNUSED int32_t Run(RESULT_PARAM_DEFINE);
+	void				Finalize(RESULT_PARAM_DEFINE);
+
+public:
+	NODISCARD Window& GetWindow();
+	void DestroyWindow();
 
 private:
-	void RunInternal(RESULT_PARAM_IMPL);
+	void RunInternal(RESULT_PARAM_DEFINE);
 
 public:
 	static Manager& Instance();
 
 private:
-	friend class Render::PlatformManager;
 	ProgramArgs mArgs;
 	Window		mWindow{};
+
+public:
+	NODISCARD float32_t GetDeltaTime() const;
+
+private:
+	uint64_t										 mFrameCounter{};
+	float32_t										 mDeltaTime{}, mTotalSeconds{}, mElapsedSeconds{};
+	eastl::chrono::high_resolution_clock			 mClock{};
+	eastl::chrono::high_resolution_clock::time_point mLoopBeginTime{}, mLoopEndTime{};
 };
+
+INLINE Manager& Instance()
+{
+	return Manager::Instance();
+}
 
 } // namespace Engine
 

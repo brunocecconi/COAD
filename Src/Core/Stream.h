@@ -208,7 +208,7 @@ bool Static<size_t>::WriteGeneric(const void* data, typename container_t::size_t
 	RESULT_ENSURE_LAST_NOLOG(false);
 	if (write_cursor_ + size > size_t)
 	{
-		RESULT_ERROR(eResultErrorMemoryOutOfBuffer, false);
+		RESULT_ERROR(MemoryOutOfBuffer, false);
 	}
 	memcpy(data_.data() + write_cursor_, data, size);
 	write_cursor_ += size;
@@ -222,7 +222,7 @@ bool Static<size_t>::ReadGeneric(void* data, typename container_t::size_type siz
 	RESULT_ENSURE_LAST_NOLOG(false);
 	if (read_cursor_ + size > size_t)
 	{
-		RESULT_ERROR(eResultErrorMemoryOutOfBuffer, false);
+		RESULT_ERROR(MemoryOutOfBuffer, false);
 	}
 	memcpy(data, data_.data(), size);
 	read_cursor_ += size;
@@ -237,9 +237,9 @@ bool Static<size_t>::Write(const T* data, const typename container_t::size_type 
 	const auto l_sizeof = sizeof T;
 	UNUSED(l_sizeof);
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(static_cast<const void*>(&l_sizeof), sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(static_cast<const void*>(&size), sizeof size, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
 	return Impl<T>::Write(*this, data, size, RESULT_ARG_PASS);
 }
 
@@ -249,11 +249,11 @@ bool Static<N>::Read(T* data, const typename container_t::size_type size, RESULT
 {
 	size_t l_sizeof{}, l_size{};
 	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(static_cast<void*>(&l_sizeof), sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof T, eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof T, StreamFailedToWrite, false);
 	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(static_cast<void*>(&l_size), sizeof l_size, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, StreamFailedToWrite, false);
 	return Impl<T>::Read(*this, data, size, RESULT_ARG_PASS);
 }
 
@@ -263,7 +263,7 @@ bool Static<size_t>::Write(const T& data, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof T;
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(static_cast<const void*>(&l_sizeof), sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
 	return Impl<T>::Write(*this, data, RESULT_ARG_PASS);
 }
 
@@ -273,8 +273,8 @@ bool Static<N>::Read(T& data, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{};
 	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(static_cast<void*>(&l_sizeof), sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof T, eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof T, StreamFailedToWrite, false);
 	return Impl<T>::Read(*this, data, RESULT_ARG_PASS);
 }
 
@@ -300,8 +300,8 @@ bool Dynamic::Write(const T* data, container_t::size_type size, RESULT_PARAM_IMP
 	const auto l_sizeof = sizeof(T);
 	UNUSED(l_sizeof);
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite,
+								  StreamFailedToWrite, false);
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), StreamFailedToWrite,
 								  false);
 	return Impl<T>::Write(*this, data, size, RESULT_ARG_PASS);
 }
@@ -311,11 +311,11 @@ bool Dynamic::Read(T* data, container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{}, l_size{};
 	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), eResultErrorStreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), eResultErrorStreamFailedToRead,
+								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), StreamFailedToRead,
 								  false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, eResultErrorStreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, size, RESULT_ARG_PASS);
 }
 
@@ -324,7 +324,7 @@ bool Dynamic::Write(const T& data, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof(T);
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
 	return Impl<T>::Write(*this, data, RESULT_ARG_PASS);
 }
 
@@ -333,8 +333,8 @@ bool Dynamic::Read(T& data, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{};
 	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), eResultErrorStreamFailedToRead, false);
+								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, RESULT_ARG_PASS);
 }
 
@@ -408,8 +408,8 @@ bool File::Write(const T* data, size_t size, RESULT_PARAM_IMPL)
 	const auto l_sizeof = sizeof(T);
 	UNUSED(l_sizeof);
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), eResultErrorStreamFailedToWrite,
+								  StreamFailedToWrite, false);
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), StreamFailedToWrite,
 								  false);
 	return Impl<T>::Write(*this, data, size, RESULT_ARG_PASS);
 }
@@ -419,11 +419,11 @@ bool File::Read(T* data, size_t size, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{}, l_size{};
 	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), eResultErrorStreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), eResultErrorStreamFailedToRead,
+								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), StreamFailedToRead,
 								  false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, eResultErrorStreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, size, RESULT_ARG_PASS);
 }
 
@@ -432,7 +432,7 @@ bool File::Write(const T& data, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof(T);
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToWrite, false);
+								  StreamFailedToWrite, false);
 	return Impl<T>::Write(*this, data, RESULT_ARG_PASS);
 }
 
@@ -441,8 +441,8 @@ bool File::Read(T& data, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{};
 	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  eResultErrorStreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), eResultErrorStreamFailedToRead, false);
+								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, RESULT_ARG_PASS);
 }
 
@@ -514,7 +514,7 @@ File& File::operator>>(T& data)
 		static_assert(eastl::is_pod_v<this_t>, "Invalid plain old data type.");                                        \
 		RESULT_ENSURE_LAST_NOLOG(false);                                                                               \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.Write((const void*)&value, sizeof(this_t), RESULT_ARG_PASS),              \
-									  eResultErrorStreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                         \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \
@@ -525,11 +525,11 @@ File& File::operator>>(T& data)
 		const auto l_sizeof = sizeof this_t;                                                                           \
 		UNUSED(l_sizeof);                                                                                              \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.WriteGeneric((const void*)&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),   \
-									  eResultErrorStreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                         \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.WriteGeneric((const void*)&size, sizeof size, RESULT_ARG_PASS),           \
-									  eResultErrorStreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                         \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.WriteGeneric((const void*)value, l_sizeof* size, RESULT_ARG_PASS),        \
-									  eResultErrorStreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                         \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \
@@ -539,10 +539,10 @@ File& File::operator>>(T& data)
 		RESULT_ENSURE_LAST_NOLOG(false);                                                                               \
 		size_t l_sizeof{};                                                                                             \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric(&l_sizeof, sizeof(l_sizeof), RESULT_ARG_PASS),                \
-									  eResultErrorStreamFailedToRead, false);                                          \
-		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t, eResultErrorStreamFailedToRead, false);               \
+									  StreamFailedToRead, false);                                          \
+		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t, StreamFailedToRead, false);               \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)&value, sizeof(this_t), RESULT_ARG_PASS),              \
-									  eResultErrorStreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                          \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \
@@ -552,11 +552,11 @@ File& File::operator>>(T& data)
 		RESULT_ENSURE_LAST_NOLOG(false);                                                                               \
 		size_t l_sizeof{}, l_size{};                                                                                   \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),          \
-									  eResultErrorStreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                          \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)&l_size, sizeof l_size, RESULT_ARG_PASS),              \
-									  eResultErrorStreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                          \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)value, l_sizeof* l_size, RESULT_ARG_PASS),             \
-									  eResultErrorStreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                          \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \
@@ -589,16 +589,16 @@ struct Impl<eastl::vector<Types...>>
 		const auto l_sizeof = this_t::value_type;
 		if (!stream.Write(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		const auto l_size = value.size();
 		if (!stream.Write(&l_size, sizeof l_size, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		if (!stream.Write(value.data(), l_size * l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		RESULT_OK();
 		return true;
@@ -609,19 +609,19 @@ struct Impl<eastl::vector<Types...>>
 		typename this_t::size_type l_sizeof{}, l_size{};
 		if (!stream.Read(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+			RESULT_ERROR(StreamFailedToRead, false);
 		}
-		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof > 0, eResultErrorZeroSize, false);
-		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t::value_type, eResultErrorStreamInvalidSizes, false);
+		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof > 0, ZeroSize, false);
+		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t::value_type, StreamInvalidSizes, false);
 		if (!stream.Read(&l_size, sizeof l_size, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+			RESULT_ERROR(StreamFailedToRead, false);
 		}
-		RESULT_CONDITION_ENSURE_NOLOG(l_size > 0, eResultErrorZeroSize, false);
+		RESULT_CONDITION_ENSURE_NOLOG(l_size > 0, ZeroSize, false);
 		value.resize(l_size);
 		if (!stream.Read(&value.data(), l_size * l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+			RESULT_ERROR(StreamFailedToRead, false);
 		}
 		RESULT_OK();
 		return true;
@@ -639,16 +639,16 @@ struct Impl<eastl::basic_string<Types...>>
 		const auto l_sizeof = sizeof this_t::value_type;
 		if (!stream.Write(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		const auto l_size = value.size();
 		if (!stream.Write(&l_size, sizeof l_size, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		if (!stream.Write(value.data(), l_size * l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		RESULT_OK();
 		return true;
@@ -659,19 +659,19 @@ struct Impl<eastl::basic_string<Types...>>
 		typename this_t::size_type l_sizeof{}, l_size{};
 		if (!stream.Read(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+			RESULT_ERROR(StreamFailedToRead, false);
 		}
-		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof > 0, eResultErrorZeroSize, false);
-		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t::value_type, eResultErrorStreamInvalidSizes, false);
+		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof > 0, ZeroSize, false);
+		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t::value_type, StreamInvalidSizes, false);
 		if (!stream.Read(&l_size, sizeof l_size, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+			RESULT_ERROR(StreamFailedToRead, false);
 		}
-		RESULT_CONDITION_ENSURE_NOLOG(l_size > 0, eResultErrorZeroSize, false);
+		RESULT_CONDITION_ENSURE_NOLOG(l_size > 0, ZeroSize, false);
 		value.resize(l_size);
 		if (!stream.Read(value.data(), l_size * l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+			RESULT_ERROR(StreamFailedToRead, false);
 		}
 		RESULT_OK();
 		return true;
@@ -689,14 +689,14 @@ struct Impl<eastl::hash_map<Types...>>
 		const auto l_size = value.size();
 		if (!stream.Write(&l_size, sizeof l_size, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 
 		for (const auto& l_pair: value)
 		{
 			if (!stream.Write(&l_pair, sizeof this_t::value_type, RESULT_ARG_PASS))
 			{
-				RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+				RESULT_ERROR(StreamFailedToWrite, false);
 			}
 		}
 		RESULT_OK();
@@ -708,16 +708,16 @@ struct Impl<eastl::hash_map<Types...>>
 		typename this_t::size_type l_size{};
 		if (!stream.Read(&l_size, sizeof l_size, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+			RESULT_ERROR(StreamFailedToRead, false);
 		}
-		RESULT_CONDITION_ENSURE_NOLOG(l_size > 0, eResultErrorZeroSize, false);
+		RESULT_CONDITION_ENSURE_NOLOG(l_size > 0, ZeroSize, false);
 		value.reserve(l_size);
 		for (typename this_t::size_type pair_index = 0ull; pair_index < l_size; ++pair_index)
 		{
 			typename this_t::value_type l_value;
 			if (!stream.Read(&value, RESULT_ARG_PASS))
 			{
-				RESULT_ERROR(eResultErrorStreamFailedToRead, false);
+				RESULT_ERROR(StreamFailedToRead, false);
 			}
 			value.emplace(l_value);
 		}
@@ -737,16 +737,16 @@ struct Impl<eastl::basic_string_view<T>>
 		const auto l_sizeof = this_t::value_type;
 		if (!stream.Write(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		const auto l_size = value.size();
 		if (!stream.Write(&l_size, sizeof l_size, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		if (!stream.Write(value.data(), l_size * l_sizeof, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		RESULT_OK();
 		return true;
@@ -763,11 +763,11 @@ struct Impl<eastl::pair<First, Second>>
 		RESULT_ENSURE_LAST_NOLOG(false);
 		if (!stream.Write(&value.first, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		if (!stream.Write(&value.second, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		RESULT_OK();
 		return true;
@@ -777,11 +777,11 @@ struct Impl<eastl::pair<First, Second>>
 		RESULT_ENSURE_LAST_NOLOG(false);
 		if (!stream.Read(&value.first, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		if (!stream.Read(&value.second, RESULT_ARG_PASS))
 		{
-			RESULT_ERROR(eResultErrorStreamFailedToWrite, false);
+			RESULT_ERROR(StreamFailedToWrite, false);
 		}
 		RESULT_OK();
 		return true;

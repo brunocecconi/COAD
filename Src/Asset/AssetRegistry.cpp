@@ -11,13 +11,13 @@ Registry::Registry(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG();
 #ifdef TOOL
-	const auto& l_path = Paths::AssetDir(DEBUG_NAME_VAL("Asset")) + "Global.AssetRegistry";
-	stream_file_.OpenRead(l_path.c_str(), RESULT_ARG_PASS);
-	if(RESULT_LAST_COMPARE(eResultErrorIoFileOpenFailed))
+	const auto& lPath = Paths::AssetDir(DEBUG_NAME_VAL("Asset")) + "Global.AssetRegistry";
+	mStreamFile.OpenRead(lPath.c_str(), RESULT_ARG_PASS);
+	if(RESULT_LAST_COMPARE(IoFileOpenFailed))
 	{
 		RESULT_OK();
-		RESULT_CONDITION_ENSURE_NOLOG(stream_file_.OpenWrite(l_path.c_str(), RESULT_ARG_PASS),
-								  eResultErrorAssetFailedToOpenRegistryFile);
+		RESULT_CONDITION_ENSURE_NOLOG(mStreamFile.OpenWrite(lPath.c_str(), RESULT_ARG_PASS),
+								  AssetFailedToOpenRegistryFile);
 	}
 #endif
 	Reserve(32ull);
@@ -36,7 +36,7 @@ Registry& Registry::Instance(RESULT_PARAM_IMPL)
 
 void Registry::Reserve(const size_t NewCapacity, RESULT_PARAM_IMPL)
 {
-	RESULT_CONDITION_ENSURE_NOLOG(NewCapacity > 0ull, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(NewCapacity > 0ull, ZeroSize);
 	mDataMap.reserve(NewCapacity);
 	mIndexMap.reserve(NewCapacity);
 }

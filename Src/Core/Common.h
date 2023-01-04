@@ -12,6 +12,9 @@
 
 #if _MSC_VER
 #pragma warning(disable : 4201)
+#ifndef RELEASE
+#pragma warning(disable : 4702)
+#endif
 #endif
 
 #include "Core/Macros.h"

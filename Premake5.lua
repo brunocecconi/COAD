@@ -2,7 +2,7 @@
 -- premake5.lua
 workspace "COAD"
 	architecture "x64"
-	configurations { "Debug", "Development", "Profile", "Release", "DebugTool", "DevelopmentTool", "ProfileTool", "ReleaseTool" }
+	configurations { "Debug", "Development", "Profile", "Release" }
 	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
 	startproject "COAD-Cmd"
 	
@@ -33,9 +33,15 @@ project "COAD"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", 
-		"USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0",
-		"PRINT_ALLOCATIONS=0", "PRINT_DEALLOCATIONS=0"
+	defines { 
+		"_CRT_SECURE_NO_WARNINGS", 
+		"USE_SAFE_PTR=1", 
+		"USE_EXPLICIT=1", 
+		"USE_RESULT=1", 
+		"EASTL_EASTDC_VSNPRINTF=0",
+		"PRINT_ALLOCATIONS=0", 
+		"PRINT_DEALLOCATIONS=0",
+		"EDITOR=1"
 	}
 
 	includedirs
@@ -71,7 +77,12 @@ project "COAD-Cmd"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
+	defines { 
+		"_CRT_SECURE_NO_WARNINGS", 
+		"USE_SAFE_PTR=1", 
+		"USE_EXPLICIT=1", 
+		"EASTL_EASTDC_VSNPRINTF=0"
+	}
 	
 	files { "Src/Cmd/Main.cpp", "./Natvis/**.natvis" }
 
@@ -102,7 +113,12 @@ project "COAD-Benchmark-Entity"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
+	defines { 
+		"_CRT_SECURE_NO_WARNINGS", 
+		"USE_SAFE_PTR=1", 
+		"USE_EXPLICIT=1", 
+		"EASTL_EASTDC_VSNPRINTF=0" 
+	}
 	
 	files { "Src/Benchmark/Entity.cpp", "./Natvis/**.natvis" }
 
@@ -133,7 +149,12 @@ project "COAD-Benchmark-Meta"
 	floatingpoint "Fast"
 	flags { "MultiProcessorCompile", "FatalWarnings" }
 	
-	defines { "_CRT_SECURE_NO_WARNINGS", "USE_SAFE_PTR=1", "USE_EXPLICIT=1", "USE_RESULT=1", "EASTL_EASTDC_VSNPRINTF=0" }
+	defines { 
+		"_CRT_SECURE_NO_WARNINGS", 
+		"USE_SAFE_PTR=1", 
+		"USE_EXPLICIT=1", 
+		"EASTL_EASTDC_VSNPRINTF=0" 
+	}
 	
 	files { "Src/Benchmark/Meta.cpp", "./Natvis/**.natvis" }
 

@@ -24,11 +24,11 @@ void ThreadNativeParams::Create(ThreadNativeParams** ThreadParams, const Thread:
 {
 	if (!ThreadParams)
 	{
-		RESULT_ERROR(eResultErrorNullPtr);
+		RESULT_ERROR(NullPtr);
 	}
 	if (*ThreadParams)
 	{
-		RESULT_ERROR(eResultErrorPtrIsNotNull);
+		RESULT_ERROR(PtrIsNotNull);
 	}
 	*ThreadParams = static_cast<ThreadNativeParams*>(
 		Allocators::Default(DEBUG_NAME("Thread")).allocate(sizeof(ThreadNativeParams)));
@@ -48,7 +48,7 @@ void ThreadNativeParams::Destroy(ThreadNativeParams** ThreadParams, RESULT_PARAM
 {
 	if (!(ThreadParams && *ThreadParams))
 	{
-		RESULT_ERROR(eResultErrorNullPtr);
+		RESULT_ERROR(NullPtr);
 	}
 	if ((*ThreadParams)->params)
 	{
@@ -94,7 +94,7 @@ void Thread::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 
 	if (mHandle.Ptr || mHandle.Params)
 	{
-		RESULT_ERROR(eResultErrorPtrIsNotNull);
+		RESULT_ERROR(PtrIsNotNull);
 	}
 
 	ThreadNativeParams* lThreadParams{};
@@ -110,7 +110,7 @@ void Thread::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 
 	if (!mHandle.Ptr)
 	{
-		RESULT_ERROR(eResultErrorThreadCreateFailed);
+		RESULT_ERROR(ThreadCreateFailed);
 	}
 
 	RESULT_OK();
@@ -120,7 +120,7 @@ void Thread::Sleep(const uint32_t Milliseconds, RESULT_PARAM_IMPL) const
 {
 	if (WaitForSingleObject(mHandle.Ptr, Milliseconds) != WAIT_TIMEOUT)
 	{
-		RESULT_ERROR(eResultErrorThreadSleepFailed);
+		RESULT_ERROR(ThreadSleepFailed);
 	}
 	RESULT_OK();
 }
@@ -128,7 +128,7 @@ void Thread::Sleep(const uint32_t Milliseconds, RESULT_PARAM_IMPL) const
 void Thread::SleepCurrent(const uint32_t Milliseconds, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
-	RESULT_CONDITION_ENSURE(Milliseconds > 0, eResultErrorZeroTime);
+	//RESULT_CONDITION_ENSURE(Milliseconds > 0, ZeroTime);
 	::Sleep(Milliseconds);
 	RESULT_OK();
 }
@@ -137,13 +137,13 @@ void Thread::Suspend(RESULT_PARAM_IMPL) const
 {
 	if (!mHandle.Ptr)
 	{
-		RESULT_ERROR(eResultErrorNullPtr);
+		RESULT_ERROR(NullPtr);
 	}
 #if PLATFORM_WINDOWS
 
 	if (SuspendThread(mHandle.Ptr) == static_cast<DWORD>(-1))
 	{
-		RESULT_ERROR(eResultErrorThreadSuspendFailed);
+		RESULT_ERROR(ThreadSuspendFailed);
 	}
 
 	RESULT_OK();
@@ -157,14 +157,14 @@ void Thread::Resume(RESULT_PARAM_IMPL) const
 {
 	if (!mHandle.Ptr)
 	{
-		RESULT_ERROR(eResultErrorNullPtr);
+		RESULT_ERROR(NullPtr);
 	}
 
 #if PLATFORM_WINDOWS
 
 	if (ResumeThread(mHandle.Ptr) == static_cast<DWORD>(-1))
 	{
-		RESULT_ERROR(eResultErrorThreadResumeFailed);
+		RESULT_ERROR(ThreadResumeFailed);
 	}
 
 	RESULT_OK();
@@ -178,14 +178,14 @@ void Thread::Destroy(RESULT_PARAM_IMPL)
 {
 	if (!mHandle.Ptr)
 	{
-		RESULT_ERROR(eResultErrorNullPtr);
+		RESULT_ERROR(NullPtr);
 	}
 
 #if PLATFORM_WINDOWS
 
 	if (CloseHandle(mHandle.Ptr) == FALSE)
 	{
-		RESULT_ERROR(eResultErrorThreadDestroyFailed);
+		RESULT_ERROR(ThreadDestroyFailed);
 	}
 
 #else
@@ -203,10 +203,23 @@ void Thread::Destroy(RESULT_PARAM_IMPL)
 void Thread::SetAffinity(const uint64_t Index, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST();
-	RESULT_CONDITION_ENSURE(mHandle.Ptr, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE(mHandle.Ptr, NullPtr);
 #if PLATFORM_WINDOWS
 	RESULT_CONDITION_ENSURE(SetThreadAffinityMask(mHandle.Ptr, 1ull << Index) != ERROR_INVALID_PARAMETER,
-		eResultErrorThreadAffinityFailed);
+		ThreadAffinityFailed);
+#else
+#error Not supported yet.
+#endif
+	RESULT_OK();
+}
+
+void Thread::SetAffinity(const Handle& Handle, const uint64_t Index, RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+	RESULT_CONDITION_ENSURE(Handle.Ptr, NullPtr);
+#if PLATFORM_WINDOWS
+	RESULT_CONDITION_ENSURE(SetThreadAffinityMask(Handle.Ptr, 1ull << Index) != ERROR_INVALID_PARAMETER,
+		ThreadAffinityFailed);
 #else
 #error Not supported yet.
 #endif
@@ -221,15 +234,25 @@ void Thread::Wait(RESULT_PARAM_IMPL) const
 void Thread::Wait(const uint32_t Milliseconds, RESULT_PARAM_IMPL) const
 {
 	RESULT_ENSURE_LAST();
-	RESULT_CONDITION_ENSURE(mHandle.Ptr, eResultErrorNullPtr);
-	RESULT_CONDITION_ENSURE(Milliseconds > 0, eResultErrorZeroTime);
+	RESULT_CONDITION_ENSURE(mHandle.Ptr, NullPtr);
+	RESULT_CONDITION_ENSURE(Milliseconds > 0, ZeroTime);
 #if PLATFORM_WINDOWS
 	RESULT_CONDITION_ENSURE(WaitForSingleObject(mHandle.Ptr, Milliseconds) != WAIT_FAILED,
-		eResultErrorThreadWaitFailed);
+		ThreadWaitFailed);
 #else
 #error Not supported yet.
 #endif
 	RESULT_OK();
+}
+
+Thread::Handle Thread::GetHandle() const
+{
+	return mHandle;
+}
+
+Thread::Handle Thread::HandleCurrent()
+{
+	return {GetCurrentThread(), {}};
 }
 
 Mutex::Scope::Scope(Mutex* Mutex, RESULT_PARAM_IMPL) : Mtx{Mutex}, result{RESULT_ARG_PASS}
@@ -277,7 +300,7 @@ void Mutex::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 
 	if (!handle_.Ptr)
 	{
-		RESULT_ERROR(eResultErrorMutexCreateFailed);
+		RESULT_ERROR(MutexCreateFailed);
 	}
 
 	RESULT_OK();
@@ -285,9 +308,9 @@ void Mutex::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 
 void Mutex::Lock(RESULT_PARAM_IMPL) const
 {
-	RESULT_CONDITION_ENSURE(handle_.Ptr, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE(handle_.Ptr, NullPtr);
 #if PLATFORM_WINDOWS
-	RESULT_CONDITION_ENSURE(WaitForSingleObject(handle_.Ptr, INFINITE) != WAIT_FAILED, eResultErrorMutexLockFailed);
+	RESULT_CONDITION_ENSURE(WaitForSingleObject(handle_.Ptr, INFINITE) == WAIT_OBJECT_0, MutexLockFailed);
 #else
 #error Not supported yet.
 #endif
@@ -296,9 +319,9 @@ void Mutex::Lock(RESULT_PARAM_IMPL) const
 
 void Mutex::Unlock(RESULT_PARAM_IMPL) const
 {
-	RESULT_CONDITION_ENSURE(handle_.Ptr, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE(handle_.Ptr, NullPtr);
 #if PLATFORM_WINDOWS
-	RESULT_CONDITION_ENSURE(ReleaseMutex(handle_.Ptr) == TRUE, eResultErrorMutexUnlockFailed);
+	RESULT_CONDITION_ENSURE(ReleaseMutex(handle_.Ptr) == TRUE, MutexUnlockFailed);
 	RESULT_OK();
 #else
 #error Not supported yet.
@@ -307,9 +330,9 @@ void Mutex::Unlock(RESULT_PARAM_IMPL) const
 
 void Mutex::Destroy(RESULT_PARAM_IMPL)
 {
-	RESULT_CONDITION_ENSURE_NOLOG(handle_.Ptr, eResultErrorNullPtr);
+	RESULT_CONDITION_ENSURE_NOLOG(handle_.Ptr, NullPtr);
 #if PLATFORM_WINDOWS
-	RESULT_CONDITION_ENSURE(CloseHandle(handle_.Ptr) == TRUE, eResultErrorMutexUnlockFailed);
+	RESULT_CONDITION_ENSURE(CloseHandle(handle_.Ptr) == TRUE, MutexUnlockFailed);
 	handle_.Ptr = nullptr;
 	RESULT_OK();
 #else

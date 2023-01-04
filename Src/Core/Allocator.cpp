@@ -41,7 +41,7 @@ SimpleMimalloc::SimpleMimalloc(const SimpleMimalloc& Other)
 #if EASTL_NAME_ENABLED
 	mpName = Other.mpName;
 #else
-	(void)other;
+	(void)Other;
 #endif
 }
 SimpleMimalloc::SimpleMimalloc(const SimpleMimalloc&, const char* EASTL_NAME(Name))
@@ -55,7 +55,7 @@ SimpleMimalloc& SimpleMimalloc::operator=(const SimpleMimalloc& Other)
 #if EASTL_NAME_ENABLED
 	mpName = Other.mpName;
 #else
-	(void)other;
+	(void)Other;
 #endif
 	return *this;
 }
@@ -123,7 +123,7 @@ Mimalloc::Mimalloc(const Mimalloc& Other)
 #if EASTL_NAME_ENABLED
 	mpName = Other.mpName;
 #else
-	(void)other;
+	(void)Other;
 #endif
 }
 Mimalloc::Mimalloc(const Mimalloc&, const char* EASTL_NAME(Name))
@@ -137,7 +137,7 @@ Mimalloc& Mimalloc::operator=(const Mimalloc& Other)
 #if EASTL_NAME_ENABLED
 	mpName = Other.mpName;
 #else
-	(void)other;
+	(void)Other;
 #endif
 	return *this;
 }

@@ -51,4 +51,6 @@
 	if (PTR)                                                                                                           \
 	*PTR
 
+#define BOOL_TO_CSTR(VALUE)		(VALUE ? "True" : "False")
+
 #endif

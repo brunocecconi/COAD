@@ -106,7 +106,7 @@ META_TYPE_BINDER_SPECIALIZATION(TestCtor)
 {
 #undef TO_STRING
 #define TO_STRING                                                                                                      \
-	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, TestCtor*, uint64_t>*>(body.args_tuple);    \
+	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, TestCtor*, uint64_t>*>(body.args_tuple);  \
 	eastl::get<0>(l_to_string_args_tuple)->resize(256);                                                                \
 	sprintf(eastl::get<0>(l_to_string_args_tuple)->data(), "TestCtor(pi=%f)",                                          \
 			eastl::get<1>(l_to_string_args_tuple)->pi);
@@ -150,12 +150,10 @@ META_CTOR_INFO_BINDER(TestCtor, 2, 0, eastl::string_view)
 #undef META_CLASS_INFO_TARGET
 #define META_CLASS_INFO_TARGET TestCtor
 META_CLASS_INFO_BEGIN(0)
-	BINDERS(CTOR_BINDER(0)),
-	BINDERS(PROPERTY_BINDER(number_)),
-	BINDERS(METHOD_BINDER(IsEven))
-META_CLASS_INFO_END()
+BINDERS(CTOR_BINDER(0)), BINDERS(PROPERTY_BINDER(number_)),
+	BINDERS(METHOD_BINDER(IsEven)) META_CLASS_INFO_END()
 
-struct Test
+		struct Test
 {
 };
 
@@ -172,48 +170,43 @@ META_TYPE_BINDER_DEFAULT_NO_TO_STRING(TestEnum)
 #undef META_ENUM_INFO_TARGET
 #define META_ENUM_INFO_TARGET TestEnum
 META_ENUM_INFO_BINDER_BEGIN(0)
-	ENUM_VALUE(eNone),
-	ENUM_VALUE(eFirst),
-	ENUM_VALUE(eSecond),
-	ENUM_VALUE(eThird)
-META_ENUM_INFO_BINDER_END();
+ENUM_VALUE(eNone), ENUM_VALUE(eFirst), ENUM_VALUE(eSecond), ENUM_VALUE(eThird) META_ENUM_INFO_BINDER_END();
 
 struct ASDB
 {
 	char v[256];
 };
 META_TYPE_BINDER_BEGIN(ASDB)
-	META_TYPE_BINDER_NO_OPERATIONS()
+META_TYPE_BINDER_NO_OPERATIONS()
 META_TYPE_BINDER_END()
 META_TYPE_AUTO_REGISTER(ASDB);
 
 LOG_DEFINE(Main);
 
-int32_t ProcessGame(const int32_t argc, char** argv)
+int32_t ProcessGame(const int32_t Argc, char** Argv)
 {
 	RESULT_VALUE_VAR(result);
 	LOG_SET_VERBOSITY(Info);
 	LOGC(Warning, Main, "Preparing to run the game...");
-	auto& l_engine = Engine::Manager::Instance();
-	RESULT_VALUE_ENSURE_CALL(l_engine.Initialize(argc, argv, RESULT_ARG_VALUE_PASS), EXIT_FAILURE);
-	RESULT_VALUE_ENSURE_CALL(l_engine.Run(RESULT_ARG_VALUE_PASS), EXIT_FAILURE);
+	auto& lEngine = Engine::Manager::Instance();
+	RESULT_VALUE_ENSURE_CALL(lEngine.Initialize(Argc, Argv, RESULT_ARG_VALUE_PASS), EXIT_FAILURE);
+	RESULT_VALUE_ENSURE_CALL(lEngine.Run(RESULT_ARG_VALUE_PASS), EXIT_FAILURE);
 	return EXIT_SUCCESS;
 }
 
-int32_t main(int32_t argc, char** argv)
+int32_t main(const int32_t Argc, char** Argv)
 {
 	LOG_INIT();
-	const Engine::ProgramArgs l_args{argc, argv};
-	if(l_args.Has("--Game"))
+	if (const Engine::ProgramArgs lArgs{Argc, Argv}; lArgs.Has("--Game"))
 	{
-		return ProcessGame(argc, argv);
+		return ProcessGame(Argc, Argv);
 	}
 
-	Result result = eResultOk;
+	EResult result = Ok;
 	(void)result;
 
-	(void)argc;
-	(void)argv;
+	(void)Argc;
+	(void)Argv;
 	LOG_SET_VERBOSITY(Info);
 
 	Meta::RegistryBaseTypes();
@@ -226,24 +219,24 @@ int32_t main(int32_t argc, char** argv)
 
 	eastl::vector<int> d{3, 4, 5, 6};
 
-	const auto& l_info = Meta::Classof<TestCtor>();
-	auto l_tc = l_info.GetCtorInfo(0)();
+	const auto& l_info	  = Meta::Classof<TestCtor>();
+	auto		l_tc	  = l_info.GetCtorInfo(0)();
 	const auto& IsEventFI = l_info.GetMethodInfo("TestCtor::IsEven");
-	const auto& NumberPI = l_info.GetPropertyInfo("TestCtor::number_");
+	const auto& NumberPI  = l_info.GetPropertyInfo("TestCtor::number_");
 	NumberPI.Set(l_tc, 4);
 	printf("%d\n", NumberPI.Get(l_tc).AsInt32());
-	if(IsEventFI(l_tc, NumberPI.Get(l_tc)))
+	if (IsEventFI(l_tc, NumberPI.Get(l_tc)))
 	{
 		printf("EVEN\n");
 	}
 
-	//l_asset_reg.Import<Asset::Object>("./test.txt" RESULT_ARG_PASS);
+	// l_asset_reg.Import<Asset::Object>("./test.txt" RESULT_ARG_PASS);
 	Asset::Registry::Instance(&RESULT_ARG_PASS);
 
 	RESULT_VALUE_ENSURE_CALL(Asset::Registry::Instance().Load<Asset::Object>("./test.txt", &RESULT_ARG_PASS), -1);
 
-	RESULT_VALUE_ENSURE_CALL(const auto& l_test_asset = 
-		Asset::Registry::Instance().Get<Asset::Object>("./test.txt", &RESULT_ARG_PASS), -1);
+	RESULT_VALUE_ENSURE_CALL(
+		const auto& l_test_asset = Asset::Registry::Instance().Get<Asset::Object>("./test.txt", &RESULT_ARG_PASS), -1);
 	(void)l_test_asset;
 	printf("%s\n", l_test_asset->ToString(256).c_str());
 

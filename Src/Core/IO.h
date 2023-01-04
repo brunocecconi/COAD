@@ -132,7 +132,7 @@ void File::ReadAll(T& Container, const char* FilePath, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST_NOLOG();
 	RESULT_ENSURE_CALL_NOLOG(const File lFile(FilePath, eFtRead, RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL_NOLOG(const auto lSize = lFile.Size(RESULT_ARG_PASS));
-	RESULT_CONDITION_ENSURE_NOLOG(lSize > 0, eResultErrorZeroSize);
+	RESULT_CONDITION_ENSURE_NOLOG(lSize > 0, ZeroSize);
 	Container.resize(lSize);
 	RESULT_ENSURE_CALL_NOLOG(lFile.Read(Container.data(), lSize, RESULT_ARG_PASS));
 	RESULT_OK();

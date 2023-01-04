@@ -57,7 +57,7 @@ public:
 	{
 		thread_function_t		  Function{};
 		thread_native_params_t	  Params{};
-		uint64_t					  ParamsSize{};
+		uint64_t				  ParamsSize{};
 		ThreadNativeCiFlags::Type Flags{};
 		bool					  DestroyOnDtor{true};
 	};
@@ -68,15 +68,20 @@ public:
 	~Thread();
 
 public:
-	void		Create(const CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
-	void		Sleep(uint32_t Milliseconds, RESULT_PARAM_DEFINE) const;
-	static void SleepCurrent(uint32_t Milliseconds, RESULT_PARAM_DEFINE);
-	void		Suspend(RESULT_PARAM_DEFINE) const;
-	void		Resume(RESULT_PARAM_DEFINE) const;
-	void		Destroy(RESULT_PARAM_DEFINE);
-	void		SetAffinity(uint64_t Index, RESULT_PARAM_DEFINE) const;
-	void		Wait(RESULT_PARAM_DEFINE) const;
-	void		Wait(uint32_t Milliseconds, RESULT_PARAM_DEFINE) const;
+	void			 Create(const CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
+	void			 Sleep(uint32_t Milliseconds, RESULT_PARAM_DEFINE) const;
+	static void		 SleepCurrent(uint32_t Milliseconds, RESULT_PARAM_DEFINE);
+	void			 Suspend(RESULT_PARAM_DEFINE) const;
+	void			 Resume(RESULT_PARAM_DEFINE) const;
+	void			 Destroy(RESULT_PARAM_DEFINE);
+	void			 SetAffinity(uint64_t Index, RESULT_PARAM_DEFINE) const;
+	static void		 SetAffinity(const Handle& Handle, uint64_t Index, RESULT_PARAM_DEFINE);
+	void			 Wait(RESULT_PARAM_DEFINE) const;
+	void			 Wait(uint32_t Milliseconds, RESULT_PARAM_DEFINE) const;
+	NODISCARD Handle GetHandle() const;
+
+public:
+	static Handle HandleCurrent();
 
 private:
 	Handle mHandle{};
@@ -97,7 +102,7 @@ public:
 	struct Scope
 	{
 		Mutex*	 Mtx;
-		Result*	 result;
+		EResult* result;
 		EXPLICIT Scope(Mutex* Mutex, RESULT_PARAM_DEFINE);
 		~Scope();
 	};
@@ -106,7 +111,7 @@ public:
 	struct ScopeFromOwner
 	{
 		TOwner*	 Owner;
-		Result*	 result;
+		EResult* result;
 		EXPLICIT ScopeFromOwner(TOwner* Owner, RESULT_PARAM_DEFINE);
 		~ScopeFromOwner();
 	};

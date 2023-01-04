@@ -20,7 +20,7 @@ public:
 	 * @brief Enum info flags.
 	 *
 	 */
-	enum Flags
+	enum EFlags
 	{
 		eNone,
 		eBitmask
@@ -48,43 +48,43 @@ public:
 	NODISCARD static const EnumInfo& None();
 
 public:
-	NODISCARD const char* ToNameGeneric(int64_t value) const;
-	NODISCARD int64_t		  ToValueGeneric(const char* name) const;
+	NODISCARD const char* ToNameGeneric(int64_t Value) const;
+	NODISCARD int64_t	  ToValueGeneric(const char* Name) const;
 
 	template<typename T>
-	NODISCARD const char* ToName(T value) const;
+	NODISCARD const char* ToName(T Value) const;
 
 	template<typename T>
-	NODISCARD T ToValue(const char* name) const;
+	NODISCARD T ToValue(const char* Name) const;
 
 public:
 	NODISCARD bool IsBitmask() const;
-	NODISCARD bool HasFlags(int64_t value) const;
+	NODISCARD bool HasFlags(int64_t Value) const;
 
 private:
-	const TypeInfo&										  type_info_;
-	eastl::vector<eastl::pair<eastl::string_view, int64_t>> entries_{DEBUG_NAME_VAL("Meta")};
-	uint64_t												  flags_;
+	const TypeInfo&											mTypeInfo;
+	eastl::vector<eastl::pair<eastl::string_view, int64_t>> mEntries{DEBUG_NAME_VAL("Meta")};
+	uint64_t												mFlags;
 };
 
 template<typename T>
-EnumInfo::EnumInfo(TypeTag<T>) : type_info_{Typeof<typename Rebinder<T>::owner_t>()}, flags_{Rebinder<T>::FLAGS}
+EnumInfo::EnumInfo(TypeTag<T>) : mTypeInfo{Typeof<typename Rebinder<T>::owner_t>()}, mFlags{Rebinder<T>::FLAGS}
 {
-	entries_ = Rebinder<T>::Pairs();
+	mEntries = Rebinder<T>::Pairs();
 }
 
 template<typename T>
-const char* EnumInfo::ToName(const T value) const
+const char* EnumInfo::ToName(const T Value) const
 {
 	static_assert(eastl::is_enum_v<T>, "Invalid enum type.");
-	return ToNameGeneric(static_cast<int64_t>(value));
+	return ToNameGeneric(static_cast<int64_t>(Value));
 }
 
 template<typename T>
-T EnumInfo::ToValue(const char* name) const
+T EnumInfo::ToValue(const char* Name) const
 {
 	static_assert(eastl::is_enum_v<T>, "Invalid enum type.");
-	return static_cast<T>(ToValueGeneric(name));
+	return static_cast<T>(ToValueGeneric(Name));
 }
 
 /**
@@ -98,27 +98,27 @@ class EnumRegistry
 public:
 	template<typename T>
 	const EnumInfo& Emplace();
-	const EnumInfo& Get(const char* name);
-	const EnumInfo& Get(id_t id);
-	bool			IsRegistered(const char* name) const;
-	bool			IsRegistered(id_t id) const;
+	const EnumInfo& Get(const char* Name);
+	const EnumInfo& Get(id_t Id);
+	bool			IsRegistered(const char* Name) const;
+	bool			IsRegistered(id_t Id) const;
 
 	static EnumRegistry& Instance();
 
 private:
 	eastl::hash_map<id_t, EnumInfo> enums_{DEBUG_NAME_VAL("Meta")};
-	static EnumRegistry*					 instance_;
+	static EnumRegistry*			instance_;
 };
 
 template<typename T>
 const EnumInfo& EnumRegistry::Emplace()
 {
-	auto l_it = enums_.find(TypeInfo::Rebinder<T>::ID);
-	if (l_it == enums_.cend())
+	auto lIt = enums_.find(TypeInfo::Rebinder<T>::ID);
+	if (lIt == enums_.cend())
 	{
-		l_it = enums_.emplace(TypeInfo::Rebinder<T>::ID, EnumInfo{TypeTag<T>{}}).first;
+		lIt = enums_.emplace(TypeInfo::Rebinder<T>::ID, EnumInfo{TypeTag<T>{}}).first;
 	}
-	return l_it->second;
+	return lIt->second;
 }
 
 template<typename T>
@@ -133,7 +133,7 @@ const EnumInfo& Enumof(T)
 	return EnumRegistry::Instance().Emplace<T>();
 }
 
-const EnumInfo& Enumof(const char* name);
+const EnumInfo& Enumof(const char* Name);
 
 } // namespace Meta
 
