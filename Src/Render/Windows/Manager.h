@@ -1,7 +1,10 @@
 
 #ifdef RENDER_INCLUDE_PLATFORM_MANAGER
 
-/** \file PlatformManager.h
+#include <EASTL/queue.h>
+#include <queue>
+
+/** \file Manager.h
  *
  * Copyright 2023 CoffeeAddict. All rights reserved.
  * This file is part of COAD and it is private.
@@ -9,8 +12,58 @@
  *
  */
 
-namespace Render
+namespace Render::Platform
 {
+
+class CommandQueue
+{
+public:
+	CommandQueue(ComPtr<ID3D12Device3> Device, D3D12_COMMAND_LIST_TYPE Type, RESULT_PARAM_DEFINE);
+	~CommandQueue();
+
+	/**
+	 * @brief Get an available command list from the command queue.
+	 *
+	 * @return Smart pointer to ID3D12GraphicsCommandList2.
+	 *
+	 */
+	ComPtr<ID3D12GraphicsCommandList2> GetCommandList(RESULT_PARAM_DEFINE);
+
+	uint64_t ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> CommandList);
+
+	uint64_t Signal();
+	bool	 IsFenceComplete(uint64_t FenceValue);
+	void	 WaitForFenceValue(uint64_t FenceValue);
+	void	 Flush();
+
+	ComPtr<ID3D12CommandQueue> GetD3D12CommandQueue() const;
+
+protected:
+	ComPtr<ID3D12CommandAllocator>	   CreateCommandAllocator(RESULT_PARAM_DEFINE) const;
+	ComPtr<ID3D12GraphicsCommandList2> CreateCommandList(ComPtr<ID3D12CommandAllocator> CommandAllocator,
+														 RESULT_PARAM_DEFINE) const;
+
+private:
+	struct CommandAllocatorEntry
+	{
+		uint64_t					   FenceValue;
+		ComPtr<ID3D12CommandAllocator> CommandAllocator;
+	};
+
+	using command_allocator_queue_t = eastl::queue<CommandAllocatorEntry>;
+	using command_list_queue_t		= std::queue<ComPtr<ID3D12GraphicsCommandList2>>;
+
+	D3D12_COMMAND_LIST_TYPE	   mCommandListType;
+	ComPtr<ID3D12Device3>	   mD3d12Device;
+	ComPtr<ID3D12CommandQueue> mD3d12CommandQueue;
+	ComPtr<ID3D12Fence>		   mD3d12Fence;
+	HANDLE					   mFenceEvent{};
+	uint64_t				   mFenceValue{};
+
+	command_allocator_queue_t mCommandAllocatorQueue{DEBUG_NAME_VAL("Dx12")};
+	command_list_queue_t	  mCommandListQueue;
+	//{DEBUG_NAME_VAL("Dx12")};
+};
 
 /**
  * @brief Platform manager class.
@@ -18,15 +71,15 @@ namespace Render
  * Designed to dx12 in windows.
  *
  */
-class PlatformManager
+class Manager
 {
-	CLASS_BODY_NON_MOVEABLE_COPYABLE(PlatformManager);
+	CLASS_BODY_NON_MOVEABLE_COPYABLE(Manager);
 
 private:
-	PlatformManager();
+	Manager();
 
 public:
-	~PlatformManager();
+	~Manager();
 
 private:
 	void Initialize(RESULT_PARAM_DEFINE);
@@ -43,28 +96,28 @@ private:
 
 private:
 	NODISCARD static bool CheckTearingSupport(RESULT_PARAM_DEFINE);
-	NODISCARD static bool CheckRaytracingSupport(ComPtr<ID3D12Device> Device, RESULT_PARAM_DEFINE);
+	NODISCARD static bool CheckRaytracingSupport(ComPtr<ID3D12Device3> Device, RESULT_PARAM_DEFINE);
 
 private:
 	NODISCARD static ComPtr<IDXGIAdapter4>		  GetAdapter(bool UseWarp, RESULT_PARAM_DEFINE);
-	NODISCARD static ComPtr<ID3D12Device>		  CreateDevice(ComPtr<IDXGIAdapter4> Adapter, RESULT_PARAM_DEFINE);
-	NODISCARD static ComPtr<ID3D12CommandQueue>	  CreateCommandQueue(ComPtr<ID3D12Device>	 Device,
+	NODISCARD static ComPtr<ID3D12Device3>		  CreateDevice(ComPtr<IDXGIAdapter4> Adapter, RESULT_PARAM_DEFINE);
+	NODISCARD static ComPtr<ID3D12CommandQueue>	  CreateCommandQueue(ComPtr<ID3D12Device3>	 Device,
 																	 D3D12_COMMAND_LIST_TYPE Type, RESULT_PARAM_DEFINE);
 	NODISCARD static ComPtr<IDXGISwapChain4>	  CreateSwapchain(HWND Hwnd, ComPtr<ID3D12CommandQueue> CommandQueue,
 																  uint32_t Width, uint32_t Height, uint32_t BufferCount,
 																  RESULT_PARAM_DEFINE);
-	NODISCARD static ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(ComPtr<ID3D12Device>		  Device,
+	NODISCARD static ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(ComPtr<ID3D12Device3>	  Device,
 																	   D3D12_DESCRIPTOR_HEAP_TYPE Type,
 																	   uint32_t NumDescriptors, RESULT_PARAM_DEFINE);
-	void UpdateRenderTargetViews(ComPtr<ID3D12Device> Device, ComPtr<IDXGISwapChain4> Swapchain,
+	void UpdateRenderTargetViews(ComPtr<ID3D12Device3> Device, ComPtr<IDXGISwapChain4> Swapchain,
 								 ComPtr<ID3D12DescriptorHeap> DescriptorHeap, RESULT_PARAM_DEFINE);
-	NODISCARD static ComPtr<ID3D12CommandAllocator>	   CreateCommandAllocator(ComPtr<ID3D12Device>	  Device,
+	NODISCARD static ComPtr<ID3D12CommandAllocator>	   CreateCommandAllocator(ComPtr<ID3D12Device3>	  Device,
 																			  D3D12_COMMAND_LIST_TYPE Type,
 																			  RESULT_PARAM_DEFINE);
 	NODISCARD static ComPtr<ID3D12GraphicsCommandList> CreateCommandList(
-		ComPtr<ID3D12Device> Device, ComPtr<ID3D12CommandAllocator> CommandAllocator, D3D12_COMMAND_LIST_TYPE Type,
+		ComPtr<ID3D12Device3> Device, ComPtr<ID3D12CommandAllocator> CommandAllocator, D3D12_COMMAND_LIST_TYPE Type,
 		RESULT_PARAM_DEFINE);
-	NODISCARD static ComPtr<ID3D12Fence> CreateFence(ComPtr<ID3D12Device> Device, RESULT_PARAM_DEFINE);
+	NODISCARD static ComPtr<ID3D12Fence> CreateFence(ComPtr<ID3D12Device3> Device, RESULT_PARAM_DEFINE);
 	NODISCARD static HANDLE				 CreateFenceEvent(RESULT_PARAM_DEFINE);
 	NODISCARD static uint64_t			 SignalFence(ComPtr<ID3D12CommandQueue> CommandQueue, ComPtr<ID3D12Fence> Fence,
 													 uint64_t& FenceValue, RESULT_PARAM_DEFINE);
@@ -76,11 +129,11 @@ private:
 	void		WaitFrameFences(RESULT_PARAM_DEFINE);
 
 private:
-	friend class Manager;
+	friend class Render::Manager;
 	friend class Engine::Window;
 	Engine::Window&		  mWindow;
-	static constexpr auto NUM_FRAMES	  = 3;
-	bool				  mUseWarp		  = false;
+	static constexpr auto NUM_FRAMES = 3;
+	bool				  mUseWarp	 = false;
 
 private:
 #if EDITOR
@@ -88,7 +141,7 @@ private:
 #endif
 
 	// Core objects
-	ComPtr<ID3D12Device>			  mDevice;
+	ComPtr<ID3D12Device3>			  mDevice;
 	ComPtr<ID3D12CommandQueue>		  mCommandQueue;
 	ComPtr<IDXGISwapChain4>			  mSwapchain;
 	ComPtr<ID3D12Resource>			  mBackBuffers[NUM_FRAMES];
@@ -110,17 +163,94 @@ private:
 	bool mVsync			   = true;
 	bool mTearingSupported = false;
 	bool mFullscreen	   = false;
+
+#if EDITOR
+	bool mEditor = false;
+#endif
 };
 
-INLINE PlatformManager::PlatformManager() : mWindow{Engine::Manager::Instance().GetWindow()}
+INLINE CommandQueue::CommandQueue(ComPtr<ID3D12Device3> Device, D3D12_COMMAND_LIST_TYPE Type, RESULT_PARAM_IMPL)
+	: mCommandListType{Type}, mD3d12Device{Device}
+{
+	D3D12_COMMAND_QUEUE_DESC lDesc{};
+	lDesc.Type	   = Type;
+	lDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+	lDesc.Flags	   = D3D12_COMMAND_QUEUE_FLAG_NONE;
+	lDesc.NodeMask = 0;
+
+	RESULT_CONDITION_ENSURE(mD3d12Device->CreateCommandQueue(&lDesc, IID_PPV_ARGS(&mD3d12CommandQueue)) == S_OK,
+							Dx12FailedToCreateCommandQueue);
+	RESULT_CONDITION_ENSURE(mD3d12Device->CreateFence(mFenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mD3d12Fence)) ==
+								S_OK,
+							Dx12FailedToCreateCommandQueue);
+	RESULT_CONDITION_ENSURE((mFenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr)),
+							Dx12FailedToCreateFenceEvent);
+}
+
+INLINE ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetCommandList(RESULT_PARAM_IMPL)
+{
+	ComPtr<ID3D12CommandAllocator> lCommandAllocator;
+    ComPtr<ID3D12GraphicsCommandList2> lCommandList;
+
+	if ( !mCommandAllocatorQueue.empty() && IsFenceComplete(mCommandAllocatorQueue.front().FenceValue))
+    {
+        lCommandAllocator = mCommandAllocatorQueue.front().CommandAllocator;
+        mCommandAllocatorQueue.pop();
+ 
+        RESULT_CONDITION_ENSURE(lCommandAllocator->Reset() == S_OK,
+			Dx12FailedToResetCommandAllocator, {});
+    }
+    else
+    {
+        lCommandAllocator = CreateCommandAllocator();
+    }
+	if (!mCommandListQueue.empty())
+    {
+        lCommandList = mCommandListQueue.front();
+        mCommandListQueue.pop();
+ 
+        RESULT_CONDITION_ENSURE(lCommandList->Reset(lCommandAllocator.Get(), nullptr),
+			Dx12FailedToResetCommandList, {});
+    }
+    else
+    {
+        lCommandList = CreateCommandList(lCommandAllocator);
+    }
+
+	RESULT_CONDITION_ENSURE(lCommandList->SetPrivateDataInterface(__uuidof(ID3D12CommandAllocator), lCommandAllocator.Get()) == S_OK,
+		Dx12FailedToSetPrivateDataInterface, {});
+
+	return lCommandList;
+}
+
+INLINE ComPtr<ID3D12CommandAllocator> CommandQueue::CreateCommandAllocator(RESULT_PARAM_IMPL) const
+{
+	ComPtr<ID3D12CommandAllocator> lCommandAllocator;
+	RESULT_CONDITION_ENSURE(mD3d12Device->CreateCommandAllocator(mCommandListType, IID_PPV_ARGS(&lCommandAllocator)) ==
+								S_OK,
+							Dx12FailedToCreateCommandAllocator, {});
+	return lCommandAllocator;
+}
+
+INLINE ComPtr<ID3D12GraphicsCommandList2> CommandQueue::CreateCommandList(
+	const ComPtr<ID3D12CommandAllocator> CommandAllocator, RESULT_PARAM_IMPL) const
+{
+	ComPtr<ID3D12GraphicsCommandList2> lCommandList;
+	RESULT_CONDITION_ENSURE(mD3d12Device->CreateCommandList(0, mCommandListType, CommandAllocator.Get(), nullptr,
+															IID_PPV_ARGS(&lCommandList)) == S_OK,
+							Dx12FailedToCreateCommandList, {});
+	return lCommandList;
+}
+
+INLINE Manager::Manager() : mWindow{Engine::Manager::Instance().GetWindow()}
 {
 }
 
-INLINE PlatformManager::~PlatformManager()
+INLINE Manager::~Manager()
 {
 }
 
-INLINE void PlatformManager::Initialize(RESULT_PARAM_IMPL)
+INLINE void Manager::Initialize(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
@@ -177,7 +307,7 @@ INLINE void PlatformManager::Initialize(RESULT_PARAM_IMPL)
 	RESULT_OK();
 }
 
-INLINE void PlatformManager::Update(RESULT_PARAM_IMPL)
+INLINE void Manager::Update(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
@@ -187,22 +317,29 @@ INLINE void PlatformManager::Update(RESULT_PARAM_IMPL)
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	Editor::Manager::Instance().RunExternal(RESULT_ARG_PASS);
+	if (mEditor)
+	{
+		Editor::Manager::Instance().RunExternal(RESULT_ARG_PASS);
+	}
+
 #endif
 
 	RESULT_ENSURE_CALL(const auto lBackBuffer = PrepareFrameUpdate(RESULT_ARG_PASS));
 
 #if EDITOR
 	ImGui::Render();
-	mCommandList->SetDescriptorHeaps(1, &Editor::Manager::Instance().mSrvDescHeap);
-	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
+	if (mEditor)
+	{
+		mCommandList->SetDescriptorHeaps(1, &Editor::Manager::Instance().mSrvDescHeap);
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), mCommandList.Get());
+	}
 #endif
 
 	RESULT_ENSURE_CALL(Present(lBackBuffer, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
-INLINE void PlatformManager::Finalize(RESULT_PARAM_IMPL)
+INLINE void Manager::Finalize(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 	RESULT_ENSURE_CALL(Flush(mCommandQueue, mFence, mFenceValue, mFenceEvent, RESULT_ARG_PASS));
@@ -210,9 +347,9 @@ INLINE void PlatformManager::Finalize(RESULT_PARAM_IMPL)
 	RESULT_OK();
 }
 
-INLINE void PlatformManager::Resize(const glm::uvec2 NewSize, RESULT_PARAM_IMPL)
+INLINE void Manager::Resize(const glm::uvec2 NewSize, RESULT_PARAM_IMPL)
 {
-	RESULT_CONDITION_ENSURE(Manager::Instance().IsInThread(), CurrentThreadIsNotTheRequiredOne);
+	RESULT_CONDITION_ENSURE(Render::Manager::Instance().IsInThread(), CurrentThreadIsNotTheRequiredOne);
 
 	RESULT_ENSURE_LAST();
 	RESULT_CONDITION_ENSURE(NewSize.x > 0 && NewSize.y > 0, ZeroSize);
@@ -240,13 +377,13 @@ INLINE void PlatformManager::Resize(const glm::uvec2 NewSize, RESULT_PARAM_IMPL)
 		RESULT_ENSURE_CALL(UpdateRenderTargetViews(mDevice, mSwapchain, mRtvDescriptorHeap, RESULT_ARG_PASS));
 
 		LOGC(Info, PlatformRender, "Resized window render target from [%u, %u] to [%u, %u].", lFromSize.x, lFromSize.y,
-			NewSize.x, NewSize.y);
+			 NewSize.x, NewSize.y);
 	}
 
 	RESULT_OK();
 }
 
-ComPtr<ID3D12Resource> PlatformManager::PrepareFrameUpdate(RESULT_PARAM_IMPL)
+ComPtr<ID3D12Resource> Manager::PrepareFrameUpdate(RESULT_PARAM_IMPL)
 {
 	ManagerWait<Render::Manager>{RESULT_ARG_PASS};
 
@@ -275,7 +412,7 @@ ComPtr<ID3D12Resource> PlatformManager::PrepareFrameUpdate(RESULT_PARAM_IMPL)
 	return lBackBuffer;
 }
 
-INLINE void PlatformManager::Present(const ComPtr<ID3D12Resource> BackBuffer, RESULT_PARAM_IMPL)
+INLINE void Manager::Present(const ComPtr<ID3D12Resource> BackBuffer, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 	// Present procedure
@@ -309,14 +446,14 @@ INLINE void PlatformManager::Present(const ComPtr<ID3D12Resource> BackBuffer, RE
 	RESULT_OK();
 }
 
-INLINE void PlatformManager::ToggleFullscreen(RESULT_PARAM_IMPL)
+INLINE void Manager::ToggleFullscreen(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 	RESULT_ENSURE_CALL(Resize(mWindow.GetSize(), RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
-INLINE ComPtr<IDXGIAdapter4> PlatformManager::GetAdapter(const bool UseWarp, RESULT_PARAM_IMPL)
+INLINE ComPtr<IDXGIAdapter4> Manager::GetAdapter(const bool UseWarp, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
 
@@ -351,7 +488,7 @@ INLINE ComPtr<IDXGIAdapter4> PlatformManager::GetAdapter(const bool UseWarp, RES
 			// is favored.
 			if ((lDxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
 				SUCCEEDED(
-					D3D12CreateDevice(lDxgiAdapter1.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), nullptr)) &&
+					D3D12CreateDevice(lDxgiAdapter1.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device3), nullptr)) &&
 				lDxgiAdapterDesc1.DedicatedVideoMemory > lMaxDedicatedVideoMemory)
 			{
 				lMaxDedicatedVideoMemory = lDxgiAdapterDesc1.DedicatedVideoMemory;
@@ -364,12 +501,12 @@ INLINE ComPtr<IDXGIAdapter4> PlatformManager::GetAdapter(const bool UseWarp, RES
 	return lDxgiAdapter4;
 }
 
-INLINE ComPtr<ID3D12Device> PlatformManager::CreateDevice(const ComPtr<IDXGIAdapter4> Adapter, RESULT_PARAM_IMPL)
+INLINE ComPtr<ID3D12Device3> Manager::CreateDevice(const ComPtr<IDXGIAdapter4> Adapter, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
 	RESULT_CONDITION_ENSURE(Adapter, NullPtr, {});
 
-	ComPtr<ID3D12Device> lDevice;
+	ComPtr<ID3D12Device3> lDevice;
 	RESULT_CONDITION_ENSURE(D3D12CreateDevice(Adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&lDevice)) == S_OK,
 							Dx12FailedToCreateDevice, {});
 
@@ -410,9 +547,8 @@ INLINE ComPtr<ID3D12Device> PlatformManager::CreateDevice(const ComPtr<IDXGIAdap
 	return lDevice;
 }
 
-INLINE ComPtr<ID3D12CommandQueue> PlatformManager::CreateCommandQueue(const ComPtr<ID3D12Device>	Device,
-																	  const D3D12_COMMAND_LIST_TYPE Type,
-																	  RESULT_PARAM_IMPL)
+INLINE ComPtr<ID3D12CommandQueue> Manager::CreateCommandQueue(const ComPtr<ID3D12Device3>	Device,
+															  const D3D12_COMMAND_LIST_TYPE Type, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
 	RESULT_CONDITION_ENSURE(Device, NullPtr, {});
@@ -431,7 +567,7 @@ INLINE ComPtr<ID3D12CommandQueue> PlatformManager::CreateCommandQueue(const ComP
 	return lQueue;
 }
 
-INLINE bool PlatformManager::CheckTearingSupport(RESULT_PARAM_IMPL)
+INLINE bool Manager::CheckTearingSupport(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST(false);
 
@@ -459,7 +595,7 @@ INLINE bool PlatformManager::CheckTearingSupport(RESULT_PARAM_IMPL)
 	return lAllowTearing == TRUE;
 }
 
-INLINE bool PlatformManager::CheckRaytracingSupport(const ComPtr<ID3D12Device> Device, RESULT_PARAM_IMPL)
+INLINE bool Manager::CheckRaytracingSupport(const ComPtr<ID3D12Device3> Device, RESULT_PARAM_IMPL)
 {
 	D3D12_FEATURE_DATA_D3D12_OPTIONS5 lOptions5		   = {};
 	BOOL							  lAllowRaytracing = FALSE;
@@ -473,10 +609,9 @@ INLINE bool PlatformManager::CheckRaytracingSupport(const ComPtr<ID3D12Device> D
 	return lAllowRaytracing;
 }
 
-INLINE ComPtr<IDXGISwapChain4> PlatformManager::CreateSwapchain(const HWND						 Hwnd,
-																const ComPtr<ID3D12CommandQueue> CommandQueue,
-																const uint32_t Width, const uint32_t Height,
-																const uint32_t BufferCount, RESULT_PARAM_IMPL)
+INLINE ComPtr<IDXGISwapChain4> Manager::CreateSwapchain(const HWND Hwnd, const ComPtr<ID3D12CommandQueue> CommandQueue,
+														const uint32_t Width, const uint32_t Height,
+														const uint32_t BufferCount, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
 	RESULT_CONDITION_ENSURE(Hwnd && CommandQueue, NullPtr, {});
@@ -523,10 +658,9 @@ INLINE ComPtr<IDXGISwapChain4> PlatformManager::CreateSwapchain(const HWND						
 	return lDxgiSwapChain4;
 }
 
-INLINE ComPtr<ID3D12DescriptorHeap> PlatformManager::CreateDescriptorHeap(const ComPtr<ID3D12Device>	   Device,
-																		  const D3D12_DESCRIPTOR_HEAP_TYPE Type,
-																		  const uint32_t NumDescriptors,
-																		  RESULT_PARAM_IMPL)
+INLINE ComPtr<ID3D12DescriptorHeap> Manager::CreateDescriptorHeap(const ComPtr<ID3D12Device3>	   Device,
+																  const D3D12_DESCRIPTOR_HEAP_TYPE Type,
+																  const uint32_t NumDescriptors, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
 	RESULT_CONDITION_ENSURE(Device, NullPtr, {});
@@ -545,10 +679,9 @@ INLINE ComPtr<ID3D12DescriptorHeap> PlatformManager::CreateDescriptorHeap(const 
 	return lDescriptorHeap;
 }
 
-INLINE void PlatformManager::UpdateRenderTargetViews(const ComPtr<ID3D12Device>			Device,
-													 const ComPtr<IDXGISwapChain4>		Swapchain,
-													 const ComPtr<ID3D12DescriptorHeap> DescriptorHeap,
-													 RESULT_PARAM_IMPL)
+INLINE void Manager::UpdateRenderTargetViews(const ComPtr<ID3D12Device3>		Device,
+											 const ComPtr<IDXGISwapChain4>		Swapchain,
+											 const ComPtr<ID3D12DescriptorHeap> DescriptorHeap, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 	RESULT_CONDITION_ENSURE(Device && Swapchain && DescriptorHeap, NullPtr);
@@ -573,9 +706,9 @@ INLINE void PlatformManager::UpdateRenderTargetViews(const ComPtr<ID3D12Device>	
 	RESULT_OK();
 }
 
-INLINE ComPtr<ID3D12CommandAllocator> PlatformManager::CreateCommandAllocator(const ComPtr<ID3D12Device>	Device,
-																			  const D3D12_COMMAND_LIST_TYPE Type,
-																			  RESULT_PARAM_IMPL)
+INLINE ComPtr<ID3D12CommandAllocator> Manager::CreateCommandAllocator(const ComPtr<ID3D12Device3>	Device,
+																	  const D3D12_COMMAND_LIST_TYPE Type,
+																	  RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
 	RESULT_CONDITION_ENSURE(Device, NullPtr, {});
@@ -589,8 +722,8 @@ INLINE ComPtr<ID3D12CommandAllocator> PlatformManager::CreateCommandAllocator(co
 	return lCommandAllocator;
 }
 
-INLINE ComPtr<ID3D12GraphicsCommandList> PlatformManager::CreateCommandList(
-	const ComPtr<ID3D12Device> Device, const ComPtr<ID3D12CommandAllocator> CommandAllocator,
+INLINE ComPtr<ID3D12GraphicsCommandList> Manager::CreateCommandList(
+	const ComPtr<ID3D12Device3> Device, const ComPtr<ID3D12CommandAllocator> CommandAllocator,
 	const D3D12_COMMAND_LIST_TYPE Type, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
@@ -607,7 +740,7 @@ INLINE ComPtr<ID3D12GraphicsCommandList> PlatformManager::CreateCommandList(
 	return lCommandList;
 }
 
-INLINE ComPtr<ID3D12Fence> PlatformManager::CreateFence(const ComPtr<ID3D12Device> Device, RESULT_PARAM_IMPL)
+INLINE ComPtr<ID3D12Fence> Manager::CreateFence(const ComPtr<ID3D12Device3> Device, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST({});
 	RESULT_CONDITION_ENSURE(Device, NullPtr, {});
@@ -621,7 +754,7 @@ INLINE ComPtr<ID3D12Fence> PlatformManager::CreateFence(const ComPtr<ID3D12Devic
 	return lFence;
 }
 
-INLINE HANDLE PlatformManager::CreateFenceEvent(RESULT_PARAM_IMPL)
+INLINE HANDLE Manager::CreateFenceEvent(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST(nullptr);
 	const HANDLE lFenceEvent = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -629,8 +762,8 @@ INLINE HANDLE PlatformManager::CreateFenceEvent(RESULT_PARAM_IMPL)
 	return lFenceEvent;
 }
 
-INLINE uint64_t PlatformManager::SignalFence(const ComPtr<ID3D12CommandQueue> CommandQueue,
-											 const ComPtr<ID3D12Fence> Fence, uint64_t& FenceValue, RESULT_PARAM_IMPL)
+INLINE uint64_t Manager::SignalFence(const ComPtr<ID3D12CommandQueue> CommandQueue, const ComPtr<ID3D12Fence> Fence,
+									 uint64_t& FenceValue, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST(UINT64_MAX);
 	RESULT_CONDITION_ENSURE(CommandQueue && Fence, NullPtr, UINT64_MAX);
@@ -644,8 +777,8 @@ INLINE uint64_t PlatformManager::SignalFence(const ComPtr<ID3D12CommandQueue> Co
 	return lFenceValueForSignal;
 }
 
-INLINE void PlatformManager::WaitForFenceValue(const ComPtr<ID3D12Fence> Fence, const uint64_t FenceValue,
-											   const HANDLE FenceEvent, const uint64_t MsDuration, RESULT_PARAM_IMPL)
+INLINE void Manager::WaitForFenceValue(const ComPtr<ID3D12Fence> Fence, const uint64_t FenceValue,
+									   const HANDLE FenceEvent, const uint64_t MsDuration, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 	RESULT_CONDITION_ENSURE(Fence && FenceEvent, NullPtr);
@@ -660,8 +793,8 @@ INLINE void PlatformManager::WaitForFenceValue(const ComPtr<ID3D12Fence> Fence, 
 	RESULT_OK();
 }
 
-INLINE void PlatformManager::Flush(const ComPtr<ID3D12CommandQueue> CommandQueue, const ComPtr<ID3D12Fence> Fence,
-								   uint64_t& FenceValue, const HANDLE FenceEvent, RESULT_PARAM_IMPL)
+INLINE void Manager::Flush(const ComPtr<ID3D12CommandQueue> CommandQueue, const ComPtr<ID3D12Fence> Fence,
+						   uint64_t& FenceValue, const HANDLE FenceEvent, RESULT_PARAM_IMPL)
 {
 	ManagerWait<Render::Manager>{};
 	RESULT_ENSURE_LAST();
@@ -671,14 +804,14 @@ INLINE void PlatformManager::Flush(const ComPtr<ID3D12CommandQueue> CommandQueue
 	RESULT_OK();
 }
 
-INLINE void PlatformManager::Flush(RESULT_PARAM_IMPL)
+INLINE void Manager::Flush(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 	RESULT_ENSURE_CALL(Flush(mCommandQueue, mFence, mFenceValue, mFenceEvent, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
-INLINE void PlatformManager::WaitFrameFences(RESULT_PARAM_IMPL)
+INLINE void Manager::WaitFrameFences(RESULT_PARAM_IMPL)
 {
 	for (uint32_t i = 0; i < NUM_FRAMES; ++i)
 	{
@@ -686,8 +819,8 @@ INLINE void PlatformManager::WaitFrameFences(RESULT_PARAM_IMPL)
 	}
 }
 
-} // namespace Render
+} // namespace Render::Platform
 
-CLASS_VALIDATION(Render::PlatformManager);
+CLASS_VALIDATION(Render::Platform::Manager);
 
 #endif

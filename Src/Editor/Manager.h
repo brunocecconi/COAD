@@ -31,9 +31,9 @@ class Window;
 
 } // namespace Engine
 
-namespace Render
+namespace Render::Platform
 {
-class PlatformManager;
+class Manager;
 }
 
 namespace Editor
@@ -45,7 +45,7 @@ class Manager: public ManagerThread<Manager>
 
 public:
 	using base_t = ManagerThread<Manager>;
-	friend class base_t;
+	friend class ManagerThread<Manager>;
 
 private:
 	Manager();
@@ -61,7 +61,7 @@ protected:
 
 private:
 	friend class Engine::Manager;
-	friend class Render::PlatformManager;
+	friend class Render::Platform::Manager;
 
 #if PLATFORM_WINDOWS
 	ID3D12DescriptorHeap* mSrvDescHeap{};
@@ -70,6 +70,11 @@ private:
 #endif
 	bool mFileSelected{};
 };
+
+INLINE Manager& Instance()
+{
+	return Manager::Instance();
+}
 
 } // namespace Editor
 

@@ -15,6 +15,12 @@ struct ManagerWait
 	~ManagerWait();
 };
 
+struct Test
+{
+	int	  a;
+	float b;
+};
+
 template<typename T>
 class ManagerNoThread
 {
@@ -61,7 +67,7 @@ void ManagerNoThread<T>::Initialize(RESULT_PARAM_IMPL)
 	RESULT_CONDITION_ENSURE(!mInitialized, AlreadyInitialized);
 	RESULT_ENSURE_CALL(mMutex.Create({}, RESULT_ARG_PASS));
 	mInitialized = true;
-	mThreadId = GetCurrentThreadId();
+	mThreadId	 = GetCurrentThreadId();
 	RESULT_OK();
 }
 
@@ -242,7 +248,9 @@ bool ManagerThread<T>::IsInThread() const
 	return GetThreadId(mThread.GetHandle().Ptr) == GetCurrentThreadId();
 }
 
-#define MANAGER_IMPL(TYPE)	eastl::unique_ptr<TYPE> ManagerThread<TYPE>::mInstance
-#define MANAGER_NO_THREAD_IMPL(TYPE)	eastl::unique_ptr<TYPE> ManagerNoThread<TYPE>::mInstance
+#define MANAGER_IMPL(TYPE)                                                                                             \
+	eastl::unique_ptr<TYPE> ManagerThread<TYPE>::mInstance
+#define MANAGER_NO_THREAD_IMPL(TYPE)                                                                                   \
+	eastl::unique_ptr<TYPE> ManagerNoThread<TYPE>::mInstance
 
 #endif

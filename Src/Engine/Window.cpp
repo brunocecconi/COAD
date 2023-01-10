@@ -1,6 +1,6 @@
 
 #include "Engine/Window.h"
-#include "Engine/InputHandler.h"
+#include "Engine/Input.h"
 #include "Render/Manager.h"
 #include "Engine/Manager.h"
 
@@ -17,7 +17,7 @@ namespace Engine
 
 LRESULT Window::WindowProc(const HWND Hwnd, const UINT Umsg, const WPARAM Wparam, const LPARAM Lparam)
 {
-	if(Umsg == WM_SIZE)
+	if(Umsg == WM_SIZE && Render::Instance().IsInitialized())
 	{
 		RECT lClientRect = {};
         ::GetClientRect(Hwnd, &lClientRect);
@@ -25,12 +25,12 @@ LRESULT Window::WindowProc(const HWND Hwnd, const UINT Umsg, const WPARAM Wparam
         int lWidth = lClientRect.right - lClientRect.left;
         int lHeight = lClientRect.bottom - lClientRect.top;
 
-		Render::Manager::Instance().ResizeFrame({lWidth, lHeight});
+		Render::Instance().ResizeFrame({lWidth, lHeight});
 	}
 #if EDITOR
 	ImGui_ImplWin32_WndProcHandler(Hwnd, Umsg, Wparam, Lparam);
 #endif
-	return Input::Handler::Instance().WindowProc(Hwnd, Umsg, Wparam, Lparam);
+	return Input::Instance().WindowProc(Hwnd, Umsg, Wparam, Lparam);
 }
 #endif
 
@@ -68,6 +68,7 @@ void Window::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 	const int32_t lScreenWidth	= ::GetSystemMetrics(SM_CXSCREEN);
 	const int32_t lScreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
 
+	WS_OVERLAPPEDWINDOW;
 	constexpr UINT lStyle = WS_OVERLAPPEDWINDOW;
 
 	mState.Rect = {0, 0, static_cast<LONG>(CreateInfo.Width), static_cast<LONG>(CreateInfo.Height)};

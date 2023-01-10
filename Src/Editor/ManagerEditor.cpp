@@ -42,7 +42,6 @@ void Manager::RunExternal(RESULT_PARAM_IMPL)
 				}
 				ImGui::EndMenu();
 			}
-			
 		}
 		ImGui::EndMainMenuBar();
 	}

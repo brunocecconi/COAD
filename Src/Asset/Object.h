@@ -12,6 +12,8 @@
                                                                                                                        \
 private:                                                                                                               \
 	friend class Asset::Registry;                                                                                      \
+                                                                                                                       \
+public:                                                                                                                \
 	struct AssetClass                                                                                                  \
 	{                                                                                                                  \
 	}
@@ -69,7 +71,7 @@ public:
 	NODISCARD eastl::string_view Path() const;
 	NODISCARD id_t				 Id() const;
 	NODISCARD bool				 IsLoaded() const;
-	NODISCARD size_t				 SourceSize() const;
+	NODISCARD size_t			 SourceSize() const;
 
 public:
 	NODISCARD eastl::string ToString(uint64_t Capacity = 256) const;
@@ -95,9 +97,10 @@ private:
 private:
 	META_REBINDER_TYPE_INFO();
 };
-ASSET_VALIDATION(Object);
 
 } // namespace Asset
+
+ASSET_VALIDATION(Asset::Object);
 
 META_TYPE_BINDER_BEGIN(Asset::Object)
 META_TYPE_BINDER_OPERATIONS_CUSTOM(META_TYPE_BINDER_OPERATION_NOT_IMPL(eDefaultCtor),
@@ -111,14 +114,14 @@ META_TYPE_BINDER_END()
 META_TYPE_AUTO_REGISTER_NS(Asset::Object, AssetObject);
 
 STREAM_IMPL_BEGIN(Asset::Object)
-	STREAM_WRITE_IMPL_VALUE_FUNCTION_BEGIN()
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mId, RESULT_ARG_PASS), StreamFailedToWrite, false);
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mPath, RESULT_ARG_PASS), StreamFailedToWrite, false);
-	STREAM_IMPL_VALUE_FUNCTION_END()
-	STREAM_READ_IMPL_VALUE_FUNCTION_BEGIN()
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mId, RESULT_ARG_PASS), StreamFailedToRead, false);
-		RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mPath, RESULT_ARG_PASS), StreamFailedToRead, false);
-	STREAM_IMPL_VALUE_FUNCTION_END()
+STREAM_WRITE_IMPL_VALUE_FUNCTION_BEGIN()
+RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mId, RESULT_ARG_PASS), StreamFailedToWrite, false);
+RESULT_CONDITION_ENSURE_NOLOG(stream.Write(value.mPath, RESULT_ARG_PASS), StreamFailedToWrite, false);
+STREAM_IMPL_VALUE_FUNCTION_END()
+STREAM_READ_IMPL_VALUE_FUNCTION_BEGIN()
+RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mId, RESULT_ARG_PASS), StreamFailedToRead, false);
+RESULT_CONDITION_ENSURE_NOLOG(stream.Read(value.mPath, RESULT_ARG_PASS), StreamFailedToRead, false);
+STREAM_IMPL_VALUE_FUNCTION_END()
 STREAM_IMPL_END()
 
 #endif

@@ -419,7 +419,9 @@ enum EResult : uint64_t
 	Dx12FailedToCreateDescriptorHeap,
 	Dx12FailedToGetBackBuffer,
 	Dx12FailedToCreateCommandAllocator,
+	Dx12FailedToResetCommandAllocator,
 	Dx12FailedToCreateCommandList,
+	Dx12FailedToResetCommandList,
 	Dx12FailedToCloseCommandList,
 	Dx12FailedToCreateFence,
 	Dx12FailedToCreateFenceEvent,
@@ -428,6 +430,7 @@ enum EResult : uint64_t
 	Dx12FailedToGetSwapChainDescription,
 	Dx12FailedToResizeSwapChain,
 	Dx12FailedToPresent,
+	Dx12FailedToSetPrivateDataInterface,
 	PlatformRenderFailedToUpdate,
 #endif
 
@@ -520,15 +523,18 @@ static constexpr char* ResultString(const EResult Value)
 		RESULT_STRING_CASE_IMPL(Dx12FailedToGetBackBuffer);
 		RESULT_STRING_CASE_IMPL(PlatformRenderFailedToUpdate);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateCommandList);
+		RESULT_STRING_CASE_IMPL(Dx12FailedToResetCommandList);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToCloseCommandList);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateFence);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateFenceEvent);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToSignalFence);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToWaitForFence);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateCommandAllocator);
+		RESULT_STRING_CASE_IMPL(Dx12FailedToResetCommandAllocator);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToGetSwapChainDescription);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToResizeSwapChain);
 		RESULT_STRING_CASE_IMPL(Dx12FailedToPresent);
+		RESULT_STRING_CASE_IMPL(Dx12FailedToSetPrivateDataInterface);
 #endif
 
 #if EDITOR

@@ -31,7 +31,7 @@ constexpr void GetParamsSignatureFromTuple(eastl::array<const TypeInfo*, ArraySi
 	if constexpr (Index < eastl::tuple_size_v<Tuple>)
 	{
 		arr[Index] = &eastl::get<Index>(tuple).Type();
-		GetParamsSignatureFromTuple<Index + 1>(arr, tuple);
+		GetParamsSignatureFromTuple<Index + 1, Tuple, ArraySize>(arr, tuple);
 	}
 }
 

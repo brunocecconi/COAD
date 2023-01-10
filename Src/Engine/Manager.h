@@ -15,17 +15,23 @@ LOG_DEFINE(Engine);
 namespace Engine
 {
 
+struct test432432
+{
+	int a;
+	int b;
+};
+
 /**
  * @brief Engine manager class.
  *
  */
-class Manager: public ManagerNoThread<Manager>
+class Manager : public ManagerNoThread<Manager>
 {
 	CLASS_BODY_NON_MOVEABLE_COPYABLE(Manager);
 
 public:
 	using base_t = ManagerNoThread<Manager>;
-	friend class base_t;
+	friend class ManagerNoThread<Manager>;
 
 private:
 	Manager();

@@ -1,6 +1,6 @@
 
-#include "Engine/Manager.h"
 #include "Render/Manager.h"
+#include "Engine/Manager.h"
 #include "Core/RawBuffer.h"
 
 #include "Editor/Manager.h"
@@ -23,8 +23,8 @@ namespace Render
 {
 
 Manager::Manager()
-	: mPlatformManager{new(Allocators::Default{DEBUG_NAME_VAL("Render")}.allocate(sizeof(PlatformManager)))
-						   PlatformManager{}}
+	: mPlatformManager{new(Allocators::Default{DEBUG_NAME_VAL("Render")}.allocate(sizeof(Platform::Manager)))
+						   Platform::Manager{}}
 {
 }
 
@@ -56,32 +56,29 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 	ManagerWait<Engine::Manager>{RESULT_ARG_PASS};
 
 	RESULT_ENSURE_LAST();
-
 	if (mRequestedRtvSize.x > 0 && mRequestedRtvSize.y > 0)
 	{
 		RESULT_ENSURE_CALL(mPlatformManager->Resize(mRequestedRtvSize, RESULT_ARG_PASS));
 		mRequestedRtvSize = {};
 	}
-
 	RESULT_ENSURE_CALL(mPlatformManager->Update(RESULT_ARG_PASS));
-	// RESULT_ENSURE_CALL(Thread::SleepCurrent(16u, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
 void Manager::Finalize(RESULT_PARAM_IMPL)
 {
 	LOGC(Info, Render, "Finalizing...");
+	RESULT_ENSURE_LAST();
 	RESULT_ENSURE_CALL(base_t::Finalize(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(base_t::WaitThreadFinish(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(mPlatformManager->Finalize(RESULT_ARG_PASS));
+	RESULT_OK();
 }
 
 void Manager::ToggleFullscreen(Engine::Window& Window, RESULT_PARAM_IMPL)
 {
-	if(!IsInitialized())
-	{
-		return;
-	}
+	RESULT_ENSURE_LAST();
+	RESULT_CONDITION_ENSURE(IsInitialized(), NotInitialized);
 	RESULT_CONDITION_ENSURE(Engine::Manager::Instance().IsInThread(), CurrentThreadIsNotTheRequiredOne);
 	ManagerWait<Manager>{RESULT_ARG_PASS};
 	RESULT_ENSURE_LAST();
@@ -101,17 +98,30 @@ void Manager::ToggleVsync() const
 	SetVsync(!mPlatformManager->mVsync);
 }
 
-void Manager::ResizeFrame(glm::uvec2 NewSize, RESULT_PARAM_IMPL)
+void Manager::ResizeFrame(const glm::uvec2 NewSize, RESULT_PARAM_IMPL)
 {
-	if(!IsInitialized())
-	{
-		return;
-	}
+	RESULT_ENSURE_LAST();
+	RESULT_CONDITION_ENSURE(IsInitialized(), NotInitialized);
 	RESULT_CONDITION_ENSURE(Engine::Manager::Instance().IsInThread(), CurrentThreadIsNotTheRequiredOne);
 	ManagerWait<Manager>{RESULT_ARG_PASS};
 	mRequestedRtvSize = NewSize;
 	RESULT_OK();
 }
+
+#if EDITOR
+void Manager::SetEditorActive(const bool Value, RESULT_PARAM_IMPL)
+{
+	ManagerWait<Manager>{RESULT_ARG_PASS};
+	RESULT_ENSURE_LAST();
+	mPlatformManager->mEditor = Value;
+	RESULT_OK();
+}
+
+void Manager::ToggleEditorActive(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_CALL(SetEditorActive(!mPlatformManager->mEditor, RESULT_ARG_PASS));
+}
+#endif
 
 #if PLATFORM_WINDOWS
 void Manager::SetTextureData(ID3D12Resource* Handle, eastl::span<uint8_t> NewData, RESULT_PARAM_IMPL)
@@ -123,10 +133,8 @@ void Manager::SetTextureData(ID3D12Resource* Handle, eastl::span<uint8_t> NewDat
 
 ComPtr<ID3D12Resource> Manager::GetTextureCurrentBackBuffer(RESULT_PARAM_IMPL) const
 {
-	if(!IsInitialized())
-	{
-		return {};
-	}
+	RESULT_ENSURE_LAST({});
+	RESULT_CONDITION_ENSURE(IsInitialized(), NotInitialized, {});
 	RESULT_CONDITION_ENSURE(Engine::Manager::Instance().IsInThread(), CurrentThreadIsNotTheRequiredOne, {});
 	RESULT_ENSURE_LAST({});
 	RESULT_ENSURE_CALL(mPlatformManager->Flush(RESULT_ARG_PASS), {});
@@ -143,7 +151,7 @@ ID3D12Device* Manager::PlatformDevice() const
 }
 uint32_t Manager::PlatformNumFrames()
 {
-	return PlatformManager::NUM_FRAMES;
+	return Platform::Manager::NUM_FRAMES;
 }
 ID3D12GraphicsCommandList* Manager::PlatformCmdList() const
 {

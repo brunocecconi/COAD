@@ -34,11 +34,12 @@ void Manager::Initialize(const int32_t Argc, char** Argv, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_CALL(mWindow.Show(RESULT_ARG_PASS));
 
 	// Initialize managers
-	RESULT_ENSURE_CALL(Render::Manager::Instance().Initialize(RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(Render::Instance().Initialize(RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(Render::Instance().ResizeFrame(mWindow.GetSize(), RESULT_ARG_PASS));
 
 	// Initialize editor
 #if EDITOR
-	RESULT_ENSURE_CALL(Editor::Manager::Instance().Initialize(mWindow, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(Editor::Instance().Initialize(mWindow, RESULT_ARG_PASS));
 #endif
 
 	RESULT_OK();
@@ -113,14 +114,14 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 	{
 		RESULT_ENSURE_CALL(mWindow.Update(RESULT_ARG_PASS));
 
-		if (auto& lInput = Input::Handler::Instance(); lInput.IsVsyncKeyDown(true))
+		if (auto& lInput = Input::Manager::Instance(); lInput.IsVsyncKeyDown(true))
 		{
 			Render::Manager::Instance().ToggleVsync();
 		}
 		else if (lInput.IsFullscreenKeyDown(true))
 		{
 			RESULT_ENSURE_CALL(Render::Manager::Instance().ToggleFullscreen(mWindow, RESULT_ARG_PASS));
-			if(RESULT_GET() != RESULT_OK_VALUE)
+			if (RESULT_GET() != RESULT_OK_VALUE)
 			{
 				RESULT_OK();
 				RESULT_ENSURE_CALL(mWindow.Destroy(RESULT_ARG_PASS));
@@ -130,6 +131,12 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 		{
 			RESULT_ENSURE_CALL(mWindow.Destroy(RESULT_ARG_PASS));
 		}
+#if EDITOR
+		else if (lInput.IsEditorKeyDown(true))
+		{
+			RESULT_ENSURE_CALL(Render::Instance().ToggleEditorActive());
+		}
+#endif
 	}
 	else
 	{
@@ -140,12 +147,12 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 	++mFrameCounter;
 	mLoopEndTime = eastl::chrono::high_resolution_clock::now();
 	mElapsedSeconds += static_cast<float32_t>((mLoopEndTime - mLoopBeginTime).count()) * 1e-9f;
-	mDeltaTime = static_cast<float32_t>((mLoopEndTime - mLoopBeginTime).count()) * 1e-6f;
+	mDeltaTime	   = static_cast<float32_t>((mLoopEndTime - mLoopBeginTime).count()) * 1e-6f;
 	mLoopBeginTime = mLoopEndTime;
 	// mTotalSeconds += mDeltaSeconds;
 	// mElapsedSeconds += mDeltaSeconds;
 
-	//printf("Delta time: %f\n", mDeltaSeconds);
+	// printf("Delta time: %f\n", mDeltaSeconds);
 
 	/*if (mElapsedSeconds > 1.f)
 	{
@@ -157,7 +164,7 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 		mFrameCounter	= 0;
 	}*/
 
-	//RESULT_ENSURE_CALL(Thread::SleepCurrent(1u, RESULT_ARG_PASS));
+	// RESULT_ENSURE_CALL(Thread::SleepCurrent(1u, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 

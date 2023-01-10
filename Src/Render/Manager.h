@@ -21,6 +21,7 @@ namespace Editor
 {
 class Manager;
 }
+
 #if PLATFORM_WINDOWS
 namespace Microsoft::WRL
 {
@@ -36,7 +37,10 @@ struct ID3D12Resource;
 namespace Render
 {
 
-class PlatformManager;
+namespace Platform
+{
+class Manager;
+}
 
 /**
  * @brief Render manager class.
@@ -48,7 +52,7 @@ class Manager: public ManagerThread<Manager>
 
 public:
 	using base_t = ManagerThread<Manager>;
-	friend class base_t;
+	friend class ManagerThread<Manager>;
 
 private:
 	Manager();
@@ -68,9 +72,14 @@ public:
 	void ToggleVsync() const;
 	void ResizeFrame(glm::uvec2 NewSize, RESULT_PARAM_DEFINE);
 
+#if EDITOR
+	void SetEditorActive(bool Value, RESULT_PARAM_DEFINE);
+	void ToggleEditorActive(RESULT_PARAM_DEFINE);
+#endif
+
 public:
 #if PLATFORM_WINDOWS
-	void SetTextureData(ID3D12Resource* Handle, eastl::span<uint8_t> NewData, RESULT_PARAM_DEFINE);
+	void	  SetTextureData(ID3D12Resource* Handle, eastl::span<uint8_t> NewData, RESULT_PARAM_DEFINE);
 	NODISCARD ComPtr<ID3D12Resource> GetTextureCurrentBackBuffer(RESULT_PARAM_DEFINE) const;
 #endif
 
@@ -79,9 +88,9 @@ private:
 	friend class Editor::Manager;
 
 #if PLATFORM_WINDOWS
-	NODISCARD ID3D12Device*				   PlatformDevice() const;
-	NODISCARD static uint32_t			   PlatformNumFrames();
-	NODISCARD ID3D12GraphicsCommandList*   PlatformCmdList() const;
+	NODISCARD ID3D12Device*				 PlatformDevice() const;
+	NODISCARD static uint32_t			 PlatformNumFrames();
+	NODISCARD ID3D12GraphicsCommandList* PlatformCmdList() const;
 #endif
 
 #endif
@@ -91,8 +100,8 @@ private:
 private:
 	friend class Engine::Manager;
 
-	eastl::unique_ptr<PlatformManager> mPlatformManager;
-	glm::uvec2						   mRequestedRtvSize{};
+	eastl::unique_ptr<Platform::Manager> mPlatformManager;
+	glm::uvec2							 mRequestedRtvSize{};
 };
 
 INLINE Manager& Instance()
