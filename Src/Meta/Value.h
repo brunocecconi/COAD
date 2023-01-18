@@ -67,19 +67,19 @@ public:
 
 public:
 	NODISCARD EXPLICIT operator bool() const;
-	NODISCARD operator void*() const;
+	NODISCARD		   operator void*() const;
 
 public:
-	NODISCARD const void*	 AsGeneric() const;
-	NODISCARD const bool&	 AsBool() const;
-	NODISCARD const int8_t&	 AsInt8() const;
-	NODISCARD const int16_t&	 AsInt16() const;
-	NODISCARD const int32_t&	 AsInt32() const;
-	NODISCARD const int64_t&	 AsInt64() const;
-	NODISCARD const uint8_t&	 AsUint8() const;
-	NODISCARD const uint16_t&	 AsUint16() const;
-	NODISCARD const uint32_t&	 AsUint32() const;
-	NODISCARD const uint64_t&	 AsUint64() const;
+	NODISCARD const void*	   AsGeneric() const;
+	NODISCARD const bool&	   AsBool() const;
+	NODISCARD const int8_t&	   AsInt8() const;
+	NODISCARD const int16_t&   AsInt16() const;
+	NODISCARD const int32_t&   AsInt32() const;
+	NODISCARD const int64_t&   AsInt64() const;
+	NODISCARD const uint8_t&   AsUint8() const;
+	NODISCARD const uint16_t&  AsUint16() const;
+	NODISCARD const uint32_t&  AsUint32() const;
+	NODISCARD const uint64_t&  AsUint64() const;
 	NODISCARD const float32_t& AsFloat32() const;
 	NODISCARD const float64_t& AsFloat64() const;
 
@@ -111,8 +111,8 @@ private:
 
 private:
 	mutable eastl::aligned_storage_t<sizeof(intptr_t) * 4, PLATFORM_ALIGNMENT> iptr_{};
-	mutable TypeInfo*														 type_info_{};
-	mutable void*															 eptr_{};
+	mutable TypeInfo*														   type_info_{};
+	mutable void*															   eptr_{};
 };
 
 template<typename T, typename>
@@ -152,7 +152,7 @@ void Value::Set(T&& value)
 	{
 		if (type_info_ ? Typeof<T>() != *type_info_ : true)
 		{
-			Allocators::Default l_allocator{DEBUG_NAME_VAL("Meta")};
+			Allocators::default_t l_allocator{DEBUG_NAME_VAL("Meta")};
 			if (eptr_)
 			{
 				l_allocator.deallocate(eptr_, type_info_->Size());
@@ -175,7 +175,7 @@ void Value::Set(const T& value)
 	{
 		if (type_info_ ? Typeof<T>() != *type_info_ : true)
 		{
-			Allocators::Default l_allocator{DEBUG_NAME_VAL("Meta")};
+			Allocators::default_t l_allocator{DEBUG_NAME_VAL("Meta")};
 			if (eptr_)
 			{
 				l_allocator.deallocate(eptr_, type_info_->Size());

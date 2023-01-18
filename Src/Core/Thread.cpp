@@ -20,7 +20,8 @@ struct ThreadNativeParams
 	static void Destroy(ThreadNativeParams** ThreadParams, RESULT_PARAM_DEFINE);
 };
 
-void ThreadNativeParams::Create(ThreadNativeParams** ThreadParams, const Thread::CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
+void ThreadNativeParams::Create(ThreadNativeParams** ThreadParams, const Thread::CreateInfo& CreateInfo,
+								RESULT_PARAM_IMPL)
 {
 	if (!ThreadParams)
 	{
@@ -31,12 +32,12 @@ void ThreadNativeParams::Create(ThreadNativeParams** ThreadParams, const Thread:
 		RESULT_ERROR(PtrIsNotNull);
 	}
 	*ThreadParams = static_cast<ThreadNativeParams*>(
-		Allocators::Default(DEBUG_NAME("Thread")).allocate(sizeof(ThreadNativeParams)));
+		Allocators::default_t(DEBUG_NAME("Thread")).allocate(sizeof(ThreadNativeParams)));
 	(*ThreadParams)->function = CreateInfo.Function;
 
 	if (CreateInfo.Params && CreateInfo.ParamsSize)
 	{
-		void* lParams = Allocators::Default(DEBUG_NAME("Thread")).allocate(CreateInfo.ParamsSize);
+		void* lParams = Allocators::default_t(DEBUG_NAME("Thread")).allocate(CreateInfo.ParamsSize);
 		memcpy(lParams, CreateInfo.Params, CreateInfo.ParamsSize);
 		(*ThreadParams)->params = lParams;
 	}
@@ -52,7 +53,7 @@ void ThreadNativeParams::Destroy(ThreadNativeParams** ThreadParams, RESULT_PARAM
 	}
 	if ((*ThreadParams)->params)
 	{
-		Allocators::Default(DEBUG_NAME("Thread")).deallocate((*ThreadParams)->params, 0);
+		Allocators::default_t(DEBUG_NAME("Thread")).deallocate((*ThreadParams)->params, 0);
 		(*ThreadParams)->params = nullptr;
 	}
 	RESULT_OK();
@@ -73,16 +74,18 @@ static DWORD GetCreationFlags(const ThreadNativeCiFlags::Type flags)
 
 Thread::Thread(RESULT_PARAM_IMPL)
 {
+	RESULT_UNUSED();
 }
 
 Thread::Thread(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL) : mDestroyOnDtor{CreateInfo.DestroyOnDtor}
 {
 	Create(eastl::move(CreateInfo));
+	RESULT_UNUSED();
 }
 
 Thread::~Thread()
 {
-	if(mDestroyOnDtor)
+	if (mDestroyOnDtor)
 	{
 		Destroy();
 	}
@@ -128,7 +131,7 @@ void Thread::Sleep(const uint32_t Milliseconds, RESULT_PARAM_IMPL) const
 void Thread::SleepCurrent(const uint32_t Milliseconds, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
-	//RESULT_CONDITION_ENSURE(Milliseconds > 0, ZeroTime);
+	// RESULT_CONDITION_ENSURE(Milliseconds > 0, ZeroTime);
 	::Sleep(Milliseconds);
 	RESULT_OK();
 }
@@ -206,7 +209,7 @@ void Thread::SetAffinity(const uint64_t Index, RESULT_PARAM_IMPL) const
 	RESULT_CONDITION_ENSURE(mHandle.Ptr, NullPtr);
 #if PLATFORM_WINDOWS
 	RESULT_CONDITION_ENSURE(SetThreadAffinityMask(mHandle.Ptr, 1ull << Index) != ERROR_INVALID_PARAMETER,
-		ThreadAffinityFailed);
+							ThreadAffinityFailed);
 #else
 #error Not supported yet.
 #endif
@@ -219,7 +222,7 @@ void Thread::SetAffinity(const Handle& Handle, const uint64_t Index, RESULT_PARA
 	RESULT_CONDITION_ENSURE(Handle.Ptr, NullPtr);
 #if PLATFORM_WINDOWS
 	RESULT_CONDITION_ENSURE(SetThreadAffinityMask(Handle.Ptr, 1ull << Index) != ERROR_INVALID_PARAMETER,
-		ThreadAffinityFailed);
+							ThreadAffinityFailed);
 #else
 #error Not supported yet.
 #endif
@@ -237,8 +240,7 @@ void Thread::Wait(const uint32_t Milliseconds, RESULT_PARAM_IMPL) const
 	RESULT_CONDITION_ENSURE(mHandle.Ptr, NullPtr);
 	RESULT_CONDITION_ENSURE(Milliseconds > 0, ZeroTime);
 #if PLATFORM_WINDOWS
-	RESULT_CONDITION_ENSURE(WaitForSingleObject(mHandle.Ptr, Milliseconds) != WAIT_FAILED,
-		ThreadWaitFailed);
+	RESULT_CONDITION_ENSURE(WaitForSingleObject(mHandle.Ptr, Milliseconds) != WAIT_FAILED, ThreadWaitFailed);
 #else
 #error Not supported yet.
 #endif
@@ -271,16 +273,19 @@ Mutex::Scope::~Scope()
 
 Mutex::Mutex(RESULT_PARAM_IMPL)
 {
+	RESULT_UNUSED();
 }
 
 Mutex::Mutex(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 {
 	Create(CreateInfo);
+	RESULT_UNUSED();
 }
 
 Mutex::Mutex(const char* Name, RESULT_PARAM_IMPL)
 {
 	Create(CreateInfo{Name});
+	RESULT_UNUSED();
 }
 
 Mutex::~Mutex()

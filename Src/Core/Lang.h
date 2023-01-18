@@ -55,8 +55,14 @@ public:                                                                         
 #define CLASS_BODY_NON_MOVEABLE(CLASS_NAME)                                                                            \
 	CLASS_BODY_CUSTOM(CLASS_NAME, CLASS_NON_MOVEABLE(CLASS_NAME), CLASS_COPYABLE(CLASS_NAME))
 
+#define CLASS_BODY_NON_MOVEABLE_OMIT_COPY(CLASS_NAME)                                                                            \
+	CLASS_BODY_CUSTOM(CLASS_NAME, CLASS_NON_MOVEABLE(CLASS_NAME), NO_BODY)
+
 #define CLASS_BODY_NON_COPYABLE(CLASS_NAME)                                                                            \
 	CLASS_BODY_CUSTOM(CLASS_NAME, CLASS_MOVEABLE(CLASS_NAME), CLASS_NON_COPYABLE(CLASS_NAME))
+
+#define CLASS_BODY_NON_COPYABLE_OMIT_MOVE(CLASS_NAME)                                                                            \
+	CLASS_BODY_CUSTOM(CLASS_NAME, NO_BODY, CLASS_NON_COPYABLE(CLASS_NAME))
 
 #define CLASS_MOVEABLE(CLASS_NAME)                                                                                     \
 	CLASS_NAME(CLASS_NAME&&) noexcept			 = default;                                                            \

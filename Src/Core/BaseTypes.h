@@ -16,9 +16,9 @@
 #include <climits>
 #include <cfloat>
 
-using byte_t = uint8_t;
-using float32_t = float;
-using float64_t = double;
+using byte_t	 = uint8_t;
+using float32_t	 = float;
+using float64_t	 = double;
 using float128_t = long double;
 
 #endif

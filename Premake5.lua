@@ -10,7 +10,7 @@ include "./Scripts/Premake/External.lua"
 include "./Scripts/Premake/Config.lua"	
 include "./Scripts/Premake/Deps.lua"
 
-outputdir = "%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}/"
+OutputDir = "%{cfg.buildcfg}-%{cfg.platform}-%{cfg.architecture}/"
 
 project "COAD-Premake"
 	location "./Int/"
@@ -25,8 +25,8 @@ project "COAD"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++20"
-	targetdir("./Lib/" .. outputdir)
-	objdir("./Int/" .. outputdir)
+	targetdir("./Lib/" .. OutputDir)
+	objdir("./Int/" .. OutputDir)
 	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
 	vectorextensions "SSE2"
 	warnings "Extra"
@@ -40,19 +40,13 @@ project "COAD"
 		"USE_RESULT=1", 
 		"EASTL_EASTDC_VSNPRINTF=0",
 		"PRINT_ALLOCATIONS=0", 
-		"PRINT_DEALLOCATIONS=0",
-		"EDITOR=1"
+		"PRINT_DEALLOCATIONS=0"
 	}
 
 	includedirs
 	{
-		IncludeDir["Windows"],
-		IncludeDir["Linux"],
-		IncludeDir["Mac"],
-		IncludeDir["Prospero"],
-		IncludeDir["XboxSeriesX"],
 		"./Src/",
-		"%{IncludeDir.VulkanSDK}"
+		IncludeDir["Windows"]
 	}
 	
 	files { "Src/**.h", "Src/**.cpp", "Src/**.cpp", "./Natvis/**.natvis" }
@@ -62,14 +56,16 @@ project "COAD"
 		flags {"ExcludeFromBuild"}
 	
 	SetLibDirs("COAD")
+	VulkanEnable("COAD")
+	EditorEnable()
 	
 project "COAD-Cmd"
 	location "./Int/"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"
-	targetdir("./Bin/" .. outputdir)
-	objdir("./Int/" .. outputdir)
+	targetdir("./Bin/" .. OutputDir)
+	objdir("./Int/" .. OutputDir)
 	--staticruntime "On"
 	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
 	vectorextensions "SSE2"
@@ -88,24 +84,21 @@ project "COAD-Cmd"
 
 	includedirs
 	{
-		IncludeDir["Windows"],
-		IncludeDir["Linux"],
-		IncludeDir["Mac"],
-		IncludeDir["Prospero"],
-		IncludeDir["XboxSeriesX"],
 		"./Src/",
-		"%{IncludeDir.VulkanSDK}"
+		IncludeDir["Windows"]
 	}
 	
 	SetLibDirs("COAD-Cmd")
+	VulkanEnable("COAD-Cmd")
+	EditorEnable()
 
 project "COAD-Benchmark-Entity"
 	location "./Int/"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"
-	targetdir("./Bin/" .. outputdir)
-	objdir("./Int/" .. outputdir)
+	targetdir("./Bin/" .. OutputDir)
+	objdir("./Int/" .. OutputDir)
 	--staticruntime "On"
 	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
 	vectorextensions "SSE2"
@@ -124,13 +117,12 @@ project "COAD-Benchmark-Entity"
 
 	includedirs
 	{
+		"./Src/",
 		IncludeDir["Windows"],
 		IncludeDir["Linux"],
 		IncludeDir["Mac"],
 		IncludeDir["Prospero"],
-		IncludeDir["XboxSeriesX"],
-		"./Src/",
-		"%{IncludeDir.VulkanSDK}"
+		IncludeDir["XboxSeriesX"]
 	}
 	
 	SetLibDirs("COAD-Benchmark")
@@ -140,8 +132,8 @@ project "COAD-Benchmark-Meta"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"
-	targetdir("./Bin/" .. outputdir)
-	objdir("./Int/" .. outputdir)
+	targetdir("./Bin/" .. OutputDir)
+	objdir("./Int/" .. OutputDir)
 	--staticruntime "On"
 	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
 	vectorextensions "SSE2"
@@ -160,13 +152,12 @@ project "COAD-Benchmark-Meta"
 
 	includedirs
 	{
+		"./Src/",
 		IncludeDir["Windows"],
 		IncludeDir["Linux"],
 		IncludeDir["Mac"],
 		IncludeDir["Prospero"],
-		IncludeDir["XboxSeriesX"],
-		"./Src/",
-		"%{IncludeDir.VulkanSDK}"
+		IncludeDir["XboxSeriesX"]
 	}
 	
 	SetLibDirs("COAD-Benchmark")

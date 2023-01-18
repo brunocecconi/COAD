@@ -17,7 +17,7 @@
 #define ENSURE_NOLOG(EXP, ...)                                                                                         \
 	if (!(EXP))                                                                                                        \
 	{                                                                                                                  \
-		return __VA_ARGS__;                                                                                           \
+		return __VA_ARGS__;                                                                                            \
 	}
 
 #define ENSURE(EXP, ...)                                                                                               \
@@ -25,7 +25,7 @@
 	{                                                                                                                  \
 		printf(LOG_COLOR_LIGHT_YELLOW LOG_COLOR_BOLD "ENSURE FAILED '" #EXP "' at '%s':'%d'\n" LOG_COLOR_DEFAULT,      \
 			   __FILE__, __LINE__);                                                                                    \
-		return __VA_ARGS__;                                                                                           \
+		return __VA_ARGS__;                                                                                            \
 	}
 
 #define ENFORCE_NOLOG(EXP)                                                                                             \

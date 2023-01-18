@@ -50,7 +50,7 @@ NODISCARD uint32_t MethodInfo::OptionalParamCount() const
 }
 
 #define META_METHOD_INFO_INVOKE_BODY(NUM, ...)                                                                         \
-	ENFORCE_MSG(owner, "Invalid owner when invoke %s::%s.", owner_type_.Name(), name_);                                                                              \
+	ENFORCE_MSG(owner, "Invalid owner when invoke %s::%s.", owner_type_.Name(), name_);                                \
 	ENFORCE_MSG(NUM >= NeededParamCount() && NUM <= TotalParamCount(),                                                 \
 				"Invalid provided arguments count. Needed parameter count is '%u'.", NeededParamCount());              \
 	auto l_args_tuple = eastl::make_tuple(__VA_ARGS__);                                                                \
@@ -58,7 +58,7 @@ NODISCARD uint32_t MethodInfo::OptionalParamCount() const
 					ParamsSignature().data(),                                                                          \
 					Detail::GetParamsSignatureFromTuple<method_params_signature_t>(l_args_tuple).data(), NUM),         \
 				"Invalid arguments signature.");                                                                       \
-	Body l_body{this, const_cast<void*>(owner), NUM, &l_args_tuple};                                                                      \
+	Body l_body{this, const_cast<void*>(owner), NUM, &l_args_tuple};                                                   \
 	return function_(l_body)
 
 Value MethodInfo::Invoke(const void* owner) const
@@ -96,14 +96,13 @@ Value MethodInfo::Invoke(const void* owner, Value p1, Value p2, Value p3, Value 
 	META_METHOD_INFO_INVOKE_BODY(6, p1, p2, p3, p4, p5, p6);
 }
 
-Value MethodInfo::Invoke(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6,
-						 Value p7) const
+Value MethodInfo::Invoke(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7) const
 {
 	META_METHOD_INFO_INVOKE_BODY(7, p1, p2, p3, p4, p5, p6, p7);
 }
 
-Value MethodInfo::Invoke(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6,
-						 Value p7, Value p8) const
+Value MethodInfo::Invoke(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7,
+						 Value p8) const
 {
 	META_METHOD_INFO_INVOKE_BODY(8, p1, p2, p3, p4, p5, p6, p7, p8);
 }
@@ -115,44 +114,44 @@ Value MethodInfo::operator()(const void* owner) const
 
 Value MethodInfo::operator()(const void* owner, Value p1) const
 {
-	return Invoke(owner,p1);
+	return Invoke(owner, p1);
 }
 
 Value MethodInfo::operator()(const void* owner, Value p1, Value p2) const
 {
-	return Invoke(owner,p1,p2);
+	return Invoke(owner, p1, p2);
 }
 
 Value MethodInfo::operator()(const void* owner, Value p1, Value p2, Value p3) const
 {
-	return Invoke(owner,p1,p2,p3);
+	return Invoke(owner, p1, p2, p3);
 }
 
 Value MethodInfo::operator()(const void* owner, Value p1, Value p2, Value p3, Value p4) const
 {
-	return Invoke(owner,p1,p2,p3,p4);
+	return Invoke(owner, p1, p2, p3, p4);
 }
 
 Value MethodInfo::operator()(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5) const
 {
-	return Invoke(owner,p1,p2,p3,p4,p5);
+	return Invoke(owner, p1, p2, p3, p4, p5);
 }
 
 Value MethodInfo::operator()(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6) const
 {
-	return Invoke(owner,p1,p2,p3,p4,p5,p6);
+	return Invoke(owner, p1, p2, p3, p4, p5, p6);
 }
 
 Value MethodInfo::operator()(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6,
-	Value p7) const
+							 Value p7) const
 {
-	return Invoke(owner,p1,p2,p3,p4,p5,p6,p7);
+	return Invoke(owner, p1, p2, p3, p4, p5, p6, p7);
 }
 
 Value MethodInfo::operator()(const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6, Value p7,
-	Value p8) const
+							 Value p8) const
 {
-	return Invoke(owner,p1,p2,p3,p4,p5,p6,p7,p8);
+	return Invoke(owner, p1, p2, p3, p4, p5, p6, p7, p8);
 }
 
 } // namespace Meta

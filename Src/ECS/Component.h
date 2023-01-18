@@ -17,30 +17,31 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define ECS_COMPONENT_BODY(NAME)	\
-public:	\
-CLASS_BODY_ONLY_HEADER(NAME)	\
-struct EcsComponentType{};
+#define ECS_COMPONENT_BODY(NAME)                                                                                       \
+public:                                                                                                                \
+	CLASS_BODY_ONLY_HEADER(NAME)                                                                                       \
+	struct EcsComponentType                                                                                            \
+	{                                                                                                                  \
+	};
 
-#define ECS_COMPONENT_VALIDATION(NAME)	\
-/*TYPE_INFO_DEFINE(NAME);*/	\
-static_assert(!eastl::is_polymorphic_v<NAME>, \
-"The component class cannot be polymorphic.");
+#define ECS_COMPONENT_VALIDATION(NAME)                                                                                 \
+	/*TYPE_INFO_DEFINE(NAME);*/                                                                                        \
+	static_assert(!eastl::is_polymorphic_v<NAME>, "The component class cannot be polymorphic.");
 
 #ifndef COMPONENT_ID_TYPE
-#define COMPONENT_ID_TYPE	u64
+#define COMPONENT_ID_TYPE u64
 #endif
 
 namespace Ecs
 {
 
-template < typename T, typename = void >
+template<typename T, typename = void>
 struct IsComponent
 {
 	static constexpr bool VALUE = false;
 };
 
-template < typename T >
+template<typename T>
 struct IsComponent<T, eastl::void_t<typename T::EcsComponentType>>
 {
 	static constexpr bool VALUE = true;
@@ -49,21 +50,21 @@ struct IsComponent<T, eastl::void_t<typename T::EcsComponentType>>
 namespace Detail
 {
 
-template < uint64_t Index, typename Tuple >
+template<uint64_t Index, typename Tuple>
 void ValidateComponentTuple()
 {
-	if constexpr(Index < eastl::tuple_size_v<Tuple>)
+	if constexpr (Index < eastl::tuple_size_v<Tuple>)
 	{
 		using TupleElementType = eastl::tuple_element_t<Index, Tuple>;
-		static_assert(IsComponent<TupleElementType>::VALUE, 
-			"Invalid ecs component. You must include ECS_COMPONENT_BODY in component type.");
-		ValidateComponentTuple<Index+1, Tuple>();
+		static_assert(IsComponent<TupleElementType>::VALUE,
+					  "Invalid ecs component. You must include ECS_COMPONENT_BODY in component type.");
+		ValidateComponentTuple<Index + 1, Tuple>();
 	}
 }
 
-}
+} // namespace Detail
 
-template < typename Tuple >
+template<typename Tuple>
 void ValidateComponentTuple()
 {
 	Detail::ValidateComponentTuple<0, Tuple>();
@@ -82,7 +83,7 @@ struct ALIGNAS(16) RotationComponent
 
 	glm::quat toQuat() const
 	{
-		return glm::quat{ value };
+		return glm::quat{value};
 	}
 };
 
@@ -105,7 +106,7 @@ struct ALIGNAS(16) Rotation2dComponent
 
 	glm::quat toQuat() const
 	{
-		return glm::quat{ glm::vec3{value.x, value.y, 0.f} };
+		return glm::quat{glm::vec3{value.x, value.y, 0.f}};
 	}
 };
 
@@ -314,44 +315,40 @@ struct PlaceholderComponent63
 {
 };
 
-using TranformComponentTypes = TypeTraits::TypeList<
-	LocationComponent, RotationComponent, ScaleComponent
-	>;
-using Tranform2dComponentTypes = TypeTraits::TypeList<
-	Location2dComponent, Rotation2dComponent, Scale2dComponent
-	>;
+using TranformComponentTypes   = TypeTraits::TypeList<LocationComponent, RotationComponent, ScaleComponent>;
+using Tranform2dComponentTypes = TypeTraits::TypeList<Location2dComponent, Rotation2dComponent, Scale2dComponent>;
 
-using Placeholder32ComponentTypes = TypeTraits::TypeList<
-	PlaceholderComponent0,PlaceholderComponent1,PlaceholderComponent2,PlaceholderComponent3,
-	PlaceholderComponent4,PlaceholderComponent5,PlaceholderComponent6,PlaceholderComponent7,
-	PlaceholderComponent8,PlaceholderComponent9,PlaceholderComponent10,PlaceholderComponent11,
-	PlaceholderComponent12,PlaceholderComponent13,PlaceholderComponent14,PlaceholderComponent15,
-	PlaceholderComponent16,PlaceholderComponent17,PlaceholderComponent18,PlaceholderComponent19,
-	PlaceholderComponent20,PlaceholderComponent21,PlaceholderComponent22,PlaceholderComponent23,
-	PlaceholderComponent24,PlaceholderComponent25,PlaceholderComponent26,PlaceholderComponent27,
-	PlaceholderComponent28,PlaceholderComponent29,PlaceholderComponent30,PlaceholderComponent31
-	>;
+using Placeholder32ComponentTypes =
+	TypeTraits::TypeList<PlaceholderComponent0, PlaceholderComponent1, PlaceholderComponent2, PlaceholderComponent3,
+						 PlaceholderComponent4, PlaceholderComponent5, PlaceholderComponent6, PlaceholderComponent7,
+						 PlaceholderComponent8, PlaceholderComponent9, PlaceholderComponent10, PlaceholderComponent11,
+						 PlaceholderComponent12, PlaceholderComponent13, PlaceholderComponent14, PlaceholderComponent15,
+						 PlaceholderComponent16, PlaceholderComponent17, PlaceholderComponent18, PlaceholderComponent19,
+						 PlaceholderComponent20, PlaceholderComponent21, PlaceholderComponent22, PlaceholderComponent23,
+						 PlaceholderComponent24, PlaceholderComponent25, PlaceholderComponent26, PlaceholderComponent27,
+						 PlaceholderComponent28, PlaceholderComponent29, PlaceholderComponent30,
+						 PlaceholderComponent31>;
 
-using Placeholder64ComponentTypes = TypeTraits::TypeList<
-	PlaceholderComponent0,PlaceholderComponent1,PlaceholderComponent2,PlaceholderComponent3,
-	PlaceholderComponent4,PlaceholderComponent5,PlaceholderComponent6,PlaceholderComponent7,
-	PlaceholderComponent8,PlaceholderComponent9,PlaceholderComponent10,PlaceholderComponent11,
-	PlaceholderComponent12,PlaceholderComponent13,PlaceholderComponent14,PlaceholderComponent15,
-	PlaceholderComponent16,PlaceholderComponent17,PlaceholderComponent18,PlaceholderComponent19,
-	PlaceholderComponent20,PlaceholderComponent21,PlaceholderComponent22,PlaceholderComponent23,
-	PlaceholderComponent24,PlaceholderComponent25,PlaceholderComponent26,PlaceholderComponent27,
-	PlaceholderComponent28,PlaceholderComponent29,PlaceholderComponent30,PlaceholderComponent31,
-	PlaceholderComponent32,PlaceholderComponent33,PlaceholderComponent34,PlaceholderComponent35,
-	PlaceholderComponent36,PlaceholderComponent37,PlaceholderComponent38,PlaceholderComponent39,
-	PlaceholderComponent40,PlaceholderComponent41,PlaceholderComponent42,PlaceholderComponent43,
-	PlaceholderComponent44,PlaceholderComponent45,PlaceholderComponent46,PlaceholderComponent47,
-	PlaceholderComponent48,PlaceholderComponent49,PlaceholderComponent50,PlaceholderComponent51,
-	PlaceholderComponent52,PlaceholderComponent33,PlaceholderComponent54,PlaceholderComponent55,
-	PlaceholderComponent56,PlaceholderComponent57,PlaceholderComponent58,PlaceholderComponent59,
-	PlaceholderComponent60,PlaceholderComponent61,PlaceholderComponent62,PlaceholderComponent63
-	>;
+using Placeholder64ComponentTypes =
+	TypeTraits::TypeList<PlaceholderComponent0, PlaceholderComponent1, PlaceholderComponent2, PlaceholderComponent3,
+						 PlaceholderComponent4, PlaceholderComponent5, PlaceholderComponent6, PlaceholderComponent7,
+						 PlaceholderComponent8, PlaceholderComponent9, PlaceholderComponent10, PlaceholderComponent11,
+						 PlaceholderComponent12, PlaceholderComponent13, PlaceholderComponent14, PlaceholderComponent15,
+						 PlaceholderComponent16, PlaceholderComponent17, PlaceholderComponent18, PlaceholderComponent19,
+						 PlaceholderComponent20, PlaceholderComponent21, PlaceholderComponent22, PlaceholderComponent23,
+						 PlaceholderComponent24, PlaceholderComponent25, PlaceholderComponent26, PlaceholderComponent27,
+						 PlaceholderComponent28, PlaceholderComponent29, PlaceholderComponent30, PlaceholderComponent31,
+						 PlaceholderComponent32, PlaceholderComponent33, PlaceholderComponent34, PlaceholderComponent35,
+						 PlaceholderComponent36, PlaceholderComponent37, PlaceholderComponent38, PlaceholderComponent39,
+						 PlaceholderComponent40, PlaceholderComponent41, PlaceholderComponent42, PlaceholderComponent43,
+						 PlaceholderComponent44, PlaceholderComponent45, PlaceholderComponent46, PlaceholderComponent47,
+						 PlaceholderComponent48, PlaceholderComponent49, PlaceholderComponent50, PlaceholderComponent51,
+						 PlaceholderComponent52, PlaceholderComponent33, PlaceholderComponent54, PlaceholderComponent55,
+						 PlaceholderComponent56, PlaceholderComponent57, PlaceholderComponent58, PlaceholderComponent59,
+						 PlaceholderComponent60, PlaceholderComponent61, PlaceholderComponent62,
+						 PlaceholderComponent63>;
 
-}
+} // namespace Ecs
 
 ECS_COMPONENT_VALIDATION(Ecs::LocationComponent);
 ECS_COMPONENT_VALIDATION(Ecs::RotationComponent);

@@ -102,7 +102,7 @@ void Manager::ResetKeyUp(EKey Key)
 #if EDITOR
 bool Manager::IsEditorKeyDown(const bool AutoReset)
 {
-	return IsKeyDown(EKey::eE, EKeyModifiers::eLeftControl, true);
+	return IsKeyDown(EKey::eE, EKeyModifiers::eLeftControl, AutoReset);
 }
 
 void Manager::ResetEditorKeyDown()
@@ -133,7 +133,7 @@ Manager& Manager::Instance()
 {
 	if (!mInstance)
 	{
-		mInstance.reset(new (Allocators::Default{DEBUG_NAME_VAL("Engine::Input")}.allocate(sizeof(Manager))) Manager{});
+		mInstance.reset(new (Allocators::default_t{DEBUG_NAME_VAL("Engine::Input")}.allocate(sizeof(Manager))) Manager{});
 	}
 	return *mInstance;
 }

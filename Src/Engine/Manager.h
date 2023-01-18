@@ -25,7 +25,7 @@ struct test432432
  * @brief Engine manager class.
  *
  */
-class Manager : public ManagerNoThread<Manager>
+class Manager: public ManagerNoThread<Manager>
 {
 	CLASS_BODY_NON_MOVEABLE_COPYABLE(Manager);
 
@@ -46,7 +46,7 @@ public:
 
 public:
 	NODISCARD Window& GetWindow();
-	void DestroyWindow();
+	void			  DestroyWindow();
 
 private:
 	void RunInternal(RESULT_PARAM_DEFINE);
@@ -60,6 +60,7 @@ private:
 
 public:
 	NODISCARD float32_t GetDeltaTime() const;
+	bool LoopPass{};
 
 private:
 	uint64_t										 mFrameCounter{};

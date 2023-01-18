@@ -357,9 +357,11 @@ eastl::string ToString(const eastl::pair<T, Y>&	 Pair,
 
 template<typename T>
 eastl::string ToString(const eastl::vector<T>&	 Vector,
-					   const EASTLAllocatorType& Allocator	   = {DEBUG_NAME_VAL("Algorithm")},
+					   const EASTLAllocatorType& Allocator	 = {DEBUG_NAME_VAL("Algorithm")},
 					   const uint64_t			 StrSizeHint = 0)
 {
+	UNUSED(StrSizeHint);
+
 	if (Vector.empty())
 	{
 		return eastl::string{Allocator};

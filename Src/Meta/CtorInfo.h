@@ -64,7 +64,7 @@ public:
 	{
 		const void* info;
 		void*		memory;
-		uint32_t		args_tuple_size;
+		uint32_t	args_tuple_size;
 		void*		args_tuple;
 	};
 
@@ -91,18 +91,18 @@ public:
 
 		const CtorInfo&		  info;
 		void*				  memory;
-		uint32_t&				  args_tuple_count;
+		uint32_t&			  args_tuple_count;
 		generic_tuple_args_t& args_tuple;
 	};
 
 	/**
 	 * @brief Rebinder structure.
-	 * 
+	 *
 	 * Used to provide information.
-	 * 
+	 *
 	 * @tparam Id Hash name id.
-	 * 
-	*/
+	 *
+	 */
 	template<id_t Id>
 	struct Rebinder;
 
@@ -124,18 +124,18 @@ public:
 		using body_t		 = Body;
 		using body_adapter_t = BodyAdapter<args_t>;
 
-		static constexpr auto ID = Id;
+		static constexpr auto ID				   = Id;
 		static constexpr auto OPTIONAL_PARAM_COUNT = OptionalParamCount;
 	};
 	using binder_invoke_function_t = void (*)(Body&);
 
 	/**
 	 * @brief Ctor
-	 * 
+	 *
 	 * @tparam RebinderType Type the implemented Rebinder.
 	 * @param Anonymous param.
-	 * 
-	*/
+	 *
+	 */
 	template<typename RebinderType>
 	EXPLICIT CtorInfo(RebinderType);
 
@@ -143,9 +143,9 @@ public:
 	NODISCARD const TypeInfo&				   OwnerType() const;
 	NODISCARD const method_params_signature_t& ParamsSignature() const;
 	NODISCARD uint32_t						   NeededParamCount() const;
-	NODISCARD id_t Id() const;
-	NODISCARD uint32_t		TotalParamCount() const;
-	NODISCARD uint32_t		OptionalParamCount() const;
+	NODISCARD id_t							   Id() const;
+	NODISCARD uint32_t						   TotalParamCount() const;
+	NODISCARD uint32_t						   OptionalParamCount() const;
 
 public:
 	NODISCARD Value Invoke() const;
@@ -172,9 +172,9 @@ private:
 	const TypeInfo&			  owner_type_;
 	method_params_signature_t params_signature_{};
 	binder_invoke_function_t  function_;
-	id_t			  id_;
-	uint32_t					  total_param_count_;
-	uint32_t					  optional_param_count_;
+	id_t					  id_;
+	uint32_t				  total_param_count_;
+	uint32_t				  optional_param_count_;
 };
 
 template<typename TypeList>

@@ -10,8 +10,8 @@ namespace Meta
 
 /**
  * @brief Method info class.
- * 
-*/
+ *
+ */
 class MethodInfo
 {
 public:
@@ -19,8 +19,8 @@ public:
 
 	/**
 	 * @brief Flags.
-	 * 
-	*/
+	 *
+	 */
 	enum Flags
 	{
 		eNone,
@@ -29,13 +29,13 @@ public:
 
 	/**
 	 * @brief Body structure.
-	 * 
-	*/
+	 *
+	 */
 	struct Body
 	{
 		const void* info;
 		void*		owner;
-		uint32_t		args_tuple_size;
+		uint32_t	args_tuple_size;
 		void*		args_tuple;
 	};
 
@@ -63,34 +63,34 @@ public:
 
 		const MethodInfo&	  info;
 		Owner&				  owner;
-		uint32_t&				  args_tuple_size;
+		uint32_t&			  args_tuple_size;
 		generic_tuple_args_t& args_tuple;
 	};
 
 	/**
 	 * @brief Rebinder structure.
-	 * 
+	 *
 	 * Used to provide information.
-	 * 
+	 *
 	 * @tparam Id Hash name id.
-	 * 
-	*/
+	 *
+	 */
 	template<id_t Id>
 	struct Rebinder;
 
 	/**
 	 * @brief Binder structure.
-	 * 
+	 *
 	 * Used to provide information.
-	 * 
+	 *
 	 * @tparam Owner Owner type.
 	 * @tparam Return Return type.
 	 * @tparam TypeListArgs Type list to argument types.
 	 * @tparam OptionalParamCount Amount of optional parameters.
 	 * @tparam Flags Flags value.
 	 * @tparam Id Hash name id.
-	 * 
-	*/
+	 *
+	 */
 	template<id_t Id, typename Owner, typename Return, typename TypeListArgs, uint32_t OptionalParamCount = 0,
 			 uint32_t Flags = eCallable>
 	struct Binder
@@ -112,10 +112,10 @@ public:
 	EXPLICIT MethodInfo(BinderType);
 
 public:
-	NODISCARD const TypeInfo& OwnerType() const;
-	NODISCARD const TypeInfo& ReturnType() const;
-	NODISCARD const char*	  Name() const;
-	NODISCARD id_t					   Id() const;
+	NODISCARD const TypeInfo&				   OwnerType() const;
+	NODISCARD const TypeInfo&				   ReturnType() const;
+	NODISCARD const char*					   Name() const;
+	NODISCARD id_t							   Id() const;
 	NODISCARD uint32_t						   Flags() const;
 	NODISCARD const method_params_signature_t& ParamsSignature() const;
 	NODISCARD uint32_t						   NeededParamCount() const;
@@ -151,12 +151,12 @@ private:
 	const TypeInfo&			  owner_type_;
 	const TypeInfo&			  return_type_;
 	const char*				  name_;
-	id_t			  id_;
-	uint32_t					  flags_;
+	id_t					  id_;
+	uint32_t				  flags_;
 	method_params_signature_t params_signature_;
 	binder_invoke_function_t  function_;
-	uint32_t					  total_param_count_;
-	uint32_t					  optional_param_count_;
+	uint32_t				  total_param_count_;
+	uint32_t				  optional_param_count_;
 };
 
 template<typename Owner, typename TypeList>

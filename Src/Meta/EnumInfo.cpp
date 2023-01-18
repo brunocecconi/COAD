@@ -32,7 +32,7 @@ const EnumInfo& EnumInfo::None()
 {
 	if (!g_enum_info_none)
 	{
-		g_enum_info_none = new (Allocators::Default(DEBUG_NAME_VAL("Meta")).allocate(sizeof(EnumInfo))) EnumInfo{};
+		g_enum_info_none = new (Allocators::default_t(DEBUG_NAME_VAL("Meta")).allocate(sizeof(EnumInfo))) EnumInfo{};
 	}
 	return *g_enum_info_none;
 }
@@ -96,7 +96,7 @@ EnumRegistry& EnumRegistry::Instance()
 {
 	if (!instance_)
 	{
-		instance_ = new (Allocators::Default(DEBUG_NAME_VAL("Meta")).allocate(sizeof(EnumRegistry))) EnumRegistry{};
+		instance_ = new (Allocators::default_t(DEBUG_NAME_VAL("Meta")).allocate(sizeof(EnumRegistry))) EnumRegistry{};
 	}
 	return *instance_;
 }

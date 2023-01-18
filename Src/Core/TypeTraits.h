@@ -222,7 +222,7 @@ struct PropertyTraits<T(Owner::*)>
  *
  * @tparam T Type.
  *
-*/
+ */
 template<typename T>
 struct HasConstIterator
 {
@@ -234,7 +234,7 @@ private:
 	} no_t;
 
 	template<typename C>
-	static yes_t Test(typename C::const_iterator*);
+	static yes_t Test(typename C::const_iterator *);
 	template<typename C>
 	static no_t Test(...);
 
@@ -250,7 +250,7 @@ public:
  *
  * @tparam T Type.
  *
-*/
+ */
 template<typename T>
 struct HasBeginEnd
 {
@@ -258,7 +258,7 @@ struct HasBeginEnd
 	static char (
 		&F(std::enable_if_t<std::is_same_v<decltype(static_cast<typename C::const_iterator (C::*)() const>(&C::begin)),
 										   typename C::const_iterator (C::*)() const>,
-							void>*))[1];
+							void> *))[1];
 
 	template<typename C>
 	static char (&F(...))[2];
@@ -267,7 +267,7 @@ struct HasBeginEnd
 	static char (
 		&G(std::enable_if_t<std::is_same_v<decltype(static_cast<typename C::const_iterator (C::*)() const>(&C::end)),
 										   typename C::const_iterator (C::*)() const>,
-							void>*))[1];
+							void> *))[1];
 
 	template<typename C>
 	static char (&G(...))[2];
@@ -283,12 +283,12 @@ struct HasBeginEnd
  *
  * @tparam T Type.
  *
-*/
+ */
 template<typename T>
 struct IsContainer
 {
-	static constexpr bool VALUE = 
-		eastl::integral_constant<bool, HasConstIterator<T>::value && HasBeginEnd<T>::beg_value && HasBeginEnd<T>::end_value>::value;
+	static constexpr bool							   VALUE = eastl::integral_constant < bool,
+						  HasConstIterator<T>::value &&HasBeginEnd<T>::beg_value &&HasBeginEnd<T>::end_value > ::value;
 };
 
 } // namespace TypeTraits

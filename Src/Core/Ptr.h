@@ -48,7 +48,7 @@ using ptr_transfer_type_t = typename PtrTransfer<T, eastl::is_pointer_v<T>>::typ
 
 template<typename T>
 static ptr_transfer_type_t<T>* AssertIfPtrInvalid(ptr_transfer_type_t<T>* value, const char* function, const char* file,
-											  const uint32_t line)
+												  const uint32_t line)
 {
 	if (!value)
 	{
@@ -65,7 +65,7 @@ static ptr_transfer_type_t<T>* AssertIfPtrInvalid(ptr_transfer_type_t<T>* value,
 
 template<typename T>
 static ptr_transfer_type_t<T>* WarnIfPtrInvalid(ptr_transfer_type_t<T>* value, const char* function, const char* file,
-											const uint32_t line)
+												const uint32_t line)
 {
 	if (!value)
 	{
@@ -93,9 +93,9 @@ static ptr_transfer_type_t<T>* WarnIfPtrInvalid(ptr_transfer_type_t<T>* value, c
 	}
 
 #define PTR(VALUE)                                                                                                     \
-	Ptr<ptr_transfer_type_t<decltype(VALUE)>>                                                                              \
+	Ptr<ptr_transfer_type_t<decltype(VALUE)>>                                                                          \
 	{                                                                                                                  \
-		VALUE, (const char*)__FUNCSIG__, (const char*)__FILE__, (uint32_t)__LINE__                                       \
+		VALUE, (const char*)__FUNCSIG__, (const char*)__FILE__, (uint32_t)__LINE__                                     \
 	}
 #define PTRC(X) PTR(X)
 #else
@@ -123,9 +123,8 @@ public:
 
 	Ptr(T* value, const char* function = nullptr, const char* file = nullptr, uint32_t line = 0u);
 
-	template<typename Y,
-			 typename = eastl::enable_if_t<!eastl::is_pointer_v<Y> ||
-										   eastl::is_same_v<void, eastl::void_t<typename Y::underlyng_t>>>>
+	template<typename Y, typename = eastl::enable_if_t<!eastl::is_pointer_v<Y> ||
+													   eastl::is_same_v<void, eastl::void_t<typename Y::underlyng_t>>>>
 	Ptr(Y& value, const char* function = nullptr, const char* file = nullptr, uint32_t line = 0u);
 
 	Ptr(const Ptr& value, const char* function = nullptr, const char* file = nullptr, uint32_t line = 0u);
@@ -152,8 +151,8 @@ public:
 private:
 	T* value_{};
 #ifndef NDEBUG
-	char*  function_{};
-	char*  file_{};
+	char*	 function_{};
+	char*	 file_{};
 	uint32_t line_{};
 #endif
 };

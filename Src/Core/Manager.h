@@ -10,7 +10,7 @@
 template<typename T>
 struct ManagerWait
 {
-	EResult* result;
+	RESULT* result;
 	EXPLICIT ManagerWait(RESULT_PARAM_DEFINE);
 	~ManagerWait();
 };
@@ -117,7 +117,7 @@ T& ManagerNoThread<T>::Instance()
 {
 	if (!mInstance)
 	{
-		mInstance.reset(new (Allocators::Default{DEBUG_NAME_VAL("Manager")}.allocate(sizeof(T))) T{});
+		mInstance.reset(new (Allocators::default_t{DEBUG_NAME_VAL("Manager")}.allocate(sizeof(T))) T{});
 	}
 	return *mInstance;
 }
@@ -202,9 +202,12 @@ void ManagerThread<T>::WaitThreadFinish(RESULT_PARAM_IMPL) const
 }
 
 template<typename T>
-uint32_t ManagerThread<T>::ThreadRun(thread_native_params_t Args)
+uint32_t ManagerThread<T>::ThreadRun(const thread_native_params_t Args)
 {
-	EResult result = Ok;
+	RESULT_VALUE_VAR(result);
+	UNUSED(Args);
+
+	mInstance->PreRunLoop();
 
 	while (mInstance->mRunning)
 	{
@@ -237,7 +240,7 @@ T& ManagerThread<T>::Instance()
 {
 	if (!mInstance)
 	{
-		mInstance.reset(new (Allocators::Default{DEBUG_NAME_VAL("Manager")}.allocate(sizeof(T))) T{});
+		mInstance.reset(new (Allocators::default_t{DEBUG_NAME_VAL("Manager")}.allocate(sizeof(T))) T{});
 	}
 	return *mInstance;
 }
@@ -248,9 +251,7 @@ bool ManagerThread<T>::IsInThread() const
 	return GetThreadId(mThread.GetHandle().Ptr) == GetCurrentThreadId();
 }
 
-#define MANAGER_IMPL(TYPE)                                                                                             \
-	eastl::unique_ptr<TYPE> ManagerThread<TYPE>::mInstance
-#define MANAGER_NO_THREAD_IMPL(TYPE)                                                                                   \
-	eastl::unique_ptr<TYPE> ManagerNoThread<TYPE>::mInstance
+#define MANAGER_IMPL(TYPE)			 eastl::unique_ptr<TYPE> ManagerThread<TYPE>::mInstance
+#define MANAGER_NO_THREAD_IMPL(TYPE) eastl::unique_ptr<TYPE> ManagerNoThread<TYPE>::mInstance
 
 #endif

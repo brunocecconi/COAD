@@ -4,13 +4,13 @@
 namespace Stream
 {
 
-Dynamic::Dynamic(const Allocators::Default& allocator, RESULT_PARAM_IMPL) : data_{allocator}
+Dynamic::Dynamic(const Allocators::default_t& allocator, RESULT_PARAM_IMPL) : data_{allocator}
 {
 	RESULT_ENSURE_LAST_NOLOG();
 	RESULT_OK();
 }
 
-Dynamic::Dynamic(const void* data, const container_t::size_type size, const Allocators::Default& allocator,
+Dynamic::Dynamic(const void* data, const container_t::size_type size, const Allocators::default_t& allocator,
 				 RESULT_PARAM_IMPL)
 	: data_{allocator}
 {
@@ -22,7 +22,7 @@ Dynamic::Dynamic(const void* data, const container_t::size_type size, const Allo
 	RESULT_OK();
 }
 
-Dynamic::Dynamic(const container_t::size_type size, const Allocators::Default& allocator, RESULT_PARAM_IMPL)
+Dynamic::Dynamic(const container_t::size_type size, const Allocators::default_t& allocator, RESULT_PARAM_IMPL)
 	: data_{allocator}
 {
 	RESULT_ENSURE_LAST_NOLOG();
@@ -31,9 +31,10 @@ Dynamic::Dynamic(const container_t::size_type size, const Allocators::Default& a
 	RESULT_OK();
 }
 
-Dynamic::Dynamic(container_t&& container, const Allocators::Default& allocator, RESULT_PARAM_IMPL)
+Dynamic::Dynamic(container_t&& container, const Allocators::default_t& allocator, RESULT_PARAM_IMPL)
 	: data_{eastl::move(container), allocator}
 {
+	RESULT_UNUSED();
 }
 
 bool Dynamic::BufferIsEmpty() const NOEXCEPT

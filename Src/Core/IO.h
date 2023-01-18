@@ -11,6 +11,7 @@
 #define CORE_IO_H
 
 #include "Core/Common.h"
+#include "Core/RawBuffer.h"
 
 #include <cstdio>
 #include <EASTL/string.h>
@@ -94,6 +95,7 @@ public:
 	void	 OpenWrite(const char* FilePath, RESULT_PARAM_DEFINE);
 	void	 OpenReadWrite(const char* FilePath, RESULT_PARAM_DEFINE);
 	void	 Read(void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
+	uint64_t	 ReadText(void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
 	void	 Write(const void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
 	void	 Seek(uint64_t Value, ESeekType Origin, RESULT_PARAM_DEFINE) const;
 	uint64_t Tell(RESULT_PARAM_DEFINE) const;
@@ -106,6 +108,15 @@ public:
 
 	template<typename T>
 	static void ReadAll(T& Container, const char* FilePath, RESULT_PARAM_DEFINE);
+
+	template<typename T>
+	static void ReadAllText(T& Container, const char* FilePath, RESULT_PARAM_DEFINE);
+
+	template<typename T>
+	static void ReadAll(RawBuffer<T>& Buffer, const char* FilePath, RESULT_PARAM_DEFINE);
+
+	template<typename T>
+	static void ReadAllText(RawBuffer<T>& Buffer, const char* FilePath, RESULT_PARAM_DEFINE);
 
 public:
 	template<typename T>
@@ -122,7 +133,7 @@ public:
 	}
 
 private:
-	file_handle_t mHandle;
+	file_handle_t mHandle{};
 };
 
 template<typename T>
@@ -135,6 +146,47 @@ void File::ReadAll(T& Container, const char* FilePath, RESULT_PARAM_IMPL)
 	RESULT_CONDITION_ENSURE_NOLOG(lSize > 0, ZeroSize);
 	Container.resize(lSize);
 	RESULT_ENSURE_CALL_NOLOG(lFile.Read(Container.data(), lSize, RESULT_ARG_PASS));
+	RESULT_OK();
+}
+
+template<typename T>
+void File::ReadAllText(T& Container, const char* FilePath, RESULT_PARAM_IMPL)
+{
+	static_assert(sizeof(typename T::value_type) == 1, "Invalid value_type sizeof.");
+	RESULT_ENSURE_LAST_NOLOG();
+	RESULT_ENSURE_CALL_NOLOG(const File lFile(FilePath, eFtRead, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(const auto lSize = lFile.Size(RESULT_ARG_PASS));
+	RESULT_CONDITION_ENSURE_NOLOG(lSize > 0, ZeroSize);
+	Container.resize(lSize);
+	RESULT_ENSURE_CALL_NOLOG(const auto lCount = lFile.ReadText(Container.data(), lSize, RESULT_ARG_PASS));
+	Container.erase(Container.cbegin() + lCount, Container.cend());
+	RESULT_OK();
+}
+
+template<typename T>
+void File::ReadAll(RawBuffer<T>& Buffer, const char* FilePath, RESULT_PARAM_IMPL)
+{
+	static_assert(sizeof(T) == 1, "Invalid buffer type sizeof.");
+	RESULT_ENSURE_LAST_NOLOG();
+	RESULT_ENSURE_CALL_NOLOG(const File lFile(FilePath, eFtRead, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(const auto lSize = lFile.Size(RESULT_ARG_PASS));
+	RESULT_CONDITION_ENSURE_NOLOG(lSize > 0, ZeroSize);
+	Buffer.Resize(lSize);
+	RESULT_ENSURE_CALL_NOLOG(lFile.Read(Buffer.Data(), lSize, RESULT_ARG_PASS));
+	RESULT_OK();
+}
+
+template<typename T>
+void File::ReadAllText(RawBuffer<T>& Buffer, const char* FilePath, EResult* result)
+{
+	static_assert(sizeof(T) == 1, "Invalid buffer type sizeof.");
+	RESULT_ENSURE_LAST_NOLOG();
+	RESULT_ENSURE_CALL_NOLOG(const File lFile(FilePath, eFtRead, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL_NOLOG(const auto lSize = lFile.Size(RESULT_ARG_PASS));
+	RESULT_CONDITION_ENSURE_NOLOG(lSize > 0, ZeroSize);
+	Buffer.Resize(lSize);
+	RESULT_ENSURE_CALL_NOLOG(const auto lCount = lFile.ReadText(Buffer.Data(), lSize, RESULT_ARG_PASS));
+	Buffer.Clamp(lCount);
 	RESULT_OK();
 }
 

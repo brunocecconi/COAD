@@ -25,7 +25,7 @@ inline void DoBadAnyCast()
 template<typename T, typename... Args>
 void* DefaultConstruct(Args&&... args)
 {
-	auto* l_mem = Allocators::Default(DEBUG_NAME_VAL("Meta")).allocate(sizeof(T), alignof(T), 0);
+	auto* l_mem = Allocators::default_t(DEBUG_NAME_VAL("Meta")).allocate(sizeof(T), alignof(T), 0);
 	return ::new (l_mem) T(eastl::forward<Args>(args)...);
 }
 
@@ -34,7 +34,7 @@ void DefaultDestroy(T* p)
 {
 	p->~T();
 
-	Allocators::Default(DEBUG_NAME_VAL("Meta")).deallocate(static_cast<void*>(p), sizeof(T));
+	Allocators::default_t(DEBUG_NAME_VAL("Meta")).deallocate(static_cast<void*>(p), sizeof(T));
 }
 
 } // namespace Detail

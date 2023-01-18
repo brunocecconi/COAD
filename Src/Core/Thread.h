@@ -102,7 +102,7 @@ public:
 	struct Scope
 	{
 		Mutex*	 Mtx;
-		EResult* result;
+		RESULT* result;
 		EXPLICIT Scope(Mutex* Mutex, RESULT_PARAM_DEFINE);
 		~Scope();
 	};
@@ -111,7 +111,7 @@ public:
 	struct ScopeFromOwner
 	{
 		TOwner*	 Owner;
-		EResult* result;
+		RESULT* result;
 		EXPLICIT ScopeFromOwner(TOwner* Owner, RESULT_PARAM_DEFINE);
 		~ScopeFromOwner();
 	};

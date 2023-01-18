@@ -6,8 +6,8 @@
 ////////////////// TYPE INFO ////////////////////
 /////////////////////////////////////////////////
 
-#define TYPEOF(X)	Meta::Typeof<X>()
-#define TYPEOFV(X)	Meta::Typeof(X)
+#define TYPEOF(X)  Meta::Typeof<X>()
+#define TYPEOFV(X) Meta::Typeof(X)
 
 #define META_REBINDER_TYPE_INFO() friend struct Meta::TypeInfo::Rebinder<this_t>
 
@@ -21,12 +21,12 @@
 
 #define META_TYPE_BINDER_BODY(TYPE)                                                                                    \
 	using this_t							 = TYPE;                                                                   \
-	static constexpr id_t		ID	 = Hash::Fnv1A(#TYPE);                                                 \
+	static constexpr id_t				ID	 = Hash::Fnv1A(#TYPE);                                                     \
 	static constexpr eastl::string_view NAME = (char*)#TYPE;
 
 #define META_TYPE_BINDER_BODY_TEMPLATE(TYPE, TYPE_NAME, ...)                                                           \
 	using this_t							 = TYPE<__VA_ARGS__>;                                                      \
-	static constexpr id_t		ID	 = Hash::Fnv1A(TYPE_NAME);                                             \
+	static constexpr id_t				ID	 = Hash::Fnv1A(TYPE_NAME);                                                 \
 	static constexpr eastl::string_view NAME = (char*)TYPE_NAME;
 
 #define META_TYPE_BINDER_OPERATIONS_CUSTOM(DEFAULT_CTOR, MOVE_CTOR, COPY_CTOR, MOVE_ASSIGN, COPY_ASSIGN, DTOR,         \
@@ -34,7 +34,7 @@
 	static void Operations(TypeInfo::OperationBody& body)                                                              \
 	{                                                                                                                  \
 		auto& l_default_args_tuple = *static_cast<eastl::tuple<void*, void*>*>(body.args_tuple);                       \
-		(void)l_default_args_tuple;	\
+		(void)l_default_args_tuple;                                                                                    \
 		switch (body.type)                                                                                             \
 		{                                                                                                              \
 		case TypeInfo::eDefaultCtor: {                                                                                 \
@@ -67,18 +67,14 @@
 		}                                                                                                              \
 	}
 
-#define META_TYPE_BINDER_OPERATION_NOT_IMPL(TYPE)	\
-	ENFORCE_MSG(false, "Operation " #TYPE " not implemented");
+#define META_TYPE_BINDER_OPERATION_NOT_IMPL(TYPE) ENFORCE_MSG(false, "Operation " #TYPE " not implemented");
 
 #define META_TYPE_BINDER_NO_OPERATIONS()                                                                               \
-	META_TYPE_BINDER_OPERATIONS_CUSTOM(META_TYPE_BINDER_OPERATION_NOT_IMPL(eDefaultCtor),	\
-	META_TYPE_BINDER_OPERATION_NOT_IMPL(eMoveCtor),	\
-	META_TYPE_BINDER_OPERATION_NOT_IMPL(eCopyCtor),	\
-	META_TYPE_BINDER_OPERATION_NOT_IMPL(eMoveAssign),	\
-	META_TYPE_BINDER_OPERATION_NOT_IMPL(eCopyAssign),	\
-	META_TYPE_BINDER_OPERATION_NOT_IMPL(eDtor),	\
-	META_TYPE_BINDER_OPERATION_NOT_IMPL(eToString)	\
-	)
+	META_TYPE_BINDER_OPERATIONS_CUSTOM(                                                                                \
+		META_TYPE_BINDER_OPERATION_NOT_IMPL(eDefaultCtor), META_TYPE_BINDER_OPERATION_NOT_IMPL(eMoveCtor),             \
+		META_TYPE_BINDER_OPERATION_NOT_IMPL(eCopyCtor), META_TYPE_BINDER_OPERATION_NOT_IMPL(eMoveAssign),              \
+		META_TYPE_BINDER_OPERATION_NOT_IMPL(eCopyAssign), META_TYPE_BINDER_OPERATION_NOT_IMPL(eDtor),                  \
+		META_TYPE_BINDER_OPERATION_NOT_IMPL(eToString))
 
 #define META_TYPE_BINDER_DEFAULT_OPERATION_DEFAULT_CTOR() new (eastl::get<0>(l_default_args_tuple)) this_t{};
 
@@ -101,7 +97,7 @@
 	eastl::destroy_at(static_cast<this_t*>(eastl::get<0>(l_default_args_tuple)));
 
 #define META_TYPE_BINDER_DEFAULT_OPERATION_TO_STRING()                                                                 \
-	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, void*, uint64_t>*>(body.args_tuple);        \
+	auto& l_to_string_args_tuple = *static_cast<eastl::tuple<eastl::string*, void*, uint64_t>*>(body.args_tuple);      \
 	*eastl::get<0>(l_to_string_args_tuple) =                                                                           \
 		Algorithm::ToString(*static_cast<this_t*>(eastl::get<1>(l_to_string_args_tuple)), {DEBUG_NAME("Meta")},        \
 							eastl::get<2>(l_to_string_args_tuple));
@@ -148,31 +144,40 @@
 	;                                                                                                                  \
 	}
 
-#define META_TYPE_AUTO_REGISTER_NS(NAME, SYMBOL)	\
-struct SYMBOL##TypeAutoRegister	\
-{	\
-	SYMBOL##TypeAutoRegister(){ Meta::Typeof<NAME>(); }	\
-}; static SYMBOL##TypeAutoRegister g##SYMBOL##TypeAutoRegister
+#define META_TYPE_AUTO_REGISTER_NS(NAME, SYMBOL)                                                                       \
+	struct SYMBOL##TypeAutoRegister                                                                                    \
+	{                                                                                                                  \
+		SYMBOL##TypeAutoRegister()                                                                                     \
+		{                                                                                                              \
+			Meta::Typeof<NAME>();                                                                                      \
+		}                                                                                                              \
+	};                                                                                                                 \
+	static SYMBOL##TypeAutoRegister g##SYMBOL##TypeAutoRegister
 
-#define META_TYPE_AUTO_REGISTER(NAME)	\
-struct NAME##TypeAutoRegister	\
-{	\
-	NAME##TypeAutoRegister(){ Meta::Typeof<NAME>(); }	\
-}; static NAME##TypeAutoRegister g##NAME##TypeAutoRegister
+#define META_TYPE_AUTO_REGISTER(NAME)                                                                                  \
+	struct NAME##TypeAutoRegister                                                                                      \
+	{                                                                                                                  \
+		NAME##TypeAutoRegister()                                                                                       \
+		{                                                                                                              \
+			Meta::Typeof<NAME>();                                                                                      \
+		}                                                                                                              \
+	};                                                                                                                 \
+	static NAME##TypeAutoRegister g##NAME##TypeAutoRegister
 
 /////////////////////////////////////////////////
 ////////////////// CTOR INFO ////////////////////
 /////////////////////////////////////////////////
 
-#define META_REBINDER_CTOR(INDEX)	\
+#define META_REBINDER_CTOR(INDEX)                                                                                      \
 public:                                                                                                                \
-	static constexpr auto Ctor_##INDEX##_ID = "Ctor_"#INDEX##_fnv1a;                                                                    \
+	static constexpr auto Ctor_##INDEX##_ID = "Ctor_" #INDEX##_fnv1a;                                                  \
                                                                                                                        \
 private:                                                                                                               \
 	friend struct Meta::CtorInfo::Rebinder<Ctor_##INDEX##_ID>
 
 #define META_CTOR_INFO_BINDER(OWNER, INDEX, OPTIONAL_ARGS, ...)                                                        \
-	template<> struct CtorInfo::Rebinder<OWNER::Ctor_##INDEX##_ID>                                                                \
+	template<>                                                                                                         \
+	struct CtorInfo::Rebinder<OWNER::Ctor_##INDEX##_ID>                                                                \
 		: Binder<OWNER::Ctor_##INDEX##_ID, OWNER(__VA_ARGS__), OPTIONAL_ARGS>
 
 #define META_CTOR_INFO_BINDER_INVOKE_CUSTOM(...)                                                                       \
@@ -500,7 +505,7 @@ private:                                                                        
 /////////////////////////////////////////////////
 
 #define CLASSOF(X)	Meta::Classof<X>()
-#define CLASSOFV(X)	Meta::Classof(X)
+#define CLASSOFV(X) Meta::Classof(X)
 
 #define META_CLASS_INFO_BEGIN(FLAGS)                                                                                   \
 	namespace Meta                                                                                                     \
@@ -515,21 +520,25 @@ private:                                                                        
 #define BINDERS(...) TypeTraits::TypeList<__VA_ARGS__>
 
 #define META_CLASS_INFO_END()                                                                                          \
-	> {};                                                                                                        \
+	> {};                                                                                                              \
 	}
 
-#define META_CLASS_AUTO_REGISTER(NAME)	\
-struct NAME##ClassAutoRegister	\
-{	\
-	NAME##ClassAutoRegister(){ Meta::Classof<NAME>(); }	\
-};  static NAME##ClassAutoRegister g##NAME##ClassAutoRegister
+#define META_CLASS_AUTO_REGISTER(NAME)                                                                                 \
+	struct NAME##ClassAutoRegister                                                                                     \
+	{                                                                                                                  \
+		NAME##ClassAutoRegister()                                                                                      \
+		{                                                                                                              \
+			Meta::Classof<NAME>();                                                                                     \
+		}                                                                                                              \
+	};                                                                                                                 \
+	static NAME##ClassAutoRegister g##NAME##ClassAutoRegister
 
 /////////////////////////////////////////////////
 ////////////////// ENUM INFO ////////////////////
 /////////////////////////////////////////////////
 
-#define ENUMOF(X)	Meta::Enumof<X>()
-#define ENUMOFV(X)	Meta::Enumof(X)
+#define ENUMOF(X)  Meta::Enumof<X>()
+#define ENUMOFV(X) Meta::Enumof(X)
 
 #define META_ENUM_INFO_BINDER_BEGIN(FLAGS)                                                                             \
 	namespace Meta                                                                                                     \
@@ -539,13 +548,13 @@ struct NAME##ClassAutoRegister	\
 	{                                                                                                                  \
 		static auto Pairs()                                                                                            \
 		{                                                                                                              \
-			return eastl::vector<eastl::pair<eastl::string_view, int64_t>>                                               \
+			return eastl::vector<eastl::pair<eastl::string_view, int64_t>>                                             \
 			{                                                                                                          \
 				{
 
 #define ENUM_VALUE(V)                                                                                                  \
 	{                                                                                                                  \
-#V, (int64_t)META_ENUM_INFO_TARGET::V                                                                                                          \
+#V, (int64_t)META_ENUM_INFO_TARGET::V                                                                          \
 	}
 
 #define META_ENUM_INFO_BINDER_END()                                                                                    \
@@ -557,16 +566,24 @@ struct NAME##ClassAutoRegister	\
 	;                                                                                                                  \
 	}
 
-#define META_ENUM_AUTO_REGISTER(NAME)	\
-struct NAME##EnumAutoRegister	\
-{	\
-	NAME##EnumAutoRegister(){ Meta::Enumof<NAME>(); }	\
-};  static NAME##EnumAutoRegister g##NAME##EnumAutoRegister
+#define META_ENUM_AUTO_REGISTER(NAME)                                                                                  \
+	struct NAME##EnumAutoRegister                                                                                      \
+	{                                                                                                                  \
+		NAME##EnumAutoRegister()                                                                                       \
+		{                                                                                                              \
+			Meta::Enumof<NAME>();                                                                                      \
+		}                                                                                                              \
+	};                                                                                                                 \
+	static NAME##EnumAutoRegister g##NAME##EnumAutoRegister
 
-#define META_ENUM_AUTO_REGISTER_CUSTOM(ENUM_TYPE, NAME)	\
-struct NAME##EnumAutoRegister	\
-{	\
-	NAME##EnumAutoRegister(){ Meta::Enumof<ENUM_TYPE>(); }	\
-};  static NAME##EnumAutoRegister g##NAME##EnumAutoRegister
+#define META_ENUM_AUTO_REGISTER_CUSTOM(ENUM_TYPE, NAME)                                                                \
+	struct NAME##EnumAutoRegister                                                                                      \
+	{                                                                                                                  \
+		NAME##EnumAutoRegister()                                                                                       \
+		{                                                                                                              \
+			Meta::Enumof<ENUM_TYPE>();                                                                                 \
+		}                                                                                                              \
+	};                                                                                                                 \
+	static NAME##EnumAutoRegister g##NAME##EnumAutoRegister
 
 #endif

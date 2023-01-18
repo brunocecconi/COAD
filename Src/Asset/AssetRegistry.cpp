@@ -13,11 +13,11 @@ Registry::Registry(RESULT_PARAM_IMPL)
 #ifdef TOOL
 	const auto& lPath = Paths::AssetDir(DEBUG_NAME_VAL("Asset")) + "Global.AssetRegistry";
 	mStreamFile.OpenRead(lPath.c_str(), RESULT_ARG_PASS);
-	if(RESULT_LAST_COMPARE(IoFileOpenFailed))
+	if (RESULT_LAST_COMPARE(IoFileOpenFailed))
 	{
 		RESULT_OK();
 		RESULT_CONDITION_ENSURE_NOLOG(mStreamFile.OpenWrite(lPath.c_str(), RESULT_ARG_PASS),
-								  AssetFailedToOpenRegistryFile);
+									  AssetFailedToOpenRegistryFile);
 	}
 #endif
 	Reserve(32ull);
@@ -29,7 +29,7 @@ Registry& Registry::Instance(RESULT_PARAM_IMPL)
 	if (!mInstance)
 	{
 		mInstance =
-			new (Allocators::Default{DEBUG_NAME_VAL("Asset")}.allocate(sizeof(Registry))) Registry{RESULT_ARG_PASS};
+			new (Allocators::default_t{DEBUG_NAME_VAL("Asset")}.allocate(sizeof(Registry))) Registry{RESULT_ARG_PASS};
 	}
 	return *mInstance;
 }

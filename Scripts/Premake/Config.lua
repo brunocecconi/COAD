@@ -1,4 +1,31 @@
 
+function EditorEnable()
+defines { "EDITOR=1" }
+filter { "configurations:Debug or configurations:Development or configurations:Profile", "platforms:Windows" }
+	links { "imguid" }
+	
+filter { "configurations:Release", "platforms:Windows" }
+	links { "imgui" }
+end
+
+function VulkanEnable(ProjectName)
+
+if ProjectName == "COAD" then
+filter { "platforms:Windows or platforms:Linux" }
+	defines { "VULKAN_ENABLED=1" }
+
+elseif ProjectName == "COAD-Cmd" then
+filter { "platforms:Windows or platforms:Linux" }
+	defines { "VULKAN_ENABLED=1" }
+
+filter { "configurations:Debug or configurations:Development or configurations:Profile", "platforms:Windows" }
+	links { "%{Library.Vulkan}", "%{Library.VulkanShaderC}" }
+	
+filter { "configurations:Release", "platforms:Windows" }
+	links { "%{Library.Vulkan}", "%{Library.VulkanShaderC}" }
+end
+end
+
 filter "system:prospero"
 	systemversion "latest"
 	defines { "PLATFORM_PROSPERO" }

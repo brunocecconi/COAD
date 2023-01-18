@@ -8,6 +8,7 @@ namespace Render
 Texture::Texture(const EType Type, eastl::span<uint8_t> Data, RESULT_PARAM_IMPL) : mType{Type}
 {
 	RESULT_ENSURE_LAST();
+	UNUSED(Data);
 	switch (Type)
 	{
 	case e2D: {
@@ -20,10 +21,6 @@ Texture::Texture(const EType Type, eastl::span<uint8_t> Data, RESULT_PARAM_IMPL)
 		break;
 	}
 	case eRenderTarget: {
-		break;
-	}
-	case eCurrentBackBuffer: {
-		RESULT_ENSURE_CALL(mHandle = Instance().GetTextureCurrentBackBuffer(RESULT_ARG_PASS));
 		break;
 	}
 	default:;
@@ -39,13 +36,13 @@ void Texture::SetData(const eastl::span<uint8_t> NewData, RESULT_PARAM_IMPL) con
 {
 	RESULT_ENSURE_LAST();
 	RESULT_CONDITION_ENSURE(!NewData.empty(), ZeroSize);
-	RESULT_ENSURE_CALL(Instance().SetTextureData(mHandle.Get(), NewData, RESULT_ARG_PASS));
+	// RESULT_ENSURE_CALL(Instance().SetTextureData(mHandle.Get(), NewData, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
 eastl::span<uint8_t> Texture::GetData() const
 {
-	if(!mHandle)
+	if (!mHandle)
 	{
 		return {};
 	}
@@ -53,9 +50,9 @@ eastl::span<uint8_t> Texture::GetData() const
 	return {};
 }
 
-texture_handle_ptr_t Texture::GetHandle() const
+texture_handle_t Texture::GetHandle() const
 {
-	return mHandle.Get();
+	return nullptr;
 }
 
 } // namespace Render

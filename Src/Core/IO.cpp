@@ -72,7 +72,14 @@ void File::Open(const char* FilePath, const uint32_t Flags, RESULT_PARAM_IMPL)
 
 void File::OpenRead(const char* FilePath, RESULT_PARAM_IMPL)
 {
-	Open(FilePath, eFtRead, RESULT_ARG_PASS);
+	RESULT_ENSURE_LAST_NOLOG();
+	RESULT_CONDITION_ENSURE_NOLOG(!mHandle, PtrIsNotNull);
+	RESULT_CONDITION_ENSURE_NOLOG(FilePath, NullPtr);
+	RESULT_ENSURE_CALL_NOLOG(const Path lPath{FilePath});
+	RESULT_ENSURE_CALL_NOLOG(Path lFullPath = lPath.FullPath());
+	mHandle = fopen(FilePath, "r");
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle, IoFileOpenFailed);
+	RESULT_OK();
 }
 
 void File::OpenWrite(const char* FilePath, RESULT_PARAM_IMPL)
@@ -82,7 +89,7 @@ void File::OpenWrite(const char* FilePath, RESULT_PARAM_IMPL)
 
 void File::OpenReadWrite(const char* FilePath, RESULT_PARAM_IMPL)
 {
-	Open(FilePath, eFtRead|eFtWrite, RESULT_ARG_PASS);
+	Open(FilePath, eFtRead | eFtWrite, RESULT_ARG_PASS);
 }
 
 void File::Read(void* Data, const uint64_t Size, RESULT_PARAM_IMPL) const
@@ -99,6 +106,33 @@ void File::Read(void* Data, const uint64_t Size, RESULT_PARAM_IMPL) const
 		RESULT_ERROR(IoFileReadFailed);
 	}
 	RESULT_OK();
+}
+
+uint64_t File::ReadText(void* Data, uint64_t Size, RESULT_PARAM_IMPL) const
+{
+	RESULT_ENSURE_LAST_NOLOG({});
+	RESULT_CONDITION_ENSURE_NOLOG(mHandle && Data, NullPtr, {});
+
+	if (Size == 0)
+	{
+		RESULT_ERROR(ZeroSize, {});
+	}
+
+	const auto lData	   = static_cast<char*>(Data);
+	char	   lLine[1024] = {};
+	uint64_t   lIndex{};
+	while (!feof(mHandle))
+	{
+		if (fgets(lLine, sizeof lLine, mHandle))
+		{
+			const auto lLength = strlen(lLine);
+			memcpy(lData + lIndex, lLine, lLength);
+			lIndex += lLength;
+		}
+	}
+
+	RESULT_OK();
+	return lIndex;
 }
 
 void File::Write(const void* Data, const uint64_t Size, RESULT_PARAM_IMPL) const
@@ -208,6 +242,8 @@ Path::Path(const char* FilePath, RESULT_PARAM_IMPL)
 	}
 
 	strcpy(mValue, FilePath);
+
+	RESULT_OK();
 }
 
 Path::~Path()
@@ -241,6 +277,7 @@ Path Path::RelativePath(const char* To, RESULT_PARAM_IMPL) const
 		RESULT_ENSURE_NOLOG(IoExceededMaxPathLength, lPath);
 	}
 	PathRelativePathToA(lPath.mValue, mValue, FILE_ATTRIBUTE_DIRECTORY, To, FILE_ATTRIBUTE_NORMAL);
+	RESULT_OK();
 	return lPath;
 }
 
@@ -251,20 +288,24 @@ eastl::string Path::Extension()
 
 void Path::RemoveExtension(RESULT_PARAM_IMPL)
 {
+	RESULT_UNUSED();
 }
 
 bool Path::IsFile(RESULT_PARAM_IMPL) const
 {
+	RESULT_UNUSED();
 	return false;
 }
 
 bool Path::IsDirectory(RESULT_PARAM_IMPL) const
 {
+	RESULT_UNUSED();
 	return false;
 }
 
 const char* Path::Data(RESULT_PARAM_IMPL) const
 {
+	RESULT_UNUSED();
 	return mValue;
 }
 

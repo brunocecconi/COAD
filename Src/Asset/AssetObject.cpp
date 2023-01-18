@@ -1,11 +1,11 @@
 
 #include "Asset/Object.h"
 
-#define DELEGATE_CALL(X, ...)	\
-	eastl::for_each(X.begin(), X.end(), [&](auto& f) {	\
-		f(RESULT_ARG_PASS);	\
-		RESULT_ENSURE_LAST_NOLOG();	\
-	});	\
+#define DELEGATE_CALL(X, ...)                                                                                          \
+	eastl::for_each(X.begin(), X.end(), [&](auto& f) {                                                                 \
+		f(RESULT_ARG_PASS);                                                                                            \
+		RESULT_ENSURE_LAST_NOLOG();                                                                                    \
+	});                                                                                                                \
 	RESULT_ENSURE_LAST_NOLOG(__VA_ARGS__);
 
 namespace Asset
@@ -18,11 +18,13 @@ Object::~Object()
 Object::Object(Stream::Dynamic& SourceArchive, const char* Path, RESULT_PARAM_IMPL)
 	: mPath{Path}, mId{MakeId(Path, mPath.size())}, mSourceSize{SourceArchive.BufferSize()}
 {
+	RESULT_UNUSED();
 }
 
 Object::Object(Stream::Dynamic& SourceArchive, const char* Path, const id_t Id, RESULT_PARAM_IMPL)
 	: mPath{Path}, mId{Id}, mSourceSize{SourceArchive.BufferSize()}
 {
+	RESULT_UNUSED();
 }
 
 bool Object::OnLoad(RESULT_PARAM_IMPL)

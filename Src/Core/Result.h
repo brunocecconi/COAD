@@ -23,8 +23,9 @@
 	(void)NAME
 
 #define RESULT_VALUE_VAR(NAME)                                                                                         \
-	RESULT NAME = Ok;                                                                                           \
+	RESULT NAME = Ok;                                                                                                  \
 	(void)NAME
+#define RESULT_UNUSED()	(void)result
 #define RESULT_SET_VAR(NAME, VALUE) NAME = (EResult)(VALUE)
 #define RESULT_GET_VAR(NAME)		NAME
 #define RESULT_LAST					RESULT_GET_VAR(result) ? *RESULT_GET_VAR(result) : Ok
@@ -409,29 +410,38 @@ enum EResult : uint64_t
 	AlreadyInitialized,
 	NotInitialized,
 
+	RenderPlatformFailedToInitialize,
+	RenderPlatformFailedToUpdate,
+	RenderPlatformFailedToCompileShader,
+
 #if PLATFORM_WINDOWS
-	PlatformRenderFailedToInitialize,
-	Dx12FailedToCreateFactory,
-	Dx12FailedToGetAdapter,
-	Dx12FailedToCreateDevice,
-	Dx12FailedToCreateCommandQueue,
-	Dx12FailedToCreateSwapchain,
-	Dx12FailedToCreateDescriptorHeap,
-	Dx12FailedToGetBackBuffer,
-	Dx12FailedToCreateCommandAllocator,
-	Dx12FailedToResetCommandAllocator,
-	Dx12FailedToCreateCommandList,
-	Dx12FailedToResetCommandList,
-	Dx12FailedToCloseCommandList,
-	Dx12FailedToCreateFence,
-	Dx12FailedToCreateFenceEvent,
-	Dx12FailedToSignalFence,
-	Dx12FailedToWaitForFence,
-	Dx12FailedToGetSwapChainDescription,
-	Dx12FailedToResizeSwapChain,
-	Dx12FailedToPresent,
-	Dx12FailedToSetPrivateDataInterface,
-	PlatformRenderFailedToUpdate,
+#if OPENGL_ENABLED
+	OpenglFailedToInitializeGlew,
+	OpenglFailedToRequiredExtensionIsNotSupported,
+#elif VULKAN_ENABLED
+	VulkanFailedToCreateInstance,
+	VulkanFailedToSetupDebugMessenger,
+	VulkanFailedToFindGpuWithVulkanSupport,
+	VulkanFailedToPickPhysicalDevice,
+	VulkanFailedToCreateDevice,
+	VulkanFailedToCreateSurface,
+	VulkanFailedToCreateSwapchain,
+	VulkanFailedToCreateSwapchainImageView,
+	VulkanFailedToCreateShaderModule,
+	VulkanFailedToCreateGraphicsPipeline,
+	VulkanFailedToCreateRenderPass,
+	VulkanFailedToCreateFramebuffer,
+	VulkanFailedToCreateCommandPool,
+	VulkanFailedToCreateCommandBuffer,
+	VulkanFailedToBeginCommandBuffer,
+	VulkanFailedToEndCommandBuffer,
+	VulkanFailedToCreateSemaphore,
+	VulkanFailedToCreateFence,
+	VulkanFailedToSubmitGraphicsQueue,
+	VulkanFailedToAcquireSwapchainImage,
+	VulkanFailedToCreateBuffer,
+	VulkanFailedToAllocateMemory,
+#endif
 #endif
 
 #if EDITOR
@@ -452,7 +462,7 @@ static constexpr char* ResultString(const EResult Value)
 {
 #ifdef DEBUG
 #define RESULT_STRING_CASE_IMPL(NAME)                                                                                  \
-	case NAME:                                                                                                \
+	case NAME:                                                                                                         \
 		return (char*)#NAME
 
 	switch (Value)
@@ -512,29 +522,33 @@ static constexpr char* ResultString(const EResult Value)
 		RESULT_STRING_CASE_IMPL(AlreadyInitialized);
 		RESULT_STRING_CASE_IMPL(NotInitialized);
 
+		RESULT_STRING_CASE_IMPL(RenderPlatformFailedToInitialize);
+		RESULT_STRING_CASE_IMPL(RenderPlatformFailedToUpdate);
+		RESULT_STRING_CASE_IMPL(RenderPlatformFailedToCompileShader);
+
 #if PLATFORM_WINDOWS
-		RESULT_STRING_CASE_IMPL(PlatformRenderFailedToInitialize);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateFactory);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToGetAdapter);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateDevice);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateCommandQueue);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateSwapchain);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateDescriptorHeap);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToGetBackBuffer);
-		RESULT_STRING_CASE_IMPL(PlatformRenderFailedToUpdate);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateCommandList);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToResetCommandList);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCloseCommandList);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateFence);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateFenceEvent);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToSignalFence);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToWaitForFence);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToCreateCommandAllocator);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToResetCommandAllocator);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToGetSwapChainDescription);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToResizeSwapChain);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToPresent);
-		RESULT_STRING_CASE_IMPL(Dx12FailedToSetPrivateDataInterface);
+#if OPENGL_ENABLED  
+		RESULT_STRING_CASE_IMPL(OpenglFailedToInitializeGlew);
+		RESULT_STRING_CASE_IMPL(OpenglFailedToRequiredExtensionIsNotSupported);
+#elif VULKAN_ENABLED
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateInstance);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToSetupDebugMessenger);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToFindGpuWithVulkanSupport);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToPickPhysicalDevice);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateDevice);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateSurface);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateSwapchain);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateSwapchainImageView);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateShaderModule);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateGraphicsPipeline);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateRenderPass);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateFramebuffer);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateCommandPool);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToBeginCommandBuffer);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToAcquireSwapchainImage);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateBuffer);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToAllocateMemory);
+#endif
 #endif
 
 #if EDITOR
@@ -560,7 +574,7 @@ static constexpr char* ResultInfo(const EResult Value)
 {
 #ifdef DEBUG
 #define RESULT_INFO_CASE_IMPL(NAME, MSG)                                                                               \
-	case NAME:                                                                                                \
+	case NAME:                                                                                                         \
 		return (char*)MSG
 
 	switch (Value)
@@ -569,16 +583,14 @@ static constexpr char* ResultInfo(const EResult Value)
 		RESULT_INFO_CASE_IMPL(Fail, "Generic fail. \n"
 									"Used when a function behaves like boolean.");
 		RESULT_INFO_CASE_IMPL(NullPtr, "Null pointer.");
-		RESULT_INFO_CASE_IMPL(PtrIsNotNull,
-							  "Pointer is not null. Used when a function need a pointer to be null.");
+		RESULT_INFO_CASE_IMPL(PtrIsNotNull, "Pointer is not null. Used when a function need a pointer to be null.");
 		RESULT_INFO_CASE_IMPL(ZeroSize, "Zero size. Used by functions that need manipulate buffer and the size \n"
-											 "always need to be greater than zero.");
+										"always need to be greater than zero.");
 		RESULT_INFO_CASE_IMPL(MemoryOutOfMemory,
 							  "Out of memory. Used when the OS function to allocate fail by lack of memory.");
-		RESULT_INFO_CASE_IMPL(MemoryInvalidSizes,
-							  "Comparation between size 1 and 2 get fail. \n"
-							  "Used by reallocate function when old size is equal new size. \n"
-							  "It doesn't make sense reallocate memory when the sizes are equal.");
+		RESULT_INFO_CASE_IMPL(MemoryInvalidSizes, "Comparation between size 1 and 2 get fail. \n"
+												  "Used by reallocate function when old size is equal new size. \n"
+												  "It doesn't make sense reallocate memory when the sizes are equal.");
 		RESULT_INFO_CASE_IMPL(MemoryNotEnoughBufferMemory,
 							  "Not enough buffer memory."
 							  "Used in memory manipulation functions when a destination buffer has less memory "

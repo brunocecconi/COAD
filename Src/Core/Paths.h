@@ -9,28 +9,28 @@
 class Paths
 {
 public:
-	template < typename Allocator = EASTLAllocatorType >
+	template<typename Allocator = EASTLAllocatorType>
 	static eastl::string WorkingDir(const Allocator& allocator = {DEBUG_NAME_VAL("Paths")})
 	{
-		return {"./"};
+		return {"."};
 	}
 
-	template < typename Allocator = EASTLAllocatorType >
+	template<typename Allocator = EASTLAllocatorType>
 	static eastl::string AssetDir(const Allocator& allocator = {DEBUG_NAME_VAL("Paths")})
 	{
-		return {"../../Assets/"};
+		return {"../../Assets"};
 	}
 
-	template < typename Allocator = EASTLAllocatorType >
+	template<typename Allocator = EASTLAllocatorType>
 	static eastl::string ConfigsDir(const Allocator& allocator = {DEBUG_NAME_VAL("Paths")})
 	{
-		return {"../../Configs/"};
+		return {"../../Configs"};
 	}
 
-	template < typename Allocator = EASTLAllocatorType >
+	template<typename Allocator = EASTLAllocatorType>
 	static eastl::string LogsDir(const Allocator& allocator = {DEBUG_NAME_VAL("Paths")})
 	{
-		return {"../../Logs/"};
+		return {"../../Logs"};
 	}
 };
 

@@ -17,30 +17,32 @@ class Window;
 } // namespace Engine
 
 #if EDITOR
+
+#if OPENGL_ENABLED
+#endif
+
 namespace Editor
 {
 class Manager;
 }
-
-#if PLATFORM_WINDOWS
-namespace Microsoft::WRL
-{
-template<typename T>
-class ComPtr;
-}
-struct ID3D12Device;
-struct ID3D12GraphicsCommandList;
-struct ID3D12Resource;
-#endif
 #endif
 
 namespace Render
 {
 
-namespace Platform
+namespace Api
 {
 class Manager;
-}
+} // namespace Api
+
+enum class EApi
+{
+	eNone,
+	eOpengl,
+	eVulkan,
+	eD3D11,
+	eD3D12
+};
 
 /**
  * @brief Render manager class.
@@ -63,6 +65,7 @@ public:
 private:
 	void Initialize(RESULT_PARAM_DEFINE);
 	void Run(RESULT_PARAM_DEFINE);
+	void PreRunLoop(RESULT_PARAM_DEFINE);
 	void RunInternal(RESULT_PARAM_DEFINE);
 	void Finalize(RESULT_PARAM_DEFINE);
 
@@ -71,37 +74,27 @@ public:
 	void SetVsync(bool Value) const;
 	void ToggleVsync() const;
 	void ResizeFrame(glm::uvec2 NewSize, RESULT_PARAM_DEFINE);
+	void MarkDirtyFramebufferSize(RESULT_PARAM_DEFINE);
 
 #if EDITOR
 	void SetEditorActive(bool Value, RESULT_PARAM_DEFINE);
 	void ToggleEditorActive(RESULT_PARAM_DEFINE);
 #endif
 
-public:
-#if PLATFORM_WINDOWS
-	void	  SetTextureData(ID3D12Resource* Handle, eastl::span<uint8_t> NewData, RESULT_PARAM_DEFINE);
-	NODISCARD ComPtr<ID3D12Resource> GetTextureCurrentBackBuffer(RESULT_PARAM_DEFINE) const;
-#endif
+	NODISCARD static EApi GetTargetApi();
 
+public:
 private:
 #if EDITOR
 	friend class Editor::Manager;
-
-#if PLATFORM_WINDOWS
-	NODISCARD ID3D12Device*				 PlatformDevice() const;
-	NODISCARD static uint32_t			 PlatformNumFrames();
-	NODISCARD ID3D12GraphicsCommandList* PlatformCmdList() const;
 #endif
-
-#endif
-
-	void Flush() const;
 
 private:
 	friend class Engine::Manager;
+	friend class Api::Manager;
 
-	eastl::unique_ptr<Platform::Manager> mPlatformManager;
-	glm::uvec2							 mRequestedRtvSize{};
+	eastl::unique_ptr<Api::Manager> mTargetApiManager;
+	bool							mRequestedDirtyFramebufferSize{};
 };
 
 INLINE Manager& Instance()

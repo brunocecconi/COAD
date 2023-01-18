@@ -26,6 +26,6 @@ void SetVerbosity(const uint64_t Value)
 	gVerbosity = Value;
 }
 
-}
+} // namespace Log
 
 #endif

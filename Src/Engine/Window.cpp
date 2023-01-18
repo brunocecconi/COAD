@@ -6,7 +6,7 @@
 
 #if EDITOR
 #if PLATFORM_WINDOWS
-#include "Editor/Windows/imgui_impl_win32.h"
+#include <imgui_impl_win32.h>
 #endif
 #endif
 
@@ -17,18 +17,12 @@ namespace Engine
 
 LRESULT Window::WindowProc(const HWND Hwnd, const UINT Umsg, const WPARAM Wparam, const LPARAM Lparam)
 {
-	if(Umsg == WM_SIZE && Render::Instance().IsInitialized())
+	if (Umsg == WM_SIZE && Render::Instance().IsInitialized())
 	{
-		RECT lClientRect = {};
-        ::GetClientRect(Hwnd, &lClientRect);
-
-        int lWidth = lClientRect.right - lClientRect.left;
-        int lHeight = lClientRect.bottom - lClientRect.top;
-
-		Render::Instance().ResizeFrame({lWidth, lHeight});
+		Render::Instance().MarkDirtyFramebufferSize();
 	}
 #if EDITOR
-	ImGui_ImplWin32_WndProcHandler(Hwnd, Umsg, Wparam, Lparam);
+	//ImGui_ImplWin32_WndProcHandler(Hwnd, Umsg, Wparam, Lparam);
 #endif
 	return Input::Instance().WindowProc(Hwnd, Umsg, Wparam, Lparam);
 }
@@ -56,13 +50,13 @@ void Window::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 #if PLATFORM_WINDOWS
 
 	WNDCLASSA lWc{};
-	lWc.style		  = CS_HREDRAW | CS_VREDRAW;
+	lWc.style		  = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	lWc.hIcon		  = (HICON)LoadImage(NULL, IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
 	lWc.hCursor		  = (HCURSOR)LoadImage(NULL, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_SHARED);
 	lWc.lpfnWndProc	  = Window::WindowProc;
 	lWc.hInstance	  = GetModuleHandle(nullptr);
 	lWc.lpszClassName = "Window";
-	lWc.hbrBackground = CreateSolidBrush(RGB(31, 31, 127));
+	//lWc.hbrBackground = CreateSolidBrush(RGB(0, 0, 0));
 	RegisterClassA(&lWc);
 
 	const int32_t lScreenWidth	= ::GetSystemMetrics(SM_CXSCREEN);
@@ -136,13 +130,12 @@ void Window::SetFullscreen(const bool Value, RESULT_PARAM_IMPL)
 			GetMonitorInfoA(lMonitor, &lMi);
 
 			// Save state
-			mState.Rect = lMi.rcMonitor;
+			mState.Rect	 = lMi.rcMonitor;
 			mState.Style = 0;
 
 			// Set window pos
-			SetWindowPos(mHandle, HWND_TOP, mState.Rect.left, mState.Rect.top,
-						 mState.Rect.right - mState.Rect.left, mState.Rect.bottom - mState.Rect.top,
-						 SWP_FRAMECHANGED | SWP_NOACTIVATE);
+			SetWindowPos(mHandle, HWND_TOP, mState.Rect.left, mState.Rect.top, mState.Rect.right - mState.Rect.left,
+						 mState.Rect.bottom - mState.Rect.top, SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 			// Apply show window
 			ShowWindow(mHandle, SW_MAXIMIZE);
@@ -152,18 +145,18 @@ void Window::SetFullscreen(const bool Value, RESULT_PARAM_IMPL)
 			// Restore state
 			const RECT lPreviousRect  = mState.Rect;
 			const UINT lPreviousStyle = mState.Style;
-			mState.Style              = mState.PreviousStyle;
-			mState.Rect               = mState.PreviousRect;
+			mState.Style			  = mState.PreviousStyle;
+			mState.Rect				  = mState.PreviousRect;
 			SetWindowLongA(mHandle, GWL_STYLE, mState.Style);
 
 			// Save state
-			mState.PreviousRect = lPreviousRect;
+			mState.PreviousRect	 = lPreviousRect;
 			mState.PreviousStyle = lPreviousStyle;
 
 			// Set window pos
 			SetWindowPos(mHandle, HWND_NOTOPMOST, mState.Rect.left, mState.Rect.top,
-						 mState.Rect.right - mState.Rect.left,
-						 mState.Rect.bottom - mState.Rect.top, SWP_FRAMECHANGED | SWP_NOACTIVATE);
+						 mState.Rect.right - mState.Rect.left, mState.Rect.bottom - mState.Rect.top,
+						 SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 			// Apply show window
 			ShowWindow(mHandle, SW_NORMAL);
@@ -175,7 +168,9 @@ void Window::SetFullscreen(const bool Value, RESULT_PARAM_IMPL)
 
 void Window::ToggleFullscreen(RESULT_PARAM_IMPL)
 {
-	SetFullscreen(!mState.Fullscreen);
+	RESULT_ENSURE_LAST();
+	RESULT_ENSURE_CALL(SetFullscreen(!mState.Fullscreen, RESULT_ARG_PASS));
+	RESULT_OK();
 }
 
 void Window::Update(RESULT_PARAM_IMPL) const
@@ -184,7 +179,7 @@ void Window::Update(RESULT_PARAM_IMPL) const
 	RESULT_CONDITION_ENSURE_NOLOG(mHandle, NullPtr);
 #if PLATFORM_WINDOWS
 	MSG lMsg = {};
-	while (PeekMessageA(&lMsg, mHandle, 0, 0, PM_REMOVE))
+	if (PeekMessageA(&lMsg, mHandle, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&lMsg);
 		DispatchMessageA(&lMsg);
@@ -253,6 +248,12 @@ Window::Rect Window::GetPreviousRect() const
 window_handle_t Window::GetHandle() const
 {
 	return mHandle;
+}
+
+bool Window::IsMinimized() const
+{
+	const auto lRect = GetRect();
+	return lRect.Bottom == 0 || lRect.Right == 0;
 }
 
 Window::EMessageBoxResult Window::MessageBoxInfo(const char* Text, const char* Caption, const uint32_t Types)

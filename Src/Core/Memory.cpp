@@ -3,6 +3,5 @@
 
 namespace Memory
 {
-	
 
 } // namespace Memory

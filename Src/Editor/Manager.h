@@ -15,12 +15,16 @@
 #if EDITOR
 
 #include "Core/Manager.h"
-#include "Editor/imgui.h"
+#include <imgui.h>
 
 #if PLATFORM_WINDOWS
-#include <directx/d3d12.h>
-#include "Editor/Windows/imgui_impl_win32.h"
-#include "Editor/Windows/imgui_impl_dx12.h"
+#include <imgui_impl_win32.h>
+
+#if OPENGL_ENABLED
+#include <imgui_impl_opengl3.h>
+#elif VULKAN_ENABLED
+#include <imgui_impl_vulkan.h>
+#endif
 #endif
 
 namespace Engine
@@ -33,7 +37,7 @@ class Window;
 
 namespace Render::Platform
 {
-class Manager;
+class OpenglManager;
 }
 
 namespace Editor
@@ -55,19 +59,15 @@ public:
 
 protected:
 	void Initialize(const Engine::Window& Window, RESULT_PARAM_DEFINE);
+	void PreRunLoop(RESULT_PARAM_DEFINE);
 	void RunInternal(RESULT_PARAM_DEFINE);
 	void RunExternal(RESULT_PARAM_DEFINE);
 	void Finalize(RESULT_PARAM_DEFINE);
 
 private:
 	friend class Engine::Manager;
-	friend class Render::Platform::Manager;
+	friend class Render::Platform::OpenglManager;
 
-#if PLATFORM_WINDOWS
-	ID3D12DescriptorHeap* mSrvDescHeap{};
-	D3D12_CPU_DESCRIPTOR_HANDLE mCpuSrvDescHeap{};
-	D3D12_GPU_DESCRIPTOR_HANDLE mGpuSrvDescHeap{};
-#endif
 	bool mFileSelected{};
 };
 

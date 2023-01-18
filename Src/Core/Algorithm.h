@@ -61,19 +61,16 @@ constexpr void PrintArray(const eastl::array<T, Size>& arr)
 
 } // namespace Detail
 
-template < typename TFunction, typename ... TArgs >
+template<typename TFunction, typename... TArgs>
 void Call(TFunction Function, TArgs&&... Args)
 {
 	return Function(eastl::forward<TArgs>(Args)...);
 }
 
-template < typename TFunction, typename ... TArgs >
-void Call(eastl::vector<TFunction>& Functions,
-	TArgs&&... Args)
+template<typename TFunction, typename... TArgs>
+void Call(eastl::vector<TFunction>& Functions, TArgs&&... Args)
 {
-	eastl::for_each(Functions.begin(), Functions.end(), [&](TFunction& f) {
-		f(eastl::forward<TArgs>(Args)...);
-	});
+	eastl::for_each(Functions.begin(), Functions.end(), [&](TFunction& f) { f(eastl::forward<TArgs>(Args)...); });
 }
 
 template<typename ForwardIterator>
@@ -82,7 +79,7 @@ uint64_t MaxElementIndex(ForwardIterator First, ForwardIterator Last)
 	if (First != Last)
 	{
 		ForwardIterator lCurrentMax = First;
-		uint64_t			lIndex{};
+		uint64_t		lIndex{};
 		while (++First != Last)
 		{
 			if (*lCurrentMax < *First)
@@ -102,7 +99,7 @@ uint64_t MinElementIndex(ForwardIterator First, ForwardIterator Last)
 	if (First != Last)
 	{
 		ForwardIterator lCurrentMin = First;
-		uint64_t			lIndex{};
+		uint64_t		lIndex{};
 		while (++First != Last)
 		{
 			if (*lCurrentMin > *First)
@@ -116,13 +113,13 @@ uint64_t MinElementIndex(ForwardIterator First, ForwardIterator Last)
 	return 0ull;
 }
 
-template < size_t Index, typename TTuple >
+template<size_t Index, typename TTuple>
 constexpr void CtContainerTupleReserve(TTuple& Tuple, size_t NewCapacity)
 {
 	if constexpr (Index < eastl::tuple_size_v<TTuple>)
 	{
 		eastl::get<Index>(Tuple).reserve(NewCapacity);
-		CtContainerTupleReserve<Index+1>(Tuple, NewCapacity);
+		CtContainerTupleReserve<Index + 1>(Tuple, NewCapacity);
 	}
 }
 

@@ -143,7 +143,7 @@ Ptr<Asset> Registry::Get(const id_t Id, RESULT_PARAM_IMPL)
 
 	RESULT_ENSURE_LAST_NOLOG(PTR((Asset*)nullptr));
 
-	const auto& lType		 = Meta::Typeof<Asset>();
+	const auto& lType	   = Meta::Typeof<Asset>();
 	auto&		lDataArray = mDataMap[lType.Id()];
 	if (mIndexMap.find(Id) != mIndexMap.cend())
 	{
@@ -155,15 +155,15 @@ Ptr<Asset> Registry::Get(const id_t Id, RESULT_PARAM_IMPL)
 template<typename AssetType>
 AssetType* Registry::AddOrGet(const char* Path)
 {
-	const id_t lId			= Asset::MakeId(Path, strlen(Path));
+	const id_t lId		  = Asset::MakeId(Path, strlen(Path));
 	auto&	   lDataArray = mDataMap[Meta::Typeof<AssetType>().Id()];
 	if (mIndexMap.find(lId) == mIndexMap.cend())
 	{
 		Stream::Dynamic lStream{};
-		AssetType lAsset{lStream, Path};
+		AssetType		lAsset{lStream, Path};
 		mIndexMap[lId] = lDataArray.size();
 		lDataArray.insert(lDataArray.cend(), reinterpret_cast<uint8_t*>(&lAsset),
-							reinterpret_cast<uint8_t*>(&lAsset) + sizeof(AssetType));
+						  reinterpret_cast<uint8_t*>(&lAsset) + sizeof(AssetType));
 	}
 	return reinterpret_cast<AssetType*>(lDataArray.data() + mIndexMap[lId]);
 }
@@ -171,7 +171,7 @@ AssetType* Registry::AddOrGet(const char* Path)
 template<typename AssetType>
 AssetType* Registry::AddOrGetUninitialized(const char* Path)
 {
-	const id_t lId			= Asset::MakeId(Path, strlen(Path));
+	const id_t lId		  = Asset::MakeId(Path, strlen(Path));
 	auto&	   lDataArray = mDataMap[Meta::Typeof<AssetType>().Id()];
 	if (mIndexMap.find(lId) == mIndexMap.cend())
 	{

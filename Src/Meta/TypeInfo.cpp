@@ -50,7 +50,7 @@ TypeRegistry& TypeRegistry::Instance()
 {
 	if (!instance_)
 	{
-		instance_ = new (Allocators::Default(DEBUG_NAME_VAL("Meta")).allocate(sizeof(TypeRegistry))) TypeRegistry{};
+		instance_ = new (Allocators::default_t(DEBUG_NAME_VAL("Meta")).allocate(sizeof(TypeRegistry))) TypeRegistry{};
 	}
 	return *instance_;
 }
@@ -74,7 +74,7 @@ const TypeInfo& TypeInfo::None()
 {
 	if (!g_type_info_none)
 	{
-		g_type_info_none = new (Allocators::Default(DEBUG_NAME_VAL("Meta")).allocate(sizeof(TypeInfo))) TypeInfo{};
+		g_type_info_none = new (Allocators::default_t(DEBUG_NAME_VAL("Meta")).allocate(sizeof(TypeInfo))) TypeInfo{};
 	}
 	return *g_type_info_none;
 }
@@ -130,8 +130,10 @@ eastl::string TypeInfo::ToString(const uint64_t capacity) const
 
 eastl::string TypeInfo::ToValueString(void* value, const uint64_t capacity) const
 {
-	ENFORCE_MSG(operation_function_, "Operations function is marked as not implemented for '%s' type, and it is needed to properly "
-									 "apply the value string operation.", name_);
+	ENFORCE_MSG(operation_function_,
+				"Operations function is marked as not implemented for '%s' type, and it is needed to properly "
+				"apply the value string operation.",
+				name_);
 
 	OperationBody l_body{};
 

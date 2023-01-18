@@ -8,9 +8,10 @@ Value::Value() : type_info_{const_cast<TypeInfo*>(&TypeInfo::None())}
 {
 }
 
-Value::Value(void* memory, const TypeInfo& type_info) : type_info_{memory ? const_cast<TypeInfo*>(&type_info) : const_cast<TypeInfo*>(&TypeInfo::None())}
+Value::Value(void* memory, const TypeInfo& type_info)
+	: type_info_{memory ? const_cast<TypeInfo*>(&type_info) : const_cast<TypeInfo*>(&TypeInfo::None())}
 {
-	if(memory)
+	if (memory)
 	{
 		if (type_info_->Size() <= sizeof iptr_)
 		{
@@ -19,12 +20,12 @@ Value::Value(void* memory, const TypeInfo& type_info) : type_info_{memory ? cons
 		}
 		else
 		{
-			Allocators::Default l_allocator{DEBUG_NAME_VAL("Meta")};
+			Allocators::default_t l_allocator{DEBUG_NAME_VAL("Meta")};
 			if (eptr_)
 			{
 				l_allocator.deallocate(eptr_, type_info_->Size());
 			}
-			eptr_	   = l_allocator.allocate(type_info.Size());
+			eptr_ = l_allocator.allocate(type_info.Size());
 			type_info.InvokeOperation(TypeInfo::eMoveAssign, eptr_, memory);
 		}
 	}
@@ -48,8 +49,7 @@ Value::Value(const TypeInfo& type_info) : type_info_{const_cast<TypeInfo*>(&type
 	}*/
 }
 
-Value::Value(Value&& other) noexcept
-	: iptr_{other.iptr_}, type_info_{other.type_info_}, eptr_{other.eptr_}
+Value::Value(Value&& other) noexcept : iptr_{other.iptr_}, type_info_{other.type_info_}, eptr_{other.eptr_}
 {
 	other.type_info_ = nullptr;
 	other.eptr_		 = nullptr;
@@ -67,8 +67,7 @@ Value& Value::operator=(Value&& other) noexcept
 	return *this;
 }
 
-Value::Value(const Value& other)
-	: iptr_{other.iptr_}, type_info_{other.type_info_}, eptr_{other.eptr_}
+Value::Value(const Value& other) : iptr_{other.iptr_}, type_info_{other.type_info_}, eptr_{other.eptr_}
 {
 	other.type_info_ = nullptr;
 	other.eptr_		 = nullptr;
@@ -91,7 +90,7 @@ Value::~Value()
 	if (eptr_)
 	{
 		type_info_->InvokeOperation(TypeInfo::eDtor, eptr_);
-		Allocators::Default{DEBUG_NAME_VAL("Meta")}.deallocate(eptr_, type_info_->Size());
+		Allocators::default_t{DEBUG_NAME_VAL("Meta")}.deallocate(eptr_, type_info_->Size());
 		eptr_ = nullptr;
 	}
 }
@@ -176,30 +175,30 @@ const float64_t& Value::AsFloat64() const
 	return As<float64_t>();
 }
 
-//const glm::vec2& Value::AsVec2() const
+// const glm::vec2& Value::AsVec2() const
 //{
 //	return As<glm::vec2>();
-//}
+// }
 //
-//const glm::vec3& Value::AsVec3() const
+// const glm::vec3& Value::AsVec3() const
 //{
 //	return As<glm::vec3>();
-//}
+// }
 //
-//const glm::vec4& Value::AsVec4() const
+// const glm::vec4& Value::AsVec4() const
 //{
 //	return As<glm::vec4>();
-//}
+// }
 //
-//const glm::quat& Value::AsQuat() const
+// const glm::quat& Value::AsQuat() const
 //{
 //	return As<glm::quat>();
-//}
+// }
 //
-//const glm::mat4& Value::AsMat4() const
+// const glm::mat4& Value::AsMat4() const
 //{
 //	return As<glm::mat4>();
-//}
+// }
 
 const eastl::string_view& Value::AsStringView() const
 {
@@ -211,8 +210,8 @@ void Value::Reset()
 	if (eptr_)
 	{
 		// TODO: invoke operation type info
-		//eptr_dtor_(eptr_);
-		Allocators::Default{DEBUG_NAME_VAL("Meta")}.deallocate(eptr_, type_info_->Size());
+		// eptr_dtor_(eptr_);
+		Allocators::default_t{DEBUG_NAME_VAL("Meta")}.deallocate(eptr_, type_info_->Size());
 	}
 	eptr_	   = nullptr;
 	type_info_ = const_cast<TypeInfo*>(&TypeInfo::None());

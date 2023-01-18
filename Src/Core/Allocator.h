@@ -27,7 +27,7 @@
 namespace Allocators
 {
 
-class SimpleMimalloc : public eastl::allocator
+class SimpleMimalloc: public eastl::allocator
 {
 public:
 	SimpleMimalloc(const char* Name = EASTL_NAME_VAL("SimpleMimalloc"));
@@ -63,7 +63,7 @@ public:
 #error Failed to set EASTLAllocatorType to default platform allocator. Create an allocator to the target platform.
 #endif
 
-using Default = EASTLAllocatorType;
+using default_t = EASTLAllocatorType;
 
 #if DEBUG
 NODISCARD float32_t GetAllocatedSize(const char* Name);

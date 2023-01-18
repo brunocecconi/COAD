@@ -35,7 +35,7 @@ void Manager::Initialize(const int32_t Argc, char** Argv, RESULT_PARAM_IMPL)
 
 	// Initialize managers
 	RESULT_ENSURE_CALL(Render::Instance().Initialize(RESULT_ARG_PASS));
-	RESULT_ENSURE_CALL(Render::Instance().ResizeFrame(mWindow.GetSize(), RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(Render::Instance().MarkDirtyFramebufferSize(RESULT_ARG_PASS));
 
 	// Initialize editor
 #if EDITOR
@@ -164,7 +164,8 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 		mFrameCounter	= 0;
 	}*/
 
-	// RESULT_ENSURE_CALL(Thread::SleepCurrent(1u, RESULT_ARG_PASS));
+	//printf("engine\n");
+	//RESULT_ENSURE_CALL(Thread::SleepCurrent(1000u, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
@@ -172,7 +173,7 @@ Manager& Manager::Instance()
 {
 	if (!mInstance)
 	{
-		mInstance.reset(new (Allocators::Default{DEBUG_NAME_VAL("Engine")}.allocate(sizeof(Manager))) Manager{});
+		mInstance.reset(new (Allocators::default_t{DEBUG_NAME_VAL("Engine")}.allocate(sizeof(Manager))) Manager{});
 	}
 	return *mInstance;
 }

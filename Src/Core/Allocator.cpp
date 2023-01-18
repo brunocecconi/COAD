@@ -18,19 +18,18 @@
 #define PRINT_DEALLOCATIONS 1
 #endif
 #else
-#define PRINT_ALLOCATIONS 0
+#define PRINT_ALLOCATIONS	0
 #define PRINT_DEALLOCATIONS 0
 #endif
 
 #if DEBUG
 #include <EASTL/string_hash_map.h>
-using string_hash_map_t = eastl::string_hash_map<int64_t, eastl::hash<const char*>,
-	eastl::str_equal_to<const char*>, Allocators::SimpleMimalloc>;
+using string_hash_map_t = eastl::string_hash_map<int64_t, eastl::hash<const char*>, eastl::str_equal_to<const char*>,
+												 Allocators::SimpleMimalloc>;
 #endif
 
 namespace Allocators
 {
-
 
 SimpleMimalloc::SimpleMimalloc(const char* Name) : eastl::allocator{Name}
 {
@@ -95,15 +94,14 @@ float32_t GetAllocatedSize(const char* Name)
 
 void MemoryTrackCreateIfNotExist()
 {
-	if(!gMemoryTrackHashMap)
+	if (!gMemoryTrackHashMap)
 	{
-		atexit([]() 
-		{
+		atexit([]() {
 			eastl::destroy_at(&MEMORY_TRACK_HASH_MAP);
 			SimpleMimalloc{"Allocator DebugMemoryTrack"}.deallocate(gMemoryTrackHashMap, sizeof(string_hash_map_t));
 		});
-		gMemoryTrackHashMap = new (mi_malloc(sizeof(string_hash_map_t)))
-				string_hash_map_t{SimpleMimalloc{"Allocator DebugMemoryTrack"}};
+		gMemoryTrackHashMap =
+			new (mi_malloc(sizeof(string_hash_map_t))) string_hash_map_t{SimpleMimalloc{"Allocator DebugMemoryTrack"}};
 		MEMORY_TRACK_HASH_MAP.reserve(64ull);
 		ENFORCE_MSG(gMemoryTrackHashMap, "Failed to create memory track hash map.");
 	}

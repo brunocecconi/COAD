@@ -90,6 +90,7 @@ private:
 	~Window();
 
 	void Create(const CreateInfo& CreateInfo, RESULT_PARAM_DEFINE);
+public:
 	void Update(RESULT_PARAM_DEFINE) const;
 	void Destroy(RESULT_PARAM_DEFINE);
 
@@ -106,6 +107,7 @@ public:
 	NODISCARD Rect			  GetRect() const;
 	NODISCARD Rect			  GetPreviousRect() const;
 	NODISCARD window_handle_t GetHandle() const;
+	NODISCARD bool IsMinimized() const;
 
 private:
 #if PLATFORM_WINDOWS

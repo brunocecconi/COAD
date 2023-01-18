@@ -141,14 +141,13 @@ public:
 	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2) const;
 	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3) const;
 	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4) const;
-	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4,
-								 Value p5) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5) const;
 	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
 								 Value p6) const;
-	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
-								 Value p6, Value p7) const;
-	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5,
-								 Value p6, Value p7, Value p8) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6,
+								 Value p7) const;
+	NODISCARD Value InvokeMethod(id_t id, const void* owner, Value p1, Value p2, Value p3, Value p4, Value p5, Value p6,
+								 Value p7, Value p8) const;
 
 	template<size_t N, typename... Args>
 	NODISCARD Value InvokeMethod(const char (&name)[N], const void* owner, Args&&... args) const;
@@ -167,11 +166,11 @@ public:
 	NODISCARD static const ClassInfo& None();
 
 private:
-	const TypeInfo*								 type_info_;
-	uint32_t										 flags_;
-	eastl::vector<CtorInfo>						 ctors_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+	const TypeInfo*						type_info_;
+	uint32_t							flags_;
+	eastl::vector<CtorInfo>				ctors_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
 	eastl::hash_map<id_t, PropertyInfo> properties_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
-	eastl::hash_map<id_t, MethodInfo>	 methods_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
+	eastl::hash_map<id_t, MethodInfo>	methods_{EASTLAllocatorType{DEBUG_NAME_VAL("Meta")}};
 };
 
 class ClassRegistry
@@ -189,7 +188,7 @@ public:
 
 private:
 	eastl::hash_map<id_t, ClassInfo> classes_{DEBUG_NAME_VAL("Meta")};
-	static ClassRegistry*					  instance_;
+	static ClassRegistry*			 instance_;
 };
 
 template<typename T>

@@ -1,17 +1,11 @@
 
 #include "Editor/Manager.h"
-#include "Engine/Window.h"
-#include "Render/Manager.h"
-#include "Engine/Manager.h"
 
 #if EDITOR
 
-#if PLATFORM_WINDOWS
-#include "Editor/Windows/imgui_impl_win32.h"
-#include "Editor/Windows/imgui_impl_dx12.h"
-#include <d3d12.h>
-#include <wrl.h>
-#endif
+#include "Engine/Window.h"
+#include "Render/Manager.h"
+#include "Engine/Manager.h"
 
 MANAGER_IMPL(Editor::Manager);
 
@@ -31,12 +25,12 @@ void Manager::RunExternal(RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST();
 
 	// Menu
-	{
-		if(ImGui::BeginMainMenuBar())
+	/*{
+		if (ImGui::BeginMainMenuBar())
 		{
-			if(ImGui::BeginMenu("File"))
+			if (ImGui::BeginMenu("File"))
 			{
-				if(ImGui::MenuItem("Quit", "Esc", nullptr))
+				if (ImGui::MenuItem("Quit", "Esc", nullptr))
 				{
 					Engine::Manager::Instance().DestroyWindow();
 				}
@@ -44,7 +38,7 @@ void Manager::RunExternal(RESULT_PARAM_IMPL)
 			}
 		}
 		ImGui::EndMainMenuBar();
-	}
+	}*/
 
 	RESULT_OK();
 }
@@ -54,27 +48,25 @@ void Manager::Initialize(const Engine::Window& Window, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST();
 	RESULT_ENSURE_CALL(base_t::Initialize(RESULT_ARG_PASS));
 
-	IMGUI_CHECKVERSION();
+	/*IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 
 #if PLATFORM_WINDOWS
-
 	RESULT_CONDITION_ENSURE(ImGui_ImplWin32_Init(Window.GetHandle()), EditorFailedToInitImguiWindow);
 
-	D3D12_DESCRIPTOR_HEAP_DESC lDesc = {};
-	lDesc.Type						 = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	lDesc.NumDescriptors			 = 1;
-	lDesc.Flags						 = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	Render::Manager::Instance().PlatformDevice()->CreateDescriptorHeap(&lDesc, IID_PPV_ARGS(&mSrvDescHeap));
-	mCpuSrvDescHeap = mSrvDescHeap->GetCPUDescriptorHandleForHeapStart();
-	mGpuSrvDescHeap = mSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
-
-	ImGui_ImplDX12_Init(Render::Manager::Instance().PlatformDevice(), Render::Manager::PlatformNumFrames(),
-						DXGI_FORMAT_R8G8B8A8_UNORM, mSrvDescHeap, mCpuSrvDescHeap, mGpuSrvDescHeap);
-
+#if OPENGL_ENABLED
+	RESULT_CONDITION_ENSURE(ImGui_ImplOpenGL3_Init(), EditorFailedToInitImguiWindow);
 #endif
 
+#endif*/
+
+	RESULT_OK();
+}
+
+void Manager::PreRunLoop(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
 	RESULT_OK();
 }
 
@@ -89,9 +81,13 @@ void Manager::Finalize(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+//#if PLATFORM_WINDOWS
+//	ImGui_ImplWin32_Shutdown();
+//#if OPENGL_ENABLED
+//	ImGui_ImplOpenGL3_Shutdown();
+//#endif
+//#endif
+//	ImGui::DestroyContext();
 
 	RESULT_ENSURE_CALL(base_t::Finalize(RESULT_ARG_PASS));
 	RESULT_OK();

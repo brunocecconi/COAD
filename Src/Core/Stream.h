@@ -17,13 +17,13 @@ struct Impl;
  * @tparam size_t Target stream size.
  *
  */
-template<size_t size_t>
+template<size_t Size>
 class Static
 {
 public:
-	using container_t = eastl::array<uint8_t, size_t>;
+	using container_t = eastl::array<uint8_t, Size>;
 
-	static constexpr auto SIZE = size_t;
+	static constexpr auto SIZE = Size;
 
 public:
 	Static()							 = default;
@@ -86,12 +86,12 @@ public:
 	using TestT		  = void;
 
 public:
-	EXPLICIT Dynamic(const Allocators::Default& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
+	EXPLICIT Dynamic(const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
 	EXPLICIT Dynamic(const void* data, container_t::size_type size,
-					 const Allocators::Default& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
+					 const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
 	EXPLICIT Dynamic(container_t::size_type		size,
-					 const Allocators::Default& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
-	EXPLICIT Dynamic(container_t&& container, const Allocators::Default& allocator = DEBUG_NAME_VAL("Memory::Stream"),
+					 const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
+	EXPLICIT Dynamic(container_t&& container, const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"),
 					 RESULT_PARAM_DEFINE);
 	Dynamic(Dynamic&&) NOEXCEPT			   = default;
 	Dynamic& operator=(Dynamic&&) NOEXCEPT = default;
@@ -153,60 +153,60 @@ private:
 	uint64_t	read_cursor_{};
 };
 
-template<size_t size_t>
-typename Static<size_t>::container_t::value_type* Static<size_t>::Data() NOEXCEPT
+template<size_t Size>
+typename Static<Size>::container_t::value_type* Static<Size>::Data() NOEXCEPT
 {
 	return data_.data();
 }
 
-template<size_t size_t>
-const typename Static<size_t>::container_t::value_type* Static<size_t>::Data() const NOEXCEPT
+template<size_t Size>
+const typename Static<Size>::container_t::value_type* Static<Size>::Data() const NOEXCEPT
 {
 	return data_.data();
 }
 
-template<size_t size_t>
-typename Static<size_t>::container_t::reference Static<size_t>::operator[](typename container_t::size_type index)
+template<size_t Size>
+typename Static<Size>::container_t::reference Static<Size>::operator[](typename container_t::size_type index)
 {
 	return data_[index];
 }
 
-template<size_t size_t>
-typename Static<size_t>::container_t::const_reference Static<size_t>::operator[](
+template<size_t Size>
+typename Static<Size>::container_t::const_reference Static<Size>::operator[](
 	typename container_t::size_type index) const
 {
 	return data_[index];
 }
 
-template<size_t size_t>
-typename Static<size_t>::container_t::reference Static<size_t>::At(typename container_t::size_type index)
+template<size_t Size>
+typename Static<Size>::container_t::reference Static<Size>::At(typename container_t::size_type index)
 {
 	return data_.at(index);
 }
 
-template<size_t size_t>
-typename Static<size_t>::container_t::const_reference Static<size_t>::At(typename container_t::size_type index) const
+template<size_t Size>
+typename Static<Size>::container_t::const_reference Static<Size>::At(typename container_t::size_type index) const
 {
 	return data_.at(index);
 }
 
-template<size_t size_t>
-uint64_t Static<size_t>::WriteCursor() const
+template<size_t Size>
+uint64_t Static<Size>::WriteCursor() const
 {
 	return write_cursor_;
 }
 
-template<size_t size_t>
-uint64_t Static<size_t>::ReadCursor() const
+template<size_t Size>
+uint64_t Static<Size>::ReadCursor() const
 {
 	return read_cursor_;
 }
 
-template<size_t size_t>
-bool Static<size_t>::WriteGeneric(const void* data, typename container_t::size_type size, RESULT_PARAM_IMPL)
+template<size_t Size>
+bool Static<Size>::WriteGeneric(const void* data, typename container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
-	if (write_cursor_ + size > size_t)
+	if (write_cursor_ + size > Size)
 	{
 		RESULT_ERROR(MemoryOutOfBuffer, false);
 	}
@@ -216,11 +216,11 @@ bool Static<size_t>::WriteGeneric(const void* data, typename container_t::size_t
 	return true;
 }
 
-template<size_t size_t>
-bool Static<size_t>::ReadGeneric(void* data, typename container_t::size_type size, RESULT_PARAM_IMPL)
+template<size_t Size>
+bool Static<Size>::ReadGeneric(void* data, typename container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST_NOLOG(false);
-	if (read_cursor_ + size > size_t)
+	if (read_cursor_ + size > Size)
 	{
 		RESULT_ERROR(MemoryOutOfBuffer, false);
 	}
@@ -230,9 +230,9 @@ bool Static<size_t>::ReadGeneric(void* data, typename container_t::size_type siz
 	return true;
 }
 
-template<size_t size_t>
+template<size_t Size>
 template<typename T>
-bool Static<size_t>::Write(const T* data, const typename container_t::size_type size, RESULT_PARAM_IMPL)
+bool Static<Size>::Write(const T* data, const typename container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof T;
 	UNUSED(l_sizeof);
@@ -257,9 +257,9 @@ bool Static<N>::Read(T* data, const typename container_t::size_type size, RESULT
 	return Impl<T>::Read(*this, data, size, RESULT_ARG_PASS);
 }
 
-template<size_t size_t>
+template<size_t Size>
 template<typename T>
-bool Static<size_t>::Write(const T& data, RESULT_PARAM_IMPL)
+bool Static<Size>::Write(const T& data, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof T;
 	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(static_cast<const void*>(&l_sizeof), sizeof l_sizeof, RESULT_ARG_PASS),
@@ -278,17 +278,17 @@ bool Static<N>::Read(T& data, RESULT_PARAM_IMPL)
 	return Impl<T>::Read(*this, data, RESULT_ARG_PASS);
 }
 
-template<size_t size_t>
+template<size_t Size>
 template<typename T>
-Static<size_t>& Static<size_t>::operator<<(const T& data)
+Static<Size>& Static<Size>::operator<<(const T& data)
 {
 	Write(data);
 	return *this;
 }
 
-template<size_t size_t>
+template<size_t Size>
 template<typename T>
-Static<size_t>& Static<size_t>::operator>>(T& data)
+Static<Size>& Static<Size>::operator>>(T& data)
 {
 	Read(data);
 	return *this;
@@ -299,10 +299,9 @@ bool Dynamic::Write(const T* data, container_t::size_type size, RESULT_PARAM_IMP
 {
 	const auto l_sizeof = sizeof(T);
 	UNUSED(l_sizeof);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToWrite, false);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), StreamFailedToWrite,
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToWrite,
 								  false);
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), StreamFailedToWrite, false);
 	return Impl<T>::Write(*this, data, size, RESULT_ARG_PASS);
 }
 
@@ -310,11 +309,9 @@ template<typename T>
 bool Dynamic::Read(T* data, container_t::size_type size, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{}, l_size{};
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToRead, false);
 	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), StreamFailedToRead,
-								  false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), StreamFailedToRead, false);
 	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, size, RESULT_ARG_PASS);
 }
@@ -323,8 +320,8 @@ template<typename T>
 bool Dynamic::Write(const T& data, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof(T);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToWrite, false);
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToWrite,
+								  false);
 	return Impl<T>::Write(*this, data, RESULT_ARG_PASS);
 }
 
@@ -332,8 +329,7 @@ template<typename T>
 bool Dynamic::Read(T& data, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{};
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToRead, false);
 	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, RESULT_ARG_PASS);
 }
@@ -407,10 +403,9 @@ bool File::Write(const T* data, size_t size, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof(T);
 	UNUSED(l_sizeof);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToWrite, false);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), StreamFailedToWrite,
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToWrite,
 								  false);
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&size, sizeof size, RESULT_ARG_PASS), StreamFailedToWrite, false);
 	return Impl<T>::Write(*this, data, size, RESULT_ARG_PASS);
 }
 
@@ -418,11 +413,9 @@ template<typename T>
 bool File::Read(T* data, size_t size, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{}, l_size{};
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToRead, false);
 	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), StreamFailedToRead,
-								  false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_size, sizeof l_size, RESULT_ARG_PASS), StreamFailedToRead, false);
 	RESULT_CONDITION_ENSURE_NOLOG(l_size == size, StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, size, RESULT_ARG_PASS);
 }
@@ -431,8 +424,8 @@ template<typename T>
 bool File::Write(const T& data, RESULT_PARAM_IMPL)
 {
 	const auto l_sizeof = sizeof(T);
-	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToWrite, false);
+	RESULT_CONDITION_ENSURE_NOLOG(WriteGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToWrite,
+								  false);
 	return Impl<T>::Write(*this, data, RESULT_ARG_PASS);
 }
 
@@ -440,8 +433,7 @@ template<typename T>
 bool File::Read(T& data, RESULT_PARAM_IMPL)
 {
 	size_t l_sizeof{};
-	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),
-								  StreamFailedToRead, false);
+	RESULT_CONDITION_ENSURE_NOLOG(ReadGeneric(&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS), StreamFailedToRead, false);
 	RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof(T), StreamFailedToRead, false);
 	return Impl<T>::Read(*this, data, RESULT_ARG_PASS);
 }
@@ -514,7 +506,7 @@ File& File::operator>>(T& data)
 		static_assert(eastl::is_pod_v<this_t>, "Invalid plain old data type.");                                        \
 		RESULT_ENSURE_LAST_NOLOG(false);                                                                               \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.Write((const void*)&value, sizeof(this_t), RESULT_ARG_PASS),              \
-									  StreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                                     \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \
@@ -525,11 +517,11 @@ File& File::operator>>(T& data)
 		const auto l_sizeof = sizeof this_t;                                                                           \
 		UNUSED(l_sizeof);                                                                                              \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.WriteGeneric((const void*)&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),   \
-									  StreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                                     \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.WriteGeneric((const void*)&size, sizeof size, RESULT_ARG_PASS),           \
-									  StreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                                     \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.WriteGeneric((const void*)value, l_sizeof* size, RESULT_ARG_PASS),        \
-									  StreamFailedToWrite, false);                                         \
+									  StreamFailedToWrite, false);                                                     \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \
@@ -539,10 +531,10 @@ File& File::operator>>(T& data)
 		RESULT_ENSURE_LAST_NOLOG(false);                                                                               \
 		size_t l_sizeof{};                                                                                             \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric(&l_sizeof, sizeof(l_sizeof), RESULT_ARG_PASS),                \
-									  StreamFailedToRead, false);                                          \
-		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t, StreamFailedToRead, false);               \
+									  StreamFailedToRead, false);                                                      \
+		RESULT_CONDITION_ENSURE_NOLOG(l_sizeof == sizeof this_t, StreamFailedToRead, false);                           \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)&value, sizeof(this_t), RESULT_ARG_PASS),              \
-									  StreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                                      \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \
@@ -552,11 +544,11 @@ File& File::operator>>(T& data)
 		RESULT_ENSURE_LAST_NOLOG(false);                                                                               \
 		size_t l_sizeof{}, l_size{};                                                                                   \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)&l_sizeof, sizeof l_sizeof, RESULT_ARG_PASS),          \
-									  StreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                                      \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)&l_size, sizeof l_size, RESULT_ARG_PASS),              \
-									  StreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                                      \
 		RESULT_CONDITION_ENSURE_NOLOG(stream.ReadGeneric((void*)value, l_sizeof* l_size, RESULT_ARG_PASS),             \
-									  StreamFailedToRead, false);                                          \
+									  StreamFailedToRead, false);                                                      \
 		RESULT_OK();                                                                                                   \
 		return true;                                                                                                   \
 	}                                                                                                                  \

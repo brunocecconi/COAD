@@ -103,16 +103,16 @@ public:
 	NODISCARD const TypeInfo& OwnerType() const;
 	NODISCARD const TypeInfo& Type() const;
 	NODISCARD const char*	  Name() const;
-	NODISCARD id_t Id() const;
-	NODISCARD uint32_t		Flags() const;
+	NODISCARD id_t			  Id() const;
+	NODISCARD uint32_t		  Flags() const;
 	NODISCARD eastl::string ToString(uint64_t capacity = 256) const;
 
 private:
 	const TypeInfo&		  owner_type_info_;
 	const TypeInfo&		  type_info_;
 	const char*			  name_;
-	id_t		  id_;
-	uint32_t				  flags_;
+	id_t				  id_;
+	uint32_t			  flags_;
 	binder_set_function_t set_function_;
 	binder_get_function_t get_function_;
 };
