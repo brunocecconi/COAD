@@ -13,6 +13,13 @@ struct Vertex
 	glm::vec3 Color;
 };
 
+struct Mvp
+{
+	glm::mat4 Projection;
+	glm::mat4 View;
+	glm::mat4 Model;
+};
+
 class Mesh
 {
 public:

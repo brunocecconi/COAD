@@ -14,10 +14,9 @@
 #include <EASTL/span.h>
 
 MANAGER_IMPL(Render::Manager);
-LOG_DEFINE(PlatformRender);
 
-#include "Render/Windows/OpenGLManager.h"
-#include "Render/Windows/VulkanManager.h"
+#include "Render/Windows/OpenGL/Manager.h"
+#include "Render/Windows/Vulkan/Manager.h"
 
 namespace Render
 {

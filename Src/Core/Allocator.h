@@ -14,8 +14,6 @@
 #include "Core/Platform.h"
 #include "Core/Types.h"
 
-#include <vector>
-
 #include <EASTL/memory.h>
 #include <EASTL/allocator.h>
 #include <EASTL/allocator_malloc.h>

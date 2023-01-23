@@ -35,9 +35,9 @@ class Window;
 
 } // namespace Engine
 
-namespace Render::Platform
+namespace Render::Api
 {
-class OpenglManager;
+class Manager;
 }
 
 namespace Editor
@@ -58,7 +58,20 @@ public:
 	~Manager();
 
 protected:
-	void Initialize(const Engine::Window& Window, RESULT_PARAM_DEFINE);
+#if PLATFORM_WINDOWS
+#if VULKAN_ENABLED
+	struct InitializeInfo
+	{
+		ImGui_ImplVulkan_InitInfo* ImguiInitInfo;
+		VkRenderPass			   RenderPass;
+		VkSurfaceKHR			   Surface;
+		VkSwapchainKHR			   Swapchain;
+		Engine::Window*			   Window;
+	};
+
+	void Initialize(const InitializeInfo& InitInfo, RESULT_PARAM_DEFINE);
+#endif
+#endif
 	void PreRunLoop(RESULT_PARAM_DEFINE);
 	void RunInternal(RESULT_PARAM_DEFINE);
 	void RunExternal(RESULT_PARAM_DEFINE);
@@ -66,9 +79,15 @@ protected:
 
 private:
 	friend class Engine::Manager;
-	friend class Render::Platform::OpenglManager;
+	friend class Render::Api::Manager;
 
 	bool mFileSelected{};
+
+#if PLATFORM_WINDOWS
+#if VULKAN_ENABLED
+	ImGui_ImplVulkanH_Window mImguiWindowData{};
+#endif
+#endif
 };
 
 INLINE Manager& Instance()

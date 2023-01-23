@@ -49,7 +49,7 @@ project "COAD"
 		IncludeDir["Windows"]
 	}
 	
-	files { "Src/**.h", "Src/**.cpp", "Src/**.cpp", "./Natvis/**.natvis" }
+	files { "Src/**.h", "Src/**.hpp", "Src/**.cpp", "./Natvis/**.natvis" }
 	removefiles { "Src/Cmd/Main.cpp", "Src/Benchmark/Entity.cpp", "Src/Benchmark/Meta.cpp" }
 	
 	filter { "not files:**.unity.*" }

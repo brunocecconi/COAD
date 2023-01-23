@@ -30,17 +30,12 @@ void Manager::Initialize(const int32_t Argc, char** Argv, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_CALL(mArgs = ProgramArgs(Argc, Argv));
 
 	// Create window
-	RESULT_ENSURE_CALL(mWindow.Create({"Test window", 800, 600}, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(mWindow.Create({"Test window", 1280, 720}, RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(mWindow.Show(RESULT_ARG_PASS));
 
 	// Initialize managers
 	RESULT_ENSURE_CALL(Render::Instance().Initialize(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(Render::Instance().MarkDirtyFramebufferSize(RESULT_ARG_PASS));
-
-	// Initialize editor
-#if EDITOR
-	RESULT_ENSURE_CALL(Editor::Instance().Initialize(mWindow, RESULT_ARG_PASS));
-#endif
 
 	RESULT_OK();
 }
@@ -55,11 +50,6 @@ int32_t Manager::Run(RESULT_PARAM_IMPL)
 
 	// Run managers
 	RESULT_ENSURE_CALL(Render::Manager::Instance().Run(RESULT_ARG_PASS), EXIT_FAILURE);
-
-	// Run editor
-#if EDITOR
-	RESULT_ENSURE_CALL(Editor::Manager::Instance().Run(RESULT_ARG_PASS), EXIT_FAILURE);
-#endif
 
 	// Call run base
 	RESULT_ENSURE_CALL(base_t::Run(RESULT_ARG_PASS), EXIT_FAILURE);
@@ -76,11 +66,6 @@ void Manager::Finalize(RESULT_PARAM_IMPL)
 	// Finalize managers
 
 	RESULT_ENSURE_CALL(Render::Manager::Instance().Finalize(RESULT_ARG_PASS));
-
-	// Finalize editor
-#if EDITOR
-	RESULT_ENSURE_CALL(Editor::Manager::Instance().Finalize(RESULT_ARG_PASS));
-#endif
 
 	// Destroy window
 	if (mWindow.IsVisible())

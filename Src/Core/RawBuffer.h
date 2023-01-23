@@ -26,8 +26,8 @@ public:
 	using allocator_t = TAllocator;
 
 public:
-	EXPLICIT RawBuffer(const allocator_t& Allocator);
-	EXPLICIT RawBuffer(uint64_t Size, const allocator_t& Allocator);
+	EXPLICIT RawBuffer(const allocator_t& Allocator = allocator_t{});
+	EXPLICIT RawBuffer(uint64_t Size, const allocator_t& Allocator = allocator_t{});
 
 	RawBuffer(RawBuffer&&) NOEXCEPT;
 	RawBuffer& operator=(RawBuffer&&) NOEXCEPT;

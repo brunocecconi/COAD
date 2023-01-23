@@ -12,6 +12,7 @@
 
 #include "Core/BaseTypes.h"
 #include "Editor/Common.h"
+#include "Core/Stacktrace.h"
 
 #if _MSC_VER
 #pragma warning(disable : 4100)
@@ -25,7 +26,7 @@
 #define RESULT_VALUE_VAR(NAME)                                                                                         \
 	RESULT NAME = Ok;                                                                                                  \
 	(void)NAME
-#define RESULT_UNUSED()	(void)result
+#define RESULT_UNUSED()				(void)result
 #define RESULT_SET_VAR(NAME, VALUE) NAME = (EResult)(VALUE)
 #define RESULT_GET_VAR(NAME)		NAME
 #define RESULT_LAST					RESULT_GET_VAR(result) ? *RESULT_GET_VAR(result) : Ok
@@ -69,6 +70,7 @@
 			   "%s: RESULT ENSURE FAILED "                                                                             \
 			   " at '%s':'%d'.\nRESULT STRING: %s\nRESULT INFO: %s\n" CONSOLE_COLOR_DEFAULT,                           \
 			   __FUNCTION__, __FILE__, __LINE__, ResultString(RESULT), ResultInfo(RESULT));                            \
+		printf("Stack trace >>\n%s", GetStackTraceString().c_str());                                                   \
 		RESULT_ERROR(RESULT, __VA_ARGS__);                                                                             \
 	}
 
@@ -438,14 +440,21 @@ enum EResult : uint64_t
 	VulkanFailedToCreateSemaphore,
 	VulkanFailedToCreateFence,
 	VulkanFailedToSubmitGraphicsQueue,
+	VulkanFailedToSubmitTransferQueue,
 	VulkanFailedToAcquireSwapchainImage,
 	VulkanFailedToCreateBuffer,
 	VulkanFailedToAllocateMemory,
+	VulkanUnexpectedBufferUsage,
+	VulkanFailedToWaitQueueIdle,
+	VulkanFailedToCreateDescriptoSetLayout,
+	VulkanFailedToCreateDescriptorPool,
+	VulkanFailedToAllocateDescriptorSets,
 #endif
 #endif
 
 #if EDITOR
-	EditorFailedToInitImguiWindow
+	EditorFailedToInitImguiWindow,
+	EditorFailedToInitImguiBackend,
 #endif
 };
 
@@ -527,7 +536,7 @@ static constexpr char* ResultString(const EResult Value)
 		RESULT_STRING_CASE_IMPL(RenderPlatformFailedToCompileShader);
 
 #if PLATFORM_WINDOWS
-#if OPENGL_ENABLED  
+#if OPENGL_ENABLED
 		RESULT_STRING_CASE_IMPL(OpenglFailedToInitializeGlew);
 		RESULT_STRING_CASE_IMPL(OpenglFailedToRequiredExtensionIsNotSupported);
 #elif VULKAN_ENABLED
@@ -548,11 +557,19 @@ static constexpr char* ResultString(const EResult Value)
 		RESULT_STRING_CASE_IMPL(VulkanFailedToAcquireSwapchainImage);
 		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateBuffer);
 		RESULT_STRING_CASE_IMPL(VulkanFailedToAllocateMemory);
+		RESULT_STRING_CASE_IMPL(VulkanUnexpectedBufferUsage);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToSubmitGraphicsQueue);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToSubmitTransferQueue);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToWaitQueueIdle);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateDescriptoSetLayout);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateDescriptorPool);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToAllocateDescriptorSets);
 #endif
 #endif
 
 #if EDITOR
 		RESULT_STRING_CASE_IMPL(EditorFailedToInitImguiWindow);
+		RESULT_STRING_CASE_IMPL(EditorFailedToInitImguiBackend);
 #endif
 	default:;
 	}

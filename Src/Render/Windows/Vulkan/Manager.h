@@ -12,6 +12,13 @@ LOG_DEFINE(RenderApiVulkan);
 
 #include <EASTL/optional.h>
 
+#include "Render/Windows/Vulkan/Allocator.h"
+#include "Render/Windows/Vulkan/Utils.h"
+#include "Render/Windows/Vulkan/ShaderManager.h"
+#include "Render/Windows/Vulkan/Image.h"
+#include "Render/Windows/Vulkan/Mesh.h"
+#include "Render/Windows/Vulkan/Swapchain.h"
+
 /** \file VulkanManager.h
  *
  * Copyright 2023 CoffeeAddict. All rights reserved.
@@ -22,139 +29,6 @@ LOG_DEFINE(RenderApiVulkan);
 
 namespace Render::Api
 {
-
-/**
- * \brief Render api allocator.
- *
- */
-class Allocator: public eastl::allocator
-{
-public:
-	EXPLICIT Allocator(const char* Name = DEBUG_NAME("Render::Api::Vulkan"));
-
-public:
-	void* allocate(size_t N, int32_t /*flags*/ = 0);
-	void* allocate(size_t N, size_t Alignment, size_t AlignmentOffset, int32_t /*flags*/ = 0);
-	void* reallocate(void* Original, size_t N, int32_t /*flags*/ = 0);
-	void* reallocate(void* Original, size_t N, size_t Alignment, size_t AlignmentOffset, int32_t /*flags*/ = 0);
-	void  deallocate(void* P, size_t N);
-};
-using default_allocator_t = Allocator;
-
-INLINE Allocator::Allocator(const char* Name) : eastl::allocator{Name}
-{
-}
-
-INLINE void* Allocator::allocate(const size_t N, int32_t)
-{
-	return mi_malloc(N);
-}
-
-INLINE void* Allocator::allocate(const size_t N, const size_t Alignment, size_t, int32_t)
-{
-	return mi_malloc_aligned(N, Alignment);
-}
-
-INLINE void* Allocator::reallocate(void* Original, const size_t N, int32_t)
-{
-	return mi_realloc(Original, N);
-}
-
-INLINE void* Allocator::reallocate(void* Original, const size_t N, const size_t Alignment, size_t, int32_t)
-{
-	return mi_realloc_aligned(Original, N, Alignment);
-}
-
-INLINE void Allocator::deallocate(void* P, size_t)
-{
-	mi_free(P);
-}
-
-using shader_compile_data_t = RawBuffer<char, default_allocator_t>;
-
-#ifndef RELEASE
-enum class EShaderKind
-{
-	eVertex	  = shaderc_vertex_shader,
-	eFragment = shaderc_fragment_shader,
-	eCompute  = shaderc_compute_shader,
-	eGeometry = shaderc_geometry_shader
-};
-
-class Manager;
-
-/**
- * \brief Shader manager.
- *
- */
-class ShaderManager
-{
-	CLASS_BODY_NON_MOVEABLE_COPYABLE(ShaderManager);
-
-private:
-	ShaderManager();
-
-public:
-	~ShaderManager();
-
-public:
-	static constexpr eastl::string_view MACRO_NAME[] = {
-		const_cast<char*>("VERTEX_SHADER"), const_cast<char*>("FRAGMENT_SHADER"), const_cast<char*>("COMPUTE_SHADER"),
-		const_cast<char*>("GEOMETRY_SHADER")};
-
-	template<EShaderKind Kind>
-	shader_compile_data_t Compile(eastl::string_view SourceText, eastl::string_view Name, RESULT_PARAM_DEFINE) const;
-
-private:
-	friend class Manager;
-	shaderc_compiler_t		  mShaderc{};
-	shaderc_compile_options_t mShadercOptions{};
-};
-#endif
-
-/**
- * \brief Render api mesh class.
- *
- * Stores a vulkan buffer based on outside vertices.
- *
- * Obs: copy semantics are do by just copying the pointers, not the data.
- * This procedure is default because the buffer creation is based on gpu calls.
- *
- */
-class Mesh
-{
-	CLASS_BODY_NON_COPYABLE_OMIT_MOVE(Mesh);
-
-public:
-	Mesh() = default;
-	Mesh(Manager* Manager, VkPhysicalDevice PhysicalDevice, VkDevice Device,
-		 eastl::vector<Vertex, default_allocator_t>& Vertices, RESULT_PARAM_DEFINE);
-	~Mesh();
-
-public:
-	Mesh(Mesh&& Other) NOEXCEPT;
-	Mesh& operator=(Mesh&& Other) NOEXCEPT;
-
-public:
-	NODISCARD static Mesh Square(Manager* Manager, VkPhysicalDevice PhysicalDevice, VkDevice Device, RESULT_PARAM_DEFINE);
-
-public:
-	void			   DestroyVertexBuffer(RESULT_PARAM_DEFINE);
-	NODISCARD uint32_t GetVertexSize() const;
-	NODISCARD VkBuffer GetVertexBuffer() const;
-
-private:
-	void	 CreateVertexBuffer(eastl::vector<Vertex, default_allocator_t>& Vertices, RESULT_PARAM_DEFINE);
-	uint32_t FindMemoryTypeIndex(uint32_t AllowedTypes, VkMemoryPropertyFlags PropertyFlags, RESULT_PARAM_DEFINE) const;
-
-private:
-	Manager*		 mManager{};
-	uint32_t		 mVertexSize{};
-	VkBuffer		 mVertexBuffer{};
-	VkDeviceMemory	 mVertexBufferMemory{};
-	VkPhysicalDevice mPhysicalDevice{};
-	VkDevice		 mDevice{};
-};
 
 /**
  * @brief Render api manager class.
@@ -189,13 +63,6 @@ private:
 		NODISCARD bool IsComplete() const;
 	};
 
-	struct SwapchainSupportDetails
-	{
-		VkSurfaceCapabilitiesKHR						   Capabilities{};
-		RawBuffer<VkSurfaceFormatKHR, default_allocator_t> Formats{default_allocator_t{}};
-		RawBuffer<VkPresentModeKHR, default_allocator_t>   PresentModes{default_allocator_t{}};
-	};
-
 	void		   CreateInstance(RESULT_PARAM_DEFINE);
 	void		   CreateSurface(RESULT_PARAM_DEFINE);
 	void		   PickPhysicalDevice(RESULT_PARAM_DEFINE);
@@ -203,9 +70,15 @@ private:
 	void		   CreateSwapchain(RESULT_PARAM_DEFINE);
 	void		   CreateImageViews(RESULT_PARAM_DEFINE);
 	void		   CreateRenderPass(RESULT_PARAM_DEFINE);
+	void		   CreateDescriptorSetLayout(RESULT_PARAM_DEFINE);
 	void		   CreateGraphicsPipeline(RESULT_PARAM_DEFINE);
 	void		   CreateFramebuffers(RESULT_PARAM_DEFINE);
 	VkShaderModule CreateShaderModule(const shader_compile_data_t& Data, RESULT_PARAM_DEFINE) const;
+	void		   CreateUniformBuffers(RESULT_PARAM_DEFINE);
+	void		   CreateDescriptorPool(RESULT_PARAM_DEFINE);
+	void		   CreateDescriptorSets(RESULT_PARAM_DEFINE);
+
+	void UpdateUniformBuffer(uint32_t ImageIndex, RESULT_PARAM_DEFINE);
 
 	void CreateCommandPool(RESULT_PARAM_DEFINE);
 	void CreateCommandBuffers(RESULT_PARAM_DEFINE);
@@ -218,10 +91,10 @@ private:
 	void RecreateSyncObjects(RESULT_PARAM_DEFINE);
 
 private:
-	NODISCARD bool						IsDeviceSuitable(VkPhysicalDevice Device) const;
-	NODISCARD QueueFamilyIndices		FindQueueFamilies(VkPhysicalDevice Device) const;
-	NODISCARD bool						CheckDeviceExtensionSupport(VkPhysicalDevice Device) const;
-	NODISCARD SwapchainSupportDetails	QuerySwapchainSupport(VkPhysicalDevice Device) const;
+	NODISCARD bool				 IsDeviceSuitable(VkPhysicalDevice Device) const;
+	NODISCARD QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice Device) const;
+	NODISCARD bool				 CheckDeviceExtensionSupport(VkPhysicalDevice Device) const;
+	NODISCARD Swapchain::SupportDetails QuerySwapchainSupport(VkPhysicalDevice Device) const;
 	NODISCARD static VkSurfaceFormatKHR ChooseSwapSurfaceFormat(
 		const RawBuffer<VkSurfaceFormatKHR, default_allocator_t>& AvailableFormats);
 	NODISCARD static VkPresentModeKHR ChooseSwapPresentMode(
@@ -263,24 +136,25 @@ private:
 private:
 	Engine::Window& mWindow;
 	bool			mVsync = true;
-	ShaderManager	mShaderManager{};
+#ifndef RELEASE
+	ShaderManager mShaderManager{};
+#endif
 
 private:
-	uint32_t									  mMaxFrames = 3u, mCurrentFrame{};
-	VkInstance									  mInstance{};
-	VkPhysicalDevice							  mPhysicalDevice{};
-	VkSurfaceKHR								  mSurface{};
-	VkDevice									  mDevice{};
-	VkQueue										  mGraphicsQueue{}, mPresentQueue{};
-	VkSwapchainKHR								  mSwapchain{};
-	RawBuffer<VkImage, default_allocator_t>		  mSwapchainImages{mAllocator};
-	VkFormat									  mSwapchainImageFormat;
-	VkExtent2D									  mSwapchainExtent;
-	RawBuffer<VkImageView, default_allocator_t>	  mSwapchainImageViews{mAllocator};
-	RawBuffer<VkFramebuffer, default_allocator_t> mSwapchainFramebuffers{mAllocator};
-	VkRenderPass								  mRenderPass{};
-	VkPipelineLayout							  mPipelineLayout{};
-	VkPipeline									  mGraphicsPipeline{};
+	default_allocator_t	  mAllocator{};
+	VkAllocationCallbacks mAllocationCallbacks{};
+
+private:
+	uint32_t		 mMaxFrames = 3u, mCurrentFrame{};
+	VkInstance		 mInstance{};
+	VkPhysicalDevice mPhysicalDevice{};
+	VkSurfaceKHR	 mSurface{};
+	VkDevice		 mDevice{};
+	VkQueue			 mGraphicsQueue{}, mPresentQueue{};
+	Swapchain		 mSwapchain{mAllocator};
+	VkRenderPass	 mRenderPass{};
+	VkPipelineLayout mPipelineLayout{};
+	VkPipeline		 mGraphicsPipeline{};
 
 	VkCommandPool									mCommandPool{};
 	RawBuffer<VkCommandBuffer, default_allocator_t> mCommandBuffers{mAllocator};
@@ -288,15 +162,20 @@ private:
 	RawBuffer<VkSemaphore, default_allocator_t>		mRenderFinishedSemaphores{mAllocator};
 	RawBuffer<VkFence, default_allocator_t>			mInFlightFences{mAllocator};
 
+	VkDescriptorSetLayout mDescriptorSetLayout{};
+
+	VkDescriptorPool									mDescriptorPool{};
+	eastl::vector<VkDescriptorSet, default_allocator_t> mDescriptorSets{};
+
+	eastl::vector<VkBuffer, default_allocator_t>	   mUniformBuffer{};
+	eastl::vector<VkDeviceMemory, default_allocator_t> mUniformBufferMemory{};
+
 private:
 	bool mMarkDirtyFramebufferSize{};
 
 private:
-	default_allocator_t	  mAllocator{};
-	VkAllocationCallbacks mAllocatorCallbacks{};
-
-private:
-	Mesh mMesh;
+	eastl::vector<Mesh, default_allocator_t> mMeshes{};
+	eastl::vector<Mvp, default_allocator_t>	 mMeshesMvps{};
 
 private:
 #if EDITOR
@@ -310,65 +189,6 @@ private:
 	eastl::vector<const char*, default_allocator_t> mDeviceExtensions{{VK_KHR_SWAPCHAIN_EXTENSION_NAME}, mAllocator};
 };
 
-#ifndef RELEASE
-
-INLINE ShaderManager::ShaderManager()
-{
-	mShadercOptions = shaderc_compile_options_initialize();
-	shaderc_compile_options_set_source_language(mShadercOptions, shaderc_source_language_glsl); // Temporary
-
-	shaderc_compile_options_set_optimization_level(mShadercOptions,
-#ifdef RELEASE
-												   shaderc_optimization_level_performance
-#else
-												   shaderc_optimization_level_zero
-#endif
-	);
-
-	mShaderc = shaderc_compiler_initialize();
-}
-
-INLINE ShaderManager::~ShaderManager()
-{
-	shaderc_compiler_release(mShaderc);
-	shaderc_compile_options_release(mShadercOptions);
-}
-
-template<EShaderKind Kind>
-shader_compile_data_t ShaderManager::Compile(const eastl::string_view SourceText, const eastl::string_view Name,
-											 RESULT_PARAM_IMPL) const
-{
-	shader_compile_data_t lBuffer{default_allocator_t{DEBUG_NAME_VAL("Render::Api::Vulkan::ShaderManager")}};
-	RESULT_ENSURE_LAST(lBuffer);
-
-	LOGC(Verbose, RenderApiVulkan, "Compiling shader '%s'...", Name.data());
-
-	shaderc_compile_options_add_macro_definition(mShadercOptions, MACRO_NAME[0].data(), MACRO_NAME[0].size(), "0", 1);
-	shaderc_compile_options_add_macro_definition(mShadercOptions, MACRO_NAME[1].data(), MACRO_NAME[1].size(), "0", 1);
-	shaderc_compile_options_add_macro_definition(mShadercOptions, MACRO_NAME[2].data(), MACRO_NAME[2].size(), "0", 1);
-	shaderc_compile_options_add_macro_definition(mShadercOptions, MACRO_NAME[3].data(), MACRO_NAME[3].size(), "0", 1);
-
-	constexpr auto lName = MACRO_NAME[static_cast<uint32_t>(Kind)];
-	shaderc_compile_options_add_macro_definition(mShadercOptions, lName.data(), lName.size(), "1", 1);
-	const auto lResult =
-		shaderc_compile_into_spv(mShaderc, SourceText.data(), SourceText.size(), static_cast<shaderc_shader_kind>(Kind),
-								 Name.data(), "main", mShadercOptions);
-
-	if (const auto lResultStatus = shaderc_result_get_compilation_status(lResult);
-		lResultStatus != shaderc_compilation_status_success)
-	{
-		LOGC(Error, RenderApiVulkan, "Failed to compile shader: %s", shaderc_result_get_error_message(lResult));
-		RESULT_ERROR(RenderPlatformFailedToCompileShader, lBuffer);
-	}
-
-	lBuffer.Resize(shaderc_result_get_length(lResult));
-	memcpy(lBuffer.Data(), shaderc_result_get_bytes(lResult), lBuffer.Size());
-
-	RESULT_OK();
-	LOGC(Verbose, RenderApiVulkan, "Success shader compilation for '%s'.", Name.data());
-	return lBuffer;
-}
-#endif
 
 INLINE Manager::Manager() : mWindow{Engine::Manager::Instance().GetWindow()}
 {
@@ -389,18 +209,86 @@ INLINE void Manager::Initialize(RESULT_PARAM_IMPL)
 	RESULT_ENSURE_CALL(CreateSurface(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(PickPhysicalDevice(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateLogicalDevice(RESULT_ARG_PASS));
-
-	RESULT_ENSURE_CALL(mMesh = Mesh::Square(this, mPhysicalDevice, mDevice, RESULT_ARG_PASS));
-
 	RESULT_ENSURE_CALL(CreateSwapchain(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateImageViews(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateRenderPass(RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(CreateDescriptorSetLayout(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateGraphicsPipeline(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateFramebuffers(RESULT_ARG_PASS));
-
 	RESULT_ENSURE_CALL(CreateCommandPool(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateCommandBuffers(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateSyncObjects(RESULT_ARG_PASS));
+
+	RESULT_ENSURE_CALL(CreateUniformBuffers(RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(CreateDescriptorPool(RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(CreateDescriptorSets(RESULT_ARG_PASS));
+
+#if EDITOR
+	ImGui_ImplVulkan_InitInfo lInitInfo{};
+	lInitInfo.Device		 = mDevice;
+	lInitInfo.Instance		 = mInstance;
+	lInitInfo.Allocator		 = &mAllocationCallbacks;
+	lInitInfo.DescriptorPool = mDescriptorPool;
+	lInitInfo.MinImageCount	 = mMaxFrames;
+	lInitInfo.ImageCount	 = mMaxFrames;
+	lInitInfo.PhysicalDevice = mPhysicalDevice;
+	lInitInfo.Queue			 = mGraphicsQueue;
+	lInitInfo.MSAASamples	 = VK_SAMPLE_COUNT_1_BIT;
+	lInitInfo.QueueFamily	 = FindQueueFamilies(mPhysicalDevice).GraphicsFamily.value();
+
+	Editor::Manager::InitializeInfo lEditorInitInfo{};
+	lEditorInitInfo.Window		  = &mWindow;
+	lEditorInitInfo.ImguiInitInfo = &lInitInfo;
+	lEditorInitInfo.RenderPass	  = mRenderPass;
+	lEditorInitInfo.Surface		  = mSurface;
+	lEditorInitInfo.Swapchain	  = mSwapchain.Object;
+
+	RESULT_ENSURE_CALL(Editor::Instance().Initialize(lEditorInitInfo, RESULT_ARG_PASS));
+
+	// // Upload Fonts
+	//  {
+	//      // Use any command queue
+	//      const VkCommandBuffer lCommandBuffer = mCommandBuffers[mCurrentFrame++];
+
+	//      vkResetCommandPool(mDevice, mCommandPool, 0);
+	//      VkCommandBufferBeginInfo lBeginInfo = {};
+	//      lBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	//      lBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	//      vkBeginCommandBuffer(lCommandBuffer, &lBeginInfo);
+
+	//      ImGui_ImplVulkan_CreateFontsTexture(lCommandBuffer);
+
+	//      VkSubmitInfo lEndInfo = {};
+	//      lEndInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	//      lEndInfo.commandBufferCount = 1;
+	//      lEndInfo.pCommandBuffers = &lCommandBuffer;
+	// vkEndCommandBuffer(lCommandBuffer);
+	//      vkQueueSubmit(mGraphicsQueue, 1, &lEndInfo, VK_NULL_HANDLE);
+
+	//      vkDeviceWaitIdle(mDevice);
+	//      ImGui_ImplVulkan_DestroyFontUploadObjects();
+	//  }
+
+#endif
+
+	Mesh::Info lMeshInfo{};
+	lMeshInfo.PhysicalDevice = mPhysicalDevice;
+	lMeshInfo.Device = mDevice;
+	lMeshInfo.AllocatorCallbacks = &mAllocationCallbacks;
+	lMeshInfo.TransferQueue = mGraphicsQueue;
+	lMeshInfo.TransferCmdPool = mCommandPool;
+
+	RESULT_ENSURE_CALL(mMeshes.emplace_back(
+		Mesh::Square(lMeshInfo, glm::vec3{-0.35f, 0.25f, 0.f}, RESULT_ARG_PASS)));
+	RESULT_ENSURE_CALL(
+		mMeshes.emplace_back(Mesh::Square(lMeshInfo, glm::vec3{0.7f, 0.f, 0.f}, RESULT_ARG_PASS)));
+
+	glm::mat4 lProjection = glm::perspective(glm::radians(90.f), 16.f / 9.f, 0.01f, 1000.f);
+	lProjection[1][1] *= -1.f;
+	glm::mat4 lView = glm::lookAt(glm::vec3{0.f, 0.f, 1.f}, glm::vec3{0.f}, glm::vec3{0.f, 1.f, 0.f});
+
+	mMeshesMvps.emplace_back(Mvp{lProjection, lView, glm::translate(glm::mat4{1.f}, glm::vec3{0.f})});
+	mMeshesMvps.emplace_back(Mvp{lProjection, lView, glm::translate(glm::mat4{1.f}, glm::vec3{0.f, 0.f, 0.f})});
 
 	RESULT_OK();
 }
@@ -409,13 +297,10 @@ INLINE void Manager::Update(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
-	// ImGui_ImplVulkan_NewFrame();
-	// ImGui::NewFrame();
-
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t lImageIndex{};
-	VkResult lResult = vkAcquireNextImageKHR(mDevice, mSwapchain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame],
+	VkResult lResult = vkAcquireNextImageKHR(mDevice, mSwapchain.Object, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame],
 											 VK_NULL_HANDLE, &lImageIndex);
 
 	if (lResult == VK_ERROR_OUT_OF_DATE_KHR)
@@ -428,6 +313,8 @@ INLINE void Manager::Update(RESULT_PARAM_IMPL)
 	RESULT_CONDITION_ENSURE(lResult == VK_SUCCESS || lResult == VK_SUBOPTIMAL_KHR, VulkanFailedToAcquireSwapchainImage);
 
 	vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
+
+	RESULT_ENSURE_CALL(UpdateUniformBuffer(mCurrentFrame, RESULT_ARG_PASS));
 
 	vkResetCommandBuffer(mCommandBuffers[mCurrentFrame], 0);
 	RESULT_ENSURE_CALL(RecordCommandBuffer(mCommandBuffers[mCurrentFrame], lImageIndex, RESULT_ARG_PASS));
@@ -458,7 +345,7 @@ INLINE void Manager::Update(RESULT_PARAM_IMPL)
 	lPresentInfo.waitSemaphoreCount = 1;
 	lPresentInfo.pWaitSemaphores	= lSignalSemaphores;
 
-	const VkSwapchainKHR lSwapChains[] = {mSwapchain};
+	const VkSwapchainKHR lSwapChains[] = {mSwapchain.Object};
 	lPresentInfo.swapchainCount		   = 1;
 	lPresentInfo.pSwapchains		   = lSwapChains;
 
@@ -474,39 +361,53 @@ INLINE void Manager::Update(RESULT_PARAM_IMPL)
 
 	mCurrentFrame = (mCurrentFrame + 1u) % mMaxFrames;
 
-	// ImGui::Render();
-
 	RESULT_OK();
 }
 
 INLINE void Manager::Finalize(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
+
 	RESULT_CONDITION_ENSURE(mInstance, NullPtr);
 	RESULT_CONDITION_ENSURE(mSurface, NullPtr);
-	RESULT_CONDITION_ENSURE(mSwapchain, NullPtr);
+	RESULT_CONDITION_ENSURE(mSwapchain.Object, NullPtr);
 
 	vkDeviceWaitIdle(mDevice);
 
-	RESULT_ENSURE_CALL(mMesh.DestroyVertexBuffer(RESULT_ARG_PASS));
+#if EDITOR
+	RESULT_ENSURE_CALL(Editor::Instance().Finalize(RESULT_ARG_PASS));
+#endif
+
+	vkDestroyDescriptorPool(mDevice, mDescriptorPool, &mAllocationCallbacks);
+	vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, &mAllocationCallbacks);
+
+	for (uint32_t lI = 0; lI < mMaxFrames; ++lI)
+	{
+		Utils::DestroyBuffer(mDevice, mUniformBuffer[lI], mUniformBufferMemory[lI], &mAllocationCallbacks);
+	}
+
+	for (auto& lMesh: mMeshes)
+	{
+		RESULT_ENSURE_CALL(lMesh.DestroyBuffers(RESULT_ARG_PASS));
+	}
 
 	RESULT_ENSURE_CALL(DestroySwapchain(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(DestroySyncObjects(RESULT_ARG_PASS));
 
-	vkDestroyCommandPool(mDevice, mCommandPool, &mAllocatorCallbacks);
+	vkDestroyCommandPool(mDevice, mCommandPool, &mAllocationCallbacks);
 
-	vkDestroyPipeline(mDevice, mGraphicsPipeline, &mAllocatorCallbacks);
-	vkDestroyPipelineLayout(mDevice, mPipelineLayout, &mAllocatorCallbacks);
-	vkDestroyRenderPass(mDevice, mRenderPass, &mAllocatorCallbacks);
+	vkDestroyPipeline(mDevice, mGraphicsPipeline, &mAllocationCallbacks);
+	vkDestroyPipelineLayout(mDevice, mPipelineLayout, &mAllocationCallbacks);
+	vkDestroyRenderPass(mDevice, mRenderPass, &mAllocationCallbacks);
 
-	vkDestroyDevice(mDevice, &mAllocatorCallbacks);
+	vkDestroyDevice(mDevice, &mAllocationCallbacks);
 
 #if VK_ENABLE_VALIDATION_LAYER
-	DestroyDebugUtilsMessengerExt(mInstance, mDebugMessenger, &mAllocatorCallbacks);
+	DestroyDebugUtilsMessengerExt(mInstance, mDebugMessenger, &mAllocationCallbacks);
 #endif
 
-	vkDestroySurfaceKHR(mInstance, mSurface, &mAllocatorCallbacks);
-	vkDestroyInstance(mInstance, &mAllocatorCallbacks);
+	vkDestroySurfaceKHR(mInstance, mSurface, &mAllocationCallbacks);
+	vkDestroyInstance(mInstance, &mAllocationCallbacks);
 
 	RESULT_OK();
 }
@@ -525,8 +426,8 @@ INLINE void Manager::MarkDirtyFramebufferSize(RESULT_PARAM_IMPL)
 {
 	RESULT_CONDITION_ENSURE(Render::Manager::Instance().IsInThread(), CurrentThreadIsNotTheRequiredOne);
 	RESULT_ENSURE_LAST();
-	LOGC(Info, RenderApiVulkan, "Marking dirty framebuffer size. New size: [%u,%u].", mSwapchainExtent.width,
-		 mSwapchainExtent.height);
+	LOGC(Info, RenderApiVulkan, "Marking dirty framebuffer size. New size: [%u,%u].", mSwapchain.Extent.width,
+		 mSwapchain.Extent.height);
 	mMarkDirtyFramebufferSize = true;
 	RESULT_OK();
 }
@@ -552,12 +453,12 @@ INLINE void Manager::CreateInstance(RESULT_PARAM_IMPL)
 #endif
 
 	// Setup allocator
-	mAllocatorCallbacks.pUserData			  = &mAllocator;
-	mAllocatorCallbacks.pfnAllocation		  = Allocation;
-	mAllocatorCallbacks.pfnFree				  = Free;
-	mAllocatorCallbacks.pfnInternalAllocation = InternalAllocationNotification;
-	mAllocatorCallbacks.pfnInternalFree		  = InternalFreeNotification;
-	mAllocatorCallbacks.pfnReallocation		  = Reallocation;
+	mAllocationCallbacks.pUserData			   = &mAllocator;
+	mAllocationCallbacks.pfnAllocation		   = Allocation;
+	mAllocationCallbacks.pfnFree			   = Free;
+	mAllocationCallbacks.pfnInternalAllocation = InternalAllocationNotification;
+	mAllocationCallbacks.pfnInternalFree	   = InternalFreeNotification;
+	mAllocationCallbacks.pfnReallocation	   = Reallocation;
 
 	VkApplicationInfo lAppInfo{};
 	lAppInfo.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -596,7 +497,7 @@ INLINE void Manager::CreateInstance(RESULT_PARAM_IMPL)
 #endif
 
 	VkResult lResult;
-	RESULT_CONDITION_ENSURE((lResult = vkCreateInstance(&lInstanceCi, &mAllocatorCallbacks, &mInstance)) == VK_SUCCESS,
+	RESULT_CONDITION_ENSURE((lResult = vkCreateInstance(&lInstanceCi, &mAllocationCallbacks, &mInstance)) == VK_SUCCESS,
 							VulkanFailedToCreateInstance);
 
 	RESULT_OK();
@@ -609,7 +510,7 @@ INLINE void Manager::CreateSurface(RESULT_PARAM_IMPL)
 	lCreateInfo.sType	  = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 	lCreateInfo.hwnd	  = mWindow.GetHandle();
 	lCreateInfo.hinstance = GetModuleHandle(nullptr);
-	RESULT_CONDITION_ENSURE(vkCreateWin32SurfaceKHR(mInstance, &lCreateInfo, &mAllocatorCallbacks, &mSurface) ==
+	RESULT_CONDITION_ENSURE(vkCreateWin32SurfaceKHR(mInstance, &lCreateInfo, &mAllocationCallbacks, &mSurface) ==
 								VK_SUCCESS,
 							VulkanFailedToCreateSurface);
 	RESULT_OK();
@@ -644,8 +545,9 @@ INLINE void Manager::CreateLogicalDevice(RESULT_PARAM_IMPL)
 {
 	QueueFamilyIndices lIndices = FindQueueFamilies(mPhysicalDevice);
 
-	eastl::vector<VkDeviceQueueCreateInfo, default_allocator_t> lQueueCreateInfos{mAllocator};
-	eastl::set<uint32_t> lUniqueQueueFamilies = {lIndices.GraphicsFamily.value(), lIndices.PresentFamily.value()};
+	eastl::vector<VkDeviceQueueCreateInfo, default_allocator_t>		 lQueueCreateInfos{mAllocator};
+	eastl::set<uint32_t, eastl::less<uint32_t>, default_allocator_t> lUniqueQueueFamilies = {
+		lIndices.GraphicsFamily.value(), lIndices.PresentFamily.value()};
 	lQueueCreateInfos.reserve(lUniqueQueueFamilies.size());
 
 	constexpr float lQueuePriority = 1.0f;
@@ -662,16 +564,12 @@ INLINE void Manager::CreateLogicalDevice(RESULT_PARAM_IMPL)
 	VkPhysicalDeviceFeatures lDeviceFeatures{};
 
 	VkDeviceCreateInfo lCreateInfo{};
-	lCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
-	lCreateInfo.pQueueCreateInfos	 = lQueueCreateInfos.data();
-	lCreateInfo.queueCreateInfoCount = 1;
-
-	lCreateInfo.pEnabledFeatures = &lDeviceFeatures;
-
+	lCreateInfo.sType					= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	lCreateInfo.pQueueCreateInfos		= lQueueCreateInfos.data();
+	lCreateInfo.queueCreateInfoCount	= 1;
+	lCreateInfo.pEnabledFeatures		= &lDeviceFeatures;
 	lCreateInfo.enabledExtensionCount	= static_cast<uint32_t>(mDeviceExtensions.size());
 	lCreateInfo.ppEnabledExtensionNames = mDeviceExtensions.data();
-
 #if VK_ENABLE_VALIDATION_LAYER
 	lCreateInfo.enabledLayerCount	= static_cast<uint32_t>(mValidationLayers.size());
 	lCreateInfo.ppEnabledLayerNames = mValidationLayers.data();
@@ -679,7 +577,8 @@ INLINE void Manager::CreateLogicalDevice(RESULT_PARAM_IMPL)
 	lCreateInfo.enabledLayerCount = 0;
 #endif
 
-	RESULT_CONDITION_ENSURE(vkCreateDevice(mPhysicalDevice, &lCreateInfo, &mAllocatorCallbacks, &mDevice) == VK_SUCCESS,
+	RESULT_CONDITION_ENSURE(vkCreateDevice(mPhysicalDevice, &lCreateInfo, &mAllocationCallbacks, &mDevice) ==
+								VK_SUCCESS,
 							VulkanFailedToCreateDevice);
 
 	vkGetDeviceQueue(mDevice, lIndices.GraphicsFamily.value(), 0, &mGraphicsQueue);
@@ -689,7 +588,7 @@ INLINE void Manager::CreateLogicalDevice(RESULT_PARAM_IMPL)
 INLINE void Manager::CreateSwapchain(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
-	const SwapchainSupportDetails lSwapChainSupport = QuerySwapchainSupport(mPhysicalDevice);
+	const Swapchain::SupportDetails lSwapChainSupport = QuerySwapchainSupport(mPhysicalDevice);
 
 	const VkSurfaceFormatKHR lSurfaceFormat = ChooseSwapSurfaceFormat(lSwapChainSupport.Formats);
 	const VkPresentModeKHR	 lPresentMode	= ChooseSwapPresentMode(lSwapChainSupport.PresentModes);
@@ -733,31 +632,31 @@ INLINE void Manager::CreateSwapchain(RESULT_PARAM_IMPL)
 
 	lCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-	RESULT_CONDITION_ENSURE(vkCreateSwapchainKHR(mDevice, &lCreateInfo, &mAllocatorCallbacks, &mSwapchain) ==
+	RESULT_CONDITION_ENSURE(vkCreateSwapchainKHR(mDevice, &lCreateInfo, &mAllocationCallbacks, &mSwapchain.Object) ==
 								VK_SUCCESS,
 							VulkanFailedToCreateSwapchain);
 
-	vkGetSwapchainImagesKHR(mDevice, mSwapchain, &lImageCount, nullptr);
-	mSwapchainImages.Resize(lImageCount);
-	vkGetSwapchainImagesKHR(mDevice, mSwapchain, &lImageCount, mSwapchainImages.Data());
+	vkGetSwapchainImagesKHR(mDevice, mSwapchain.Object, &lImageCount, nullptr);
+	mSwapchain.Images.Resize(lImageCount);
+	vkGetSwapchainImagesKHR(mDevice, mSwapchain.Object, &lImageCount, mSwapchain.Images.Data());
 
-	mSwapchainImageFormat = lSurfaceFormat.format;
-	mSwapchainExtent	  = lExtent;
+	mSwapchain.ImageFormat = lSurfaceFormat.format;
+	mSwapchain.Extent	  = lExtent;
 	RESULT_OK();
 }
 
 INLINE void Manager::CreateImageViews(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
-	mSwapchainImageViews.Resize(mSwapchainImages.Size());
+	mSwapchain.ImageViews.Resize(mSwapchain.Images.Size());
 
-	for (size_t lI = 0; lI < mSwapchainImages.Size(); lI++)
+	for (size_t lI = 0; lI < mSwapchain.Images.Size(); lI++)
 	{
 		VkImageViewCreateInfo lCreateInfo{};
 		lCreateInfo.sType							= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		lCreateInfo.image							= mSwapchainImages[lI];
+		lCreateInfo.image							= mSwapchain.Images[lI];
 		lCreateInfo.viewType						= VK_IMAGE_VIEW_TYPE_2D;
-		lCreateInfo.format							= mSwapchainImageFormat;
+		lCreateInfo.format							= mSwapchain.ImageFormat;
 		lCreateInfo.components.r					= VK_COMPONENT_SWIZZLE_IDENTITY;
 		lCreateInfo.components.g					= VK_COMPONENT_SWIZZLE_IDENTITY;
 		lCreateInfo.components.b					= VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -769,7 +668,7 @@ INLINE void Manager::CreateImageViews(RESULT_PARAM_IMPL)
 		lCreateInfo.subresourceRange.layerCount		= 1;
 
 		RESULT_CONDITION_ENSURE(
-			vkCreateImageView(mDevice, &lCreateInfo, &mAllocatorCallbacks, &mSwapchainImageViews[lI]) == VK_SUCCESS,
+			vkCreateImageView(mDevice, &lCreateInfo, &mAllocationCallbacks, &mSwapchain.ImageViews[lI]) == VK_SUCCESS,
 			VulkanFailedToCreateSwapchainImageView);
 	}
 	RESULT_OK();
@@ -780,7 +679,7 @@ INLINE void Manager::CreateRenderPass(RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST();
 
 	VkAttachmentDescription lColorAttachment{};
-	lColorAttachment.format			= mSwapchainImageFormat;
+	lColorAttachment.format			= mSwapchain.ImageFormat;
 	lColorAttachment.samples		= VK_SAMPLE_COUNT_1_BIT;
 	lColorAttachment.loadOp			= VK_ATTACHMENT_LOAD_OP_CLEAR;
 	lColorAttachment.storeOp		= VK_ATTACHMENT_STORE_OP_STORE;
@@ -815,9 +714,35 @@ INLINE void Manager::CreateRenderPass(RESULT_PARAM_IMPL)
 	lRenderPassInfo.dependencyCount = 1;
 	lRenderPassInfo.pDependencies	= &lDependency;
 
-	RESULT_CONDITION_ENSURE(vkCreateRenderPass(mDevice, &lRenderPassInfo, &mAllocatorCallbacks, &mRenderPass) ==
+	RESULT_CONDITION_ENSURE(vkCreateRenderPass(mDevice, &lRenderPassInfo, &mAllocationCallbacks, &mRenderPass) ==
 								VK_SUCCESS,
 							VulkanFailedToCreateRenderPass);
+
+	RESULT_OK();
+}
+
+INLINE void Manager::CreateDescriptorSetLayout(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+
+	// VkSampler lSamplers[] = {};
+
+	// Mvp binding info
+	VkDescriptorSetLayoutBinding lMvpLayoutBinding{};
+	lMvpLayoutBinding.binding			 = 0;
+	lMvpLayoutBinding.descriptorType	 = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lMvpLayoutBinding.descriptorCount	 = 1;
+	lMvpLayoutBinding.stageFlags		 = VK_SHADER_STAGE_VERTEX_BIT;
+	lMvpLayoutBinding.pImmutableSamplers = nullptr;
+
+	VkDescriptorSetLayoutCreateInfo lLayoutCreateInfo{};
+	lLayoutCreateInfo.sType		   = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	lLayoutCreateInfo.bindingCount = 1;
+	lLayoutCreateInfo.pBindings	   = &lMvpLayoutBinding;
+
+	RESULT_CONDITION_ENSURE(vkCreateDescriptorSetLayout(mDevice, &lLayoutCreateInfo, &mAllocationCallbacks,
+														&mDescriptorSetLayout) == VK_SUCCESS,
+							VulkanFailedToCreateDescriptoSetLayout);
 
 	RESULT_OK();
 }
@@ -871,10 +796,10 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 	lVertexAttrDescs[0].offset	 = offsetof(Vertex, Position);
 
 	// Color attribute
-	lVertexAttrDescs[1].binding = 0;
+	lVertexAttrDescs[1].binding	 = 0;
 	lVertexAttrDescs[1].location = 1;
-	lVertexAttrDescs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-	lVertexAttrDescs[1].offset = offsetof(Vertex, Color);
+	lVertexAttrDescs[1].format	 = VK_FORMAT_R32G32B32_SFLOAT;
+	lVertexAttrDescs[1].offset	 = offsetof(Vertex, Color);
 
 	VkPipelineVertexInputStateCreateInfo lVertexInputInfo{};
 	lVertexInputInfo.sType							 = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -900,7 +825,7 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 	lRasterizer.polygonMode				= VK_POLYGON_MODE_FILL;
 	lRasterizer.lineWidth				= 1.0f;
 	lRasterizer.cullMode				= VK_CULL_MODE_BACK_BIT;
-	lRasterizer.frontFace				= VK_FRONT_FACE_CLOCKWISE;
+	lRasterizer.frontFace				= VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	lRasterizer.depthBiasEnable			= VK_FALSE;
 
 	VkPipelineMultisampleStateCreateInfo lMultisampling{};
@@ -932,11 +857,13 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 
 	VkPipelineLayoutCreateInfo lPipelineLayoutInfo{};
 	lPipelineLayoutInfo.sType				   = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	lPipelineLayoutInfo.setLayoutCount		   = 0;
+	lPipelineLayoutInfo.setLayoutCount		   = 1;
+	lPipelineLayoutInfo.pSetLayouts			   = &mDescriptorSetLayout;
 	lPipelineLayoutInfo.pushConstantRangeCount = 0;
+	lPipelineLayoutInfo.pPushConstantRanges	   = nullptr;
 
 	RESULT_CONDITION_ENSURE(
-		vkCreatePipelineLayout(mDevice, &lPipelineLayoutInfo, &mAllocatorCallbacks, &mPipelineLayout) == VK_SUCCESS,
+		vkCreatePipelineLayout(mDevice, &lPipelineLayoutInfo, &mAllocationCallbacks, &mPipelineLayout) == VK_SUCCESS,
 		VulkanFailedToCreateGraphicsPipeline);
 
 	VkGraphicsPipelineCreateInfo lPipelineInfo{};
@@ -955,12 +882,12 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 	lPipelineInfo.subpass			  = 0;
 	lPipelineInfo.basePipelineHandle  = VK_NULL_HANDLE;
 
-	RESULT_CONDITION_ENSURE(vkCreateGraphicsPipelines(mDevice, VK_NULL_HANDLE, 1, &lPipelineInfo, &mAllocatorCallbacks,
+	RESULT_CONDITION_ENSURE(vkCreateGraphicsPipelines(mDevice, VK_NULL_HANDLE, 1, &lPipelineInfo, &mAllocationCallbacks,
 													  &mGraphicsPipeline) == VK_SUCCESS,
 							VulkanFailedToCreateGraphicsPipeline);
 
-	vkDestroyShaderModule(mDevice, lBasicVertShaderModule, &mAllocatorCallbacks);
-	vkDestroyShaderModule(mDevice, lBasicFragShaderModule, &mAllocatorCallbacks);
+	vkDestroyShaderModule(mDevice, lBasicVertShaderModule, &mAllocationCallbacks);
+	vkDestroyShaderModule(mDevice, lBasicFragShaderModule, &mAllocationCallbacks);
 
 	RESULT_OK();
 }
@@ -969,23 +896,23 @@ INLINE void Manager::CreateFramebuffers(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
-	mSwapchainFramebuffers.Resize(mSwapchainImageViews.Size());
+	mSwapchain.Framebuffers.Resize(mSwapchain.ImageViews.Size());
 
-	for (size_t i = 0; i < mSwapchainFramebuffers.Size(); ++i)
+	for (size_t i = 0; i < mSwapchain.Framebuffers.Size(); ++i)
 	{
-		const VkImageView lAttachments[] = {mSwapchainImageViews[i]};
+		const VkImageView lAttachments[] = {mSwapchain.ImageViews[i]};
 
 		VkFramebufferCreateInfo lFramebufferInfo{};
 		lFramebufferInfo.sType			 = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		lFramebufferInfo.renderPass		 = mRenderPass;
 		lFramebufferInfo.attachmentCount = 1;
 		lFramebufferInfo.pAttachments	 = lAttachments;
-		lFramebufferInfo.width			 = mSwapchainExtent.width;
-		lFramebufferInfo.height			 = mSwapchainExtent.height;
+		lFramebufferInfo.width			 = mSwapchain.Extent.width;
+		lFramebufferInfo.height			 = mSwapchain.Extent.height;
 		lFramebufferInfo.layers			 = 1;
 
-		RESULT_CONDITION_ENSURE(vkCreateFramebuffer(mDevice, &lFramebufferInfo, &mAllocatorCallbacks,
-													&mSwapchainFramebuffers[i]) == VK_SUCCESS,
+		RESULT_CONDITION_ENSURE(vkCreateFramebuffer(mDevice, &lFramebufferInfo, &mAllocationCallbacks,
+													&mSwapchain.Framebuffers[i]) == VK_SUCCESS,
 								VulkanFailedToCreateFramebuffer);
 	}
 
@@ -1002,11 +929,105 @@ INLINE VkShaderModule Manager::CreateShaderModule(const shader_compile_data_t& D
 	lCreateInfo.codeSize = Data.Size();
 	lCreateInfo.pCode	 = reinterpret_cast<const uint32_t*>(Data.Data());
 
-	RESULT_CONDITION_ENSURE(vkCreateShaderModule(mDevice, &lCreateInfo, &mAllocatorCallbacks, &lModule) == VK_SUCCESS,
+	RESULT_CONDITION_ENSURE(vkCreateShaderModule(mDevice, &lCreateInfo, &mAllocationCallbacks, &lModule) == VK_SUCCESS,
 							VulkanFailedToCreateShaderModule, {});
 
 	RESULT_OK();
 	return lModule;
+}
+
+INLINE void Manager::CreateUniformBuffers(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+
+	mUniformBuffer.resize(mMaxFrames);
+	mUniformBufferMemory.resize(mMaxFrames);
+
+	Utils::CreateBufferCreateInfo lMvpBufferInfo{};
+	lMvpBufferInfo.Device			= mDevice;
+	lMvpBufferInfo.PhysicalDevice	= mPhysicalDevice;
+	lMvpBufferInfo.BufferUsage		= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	lMvpBufferInfo.BufferSize		= sizeof(Mvp);
+	lMvpBufferInfo.BufferProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+	for (uint32_t lI = 0; lI < mMaxFrames; ++lI)
+	{
+		RESULT_ENSURE_CALL(Utils::CreateBuffer(lMvpBufferInfo, &mAllocationCallbacks, mUniformBuffer[lI],
+											   mUniformBufferMemory[lI], RESULT_ARG_PASS));
+	}
+
+	RESULT_OK();
+}
+
+INLINE void Manager::CreateDescriptorPool(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+
+	VkDescriptorPoolSize lPoolSize{};
+	lPoolSize.type			  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lPoolSize.descriptorCount = mMaxFrames;
+
+	VkDescriptorPoolCreateInfo lPoolCreateInfo{};
+	lPoolCreateInfo.sType		  = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	lPoolCreateInfo.maxSets		  = mMaxFrames;
+	lPoolCreateInfo.poolSizeCount = 1;
+	lPoolCreateInfo.pPoolSizes	  = &lPoolSize;
+
+	RESULT_CONDITION_ENSURE(
+		vkCreateDescriptorPool(mDevice, &lPoolCreateInfo, &mAllocationCallbacks, &mDescriptorPool) == VK_SUCCESS,
+		VulkanFailedToCreateDescriptorPool);
+
+	RESULT_OK();
+}
+
+INLINE void Manager::CreateDescriptorSets(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+
+	mDescriptorSets.resize(mMaxFrames);
+
+	const VkDescriptorSetLayout lSetLayouts[] = {mDescriptorSetLayout, mDescriptorSetLayout, mDescriptorSetLayout};
+
+	VkDescriptorSetAllocateInfo lSetAllocInfo{};
+	lSetAllocInfo.sType				 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	lSetAllocInfo.descriptorPool	 = mDescriptorPool;
+	lSetAllocInfo.descriptorSetCount = mMaxFrames;
+	lSetAllocInfo.pSetLayouts		 = lSetLayouts;
+
+	RESULT_CONDITION_ENSURE(vkAllocateDescriptorSets(mDevice, &lSetAllocInfo, mDescriptorSets.data()) == VK_SUCCESS,
+							VulkanFailedToAllocateDescriptorSets);
+
+	for (uint32_t lI = 0; lI < mMaxFrames; ++lI)
+	{
+		VkWriteDescriptorSet lMvpSetWrite{};
+		lMvpSetWrite.sType			 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		lMvpSetWrite.dstSet			 = mDescriptorSets[lI];
+		lMvpSetWrite.dstBinding		 = 0;
+		lMvpSetWrite.dstArrayElement = 0;
+		lMvpSetWrite.descriptorType	 = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		lMvpSetWrite.descriptorCount = 1;
+
+		VkDescriptorBufferInfo lDstBufferInfo{};
+		lDstBufferInfo.buffer = mUniformBuffer[lI];
+		lDstBufferInfo.offset = 0;
+		lDstBufferInfo.range  = sizeof(Mvp);
+
+		lMvpSetWrite.pBufferInfo = &lDstBufferInfo;
+
+		vkUpdateDescriptorSets(mDevice, 1, &lMvpSetWrite, 0, nullptr);
+	}
+
+	RESULT_OK();
+}
+
+INLINE void Manager::UpdateUniformBuffer(const uint32_t ImageIndex, RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+	void* lData{};
+	vkMapMemory(mDevice, mUniformBufferMemory[ImageIndex], 0, sizeof(Mvp), 0, &lData);
+	memcpy(lData, mMeshesMvps.data(), sizeof(Mvp));
+	vkUnmapMemory(mDevice, mUniformBufferMemory[ImageIndex]);
+	RESULT_OK();
 }
 
 INLINE void Manager::CreateCommandPool(RESULT_PARAM_IMPL)
@@ -1019,7 +1040,8 @@ INLINE void Manager::CreateCommandPool(RESULT_PARAM_IMPL)
 	lPoolInfo.flags			   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	lPoolInfo.queueFamilyIndex = lQueueFamilyIndices.GraphicsFamily.value();
 
-	RESULT_CONDITION_ENSURE(vkCreateCommandPool(mDevice, &lPoolInfo, &mAllocatorCallbacks, &mCommandPool) == VK_SUCCESS,
+	RESULT_CONDITION_ENSURE(vkCreateCommandPool(mDevice, &lPoolInfo, &mAllocationCallbacks, &mCommandPool) ==
+								VK_SUCCESS,
 							VulkanFailedToCreateCommandPool);
 
 	RESULT_OK();
@@ -1048,6 +1070,16 @@ INLINE void Manager::RecordCommandBuffer(const VkCommandBuffer CommandBuffer, co
 {
 	RESULT_ENSURE_LAST();
 
+#if EDITOR
+	if (mEditor)
+	{
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+		Editor::Instance().RunExternal();
+	}
+#endif
+
 	VkCommandBufferBeginInfo lBeginInfo{};
 	lBeginInfo.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	lBeginInfo.flags			= 0;	   // Optional
@@ -1059,9 +1091,9 @@ INLINE void Manager::RecordCommandBuffer(const VkCommandBuffer CommandBuffer, co
 	VkRenderPassBeginInfo lRenderPassInfo{};
 	lRenderPassInfo.sType			  = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	lRenderPassInfo.renderPass		  = mRenderPass;
-	lRenderPassInfo.framebuffer		  = mSwapchainFramebuffers[ImageIndex];
+	lRenderPassInfo.framebuffer		  = mSwapchain.Framebuffers[ImageIndex];
 	lRenderPassInfo.renderArea.offset = {0, 0};
-	lRenderPassInfo.renderArea.extent = mSwapchainExtent;
+	lRenderPassInfo.renderArea.extent = mSwapchain.Extent;
 
 	constexpr VkClearValue lClearColor = {{{0.f, 0.f, 0.f, 1.f}}};
 	lRenderPassInfo.clearValueCount	   = 1;
@@ -1071,30 +1103,41 @@ INLINE void Manager::RecordCommandBuffer(const VkCommandBuffer CommandBuffer, co
 
 	vkCmdBindPipeline(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 
-	VkBuffer	 lVertexBuffers[] = {mMesh.GetVertexBuffer()};
-	VkDeviceSize lOffsets[]		  = {0};
-	vkCmdBindVertexBuffers(CommandBuffer, 0, 1, lVertexBuffers, lOffsets);
+	for (const auto& lMesh: mMeshes)
+	{
+		VkBuffer	 lVertexBuffer = lMesh.GetVertexBuffer();
+		VkDeviceSize lOffset	   = 0;
+		vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &lVertexBuffer, &lOffset);
+		vkCmdBindIndexBuffer(CommandBuffer, lMesh.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1,
+								&mDescriptorSets[ImageIndex], 0, nullptr);
 
-	VkViewport lViewport{};
-	lViewport.x		   = 0.0f;
-	lViewport.y		   = 0.0f;
-	lViewport.width	   = static_cast<float>(mSwapchainExtent.width);
-	lViewport.height   = static_cast<float>(mSwapchainExtent.height);
-	lViewport.minDepth = 0.0f;
-	lViewport.maxDepth = 1.0f;
-	vkCmdSetViewport(CommandBuffer, 0, 1, &lViewport);
+		VkViewport lViewport{};
+		lViewport.x		   = 0.0f;
+		lViewport.y		   = 0.0f;
+		lViewport.width	   = static_cast<float>(mSwapchain.Extent.width);
+		lViewport.height   = static_cast<float>(mSwapchain.Extent.height);
+		lViewport.minDepth = 0.0f;
+		lViewport.maxDepth = 1.0f;
+		vkCmdSetViewport(CommandBuffer, 0, 1, &lViewport);
 
-	VkRect2D lScissor{};
-	lScissor.offset = {0, 0};
-	lScissor.extent = mSwapchainExtent;
-	vkCmdSetScissor(CommandBuffer, 0, 1, &lScissor);
+		VkRect2D lScissor{};
+		lScissor.offset = {0, 0};
+		lScissor.extent = mSwapchain.Extent;
+		vkCmdSetScissor(CommandBuffer, 0, 1, &lScissor);
 
-	vkCmdDraw(CommandBuffer, mMesh.GetVertexSize(), 1, 0, 0);
+		// vkCmdDraw(CommandBuffer, mMesh.GetVertexSize(), 1, 0, 0);
+		vkCmdDrawIndexed(CommandBuffer, lMesh.GetIndexSize(), 1, 0, 0, 0);
+	}
 
-	// ImDrawData* main_draw_data = ImGui::GetDrawData();
-
-	// Record dear imgui primitives into command buffer
-	// ImGui_ImplVulkan_RenderDrawData(draw_data, fd->CommandBuffer);
+#if EDITOR
+	if (mEditor)
+	{
+		ImGui::Render();
+		ImDrawData* lMainDrawData = ImGui::GetDrawData();
+		ImGui_ImplVulkan_RenderDrawData(lMainDrawData, CommandBuffer);
+	}
+#endif
 
 	vkCmdEndRenderPass(CommandBuffer);
 
@@ -1120,15 +1163,15 @@ INLINE void Manager::CreateSyncObjects(RESULT_PARAM_IMPL)
 
 	for (uint32_t i = 0; i < mMaxFrames; ++i)
 	{
-		RESULT_CONDITION_ENSURE(vkCreateSemaphore(mDevice, &lSemaphoreInfo, &mAllocatorCallbacks,
+		RESULT_CONDITION_ENSURE(vkCreateSemaphore(mDevice, &lSemaphoreInfo, &mAllocationCallbacks,
 												  &mImageAvailableSemaphores[i]) == VK_SUCCESS,
 								VulkanFailedToCreateSemaphore);
 
-		RESULT_CONDITION_ENSURE(vkCreateSemaphore(mDevice, &lSemaphoreInfo, &mAllocatorCallbacks,
+		RESULT_CONDITION_ENSURE(vkCreateSemaphore(mDevice, &lSemaphoreInfo, &mAllocationCallbacks,
 												  &mRenderFinishedSemaphores[i]) == VK_SUCCESS,
 								VulkanFailedToCreateSemaphore);
 
-		RESULT_CONDITION_ENSURE(vkCreateFence(mDevice, &lFenceInfo, &mAllocatorCallbacks, &mInFlightFences[i]) ==
+		RESULT_CONDITION_ENSURE(vkCreateFence(mDevice, &lFenceInfo, &mAllocationCallbacks, &mInFlightFences[i]) ==
 									VK_SUCCESS,
 								VulkanFailedToCreateFence);
 	}
@@ -1139,17 +1182,17 @@ INLINE void Manager::CreateSyncObjects(RESULT_PARAM_IMPL)
 INLINE void Manager::DestroySwapchain(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
-	for (const auto lSwapchainFramebuffer: mSwapchainFramebuffers)
+	for (const auto lSwapchainFramebuffer: mSwapchain.Framebuffers)
 	{
-		vkDestroyFramebuffer(mDevice, lSwapchainFramebuffer, &mAllocatorCallbacks);
+		vkDestroyFramebuffer(mDevice, lSwapchainFramebuffer, &mAllocationCallbacks);
 	}
 
-	for (const auto lSwapchainImageView: mSwapchainImageViews)
+	for (const auto lSwapchainImageView: mSwapchain.ImageViews)
 	{
-		vkDestroyImageView(mDevice, lSwapchainImageView, &mAllocatorCallbacks);
+		vkDestroyImageView(mDevice, lSwapchainImageView, &mAllocationCallbacks);
 	}
 
-	vkDestroySwapchainKHR(mDevice, mSwapchain, &mAllocatorCallbacks);
+	vkDestroySwapchainKHR(mDevice, mSwapchain.Object, &mAllocationCallbacks);
 	RESULT_OK();
 }
 
@@ -1159,9 +1202,9 @@ INLINE void Manager::DestroySyncObjects(RESULT_PARAM_IMPL)
 
 	for (uint32_t lI = 0; lI < mMaxFrames; ++lI)
 	{
-		vkDestroySemaphore(mDevice, mImageAvailableSemaphores[lI], &mAllocatorCallbacks);
-		vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[lI], &mAllocatorCallbacks);
-		vkDestroyFence(mDevice, mInFlightFences[lI], &mAllocatorCallbacks);
+		vkDestroySemaphore(mDevice, mImageAvailableSemaphores[lI], &mAllocationCallbacks);
+		vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[lI], &mAllocationCallbacks);
+		vkDestroyFence(mDevice, mInFlightFences[lI], &mAllocationCallbacks);
 	}
 
 	RESULT_OK();
@@ -1197,13 +1240,16 @@ INLINE void Manager::RecreateSyncObjects(RESULT_PARAM_IMPL)
 
 INLINE bool Manager::IsDeviceSuitable(const VkPhysicalDevice Device) const
 {
+	VkPhysicalDeviceProperties lDeviceProperties{};
+	vkGetPhysicalDeviceProperties(Device, &lDeviceProperties);
+
 	const QueueFamilyIndices lIndices			  = FindQueueFamilies(Device);
 	const bool				 lExtensionsSupported = CheckDeviceExtensionSupport(Device);
 
 	bool lSwapChainAdequate = false;
 	if (lExtensionsSupported)
 	{
-		const SwapchainSupportDetails lSwapChainSupport = QuerySwapchainSupport(Device);
+		const Swapchain::SupportDetails lSwapChainSupport = QuerySwapchainSupport(Device);
 		lSwapChainAdequate = !lSwapChainSupport.Formats.IsEmpty() && !lSwapChainSupport.PresentModes.IsEmpty();
 	}
 
@@ -1255,7 +1301,8 @@ INLINE bool Manager::CheckDeviceExtensionSupport(const VkPhysicalDevice Device) 
 	RawBuffer<VkExtensionProperties, default_allocator_t> lAvailableExtensions{lExtensionCount, mAllocator};
 	vkEnumerateDeviceExtensionProperties(Device, nullptr, &lExtensionCount, lAvailableExtensions.Data());
 
-	eastl::set<eastl::string> lRequiredExtensions(mDeviceExtensions.begin(), mDeviceExtensions.end());
+	eastl::set<eastl::string, eastl::less<eastl::string>, default_allocator_t> lRequiredExtensions{
+		mDeviceExtensions.begin(), mDeviceExtensions.end()};
 
 	for (const auto& lExtension: lAvailableExtensions)
 	{
@@ -1265,9 +1312,9 @@ INLINE bool Manager::CheckDeviceExtensionSupport(const VkPhysicalDevice Device) 
 	return lRequiredExtensions.empty();
 }
 
-INLINE Manager::SwapchainSupportDetails Manager::QuerySwapchainSupport(const VkPhysicalDevice Device) const
+INLINE Swapchain::SupportDetails Manager::QuerySwapchainSupport(const VkPhysicalDevice Device) const
 {
-	SwapchainSupportDetails lDetails;
+	Swapchain::SupportDetails lDetails{default_allocator_t{}};
 
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, mSurface, &lDetails.Capabilities);
 
@@ -1484,161 +1531,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Manager::DebugCallback(const VkDebugUtilsMessageS
 }
 
 #endif
-
-INLINE Mesh::Mesh(Manager* Manager, const VkPhysicalDevice PhysicalDevice, const VkDevice Device,
-				  eastl::vector<Vertex, default_allocator_t>& Vertices, RESULT_PARAM_IMPL)
-	: mManager{Manager}, mVertexSize{static_cast<uint32_t>(Vertices.size())},
-	  mPhysicalDevice{PhysicalDevice}, mDevice{Device}
-{
-	RESULT_ENSURE_LAST();
-	RESULT_ENSURE_CALL(CreateVertexBuffer(Vertices, RESULT_ARG_PASS));
-	RESULT_OK();
-}
-
-INLINE Mesh::~Mesh()
-{
-	if(mVertexBuffer && mVertexBufferMemory)
-	{
-		DestroyVertexBuffer();
-	}
-}
-
-INLINE Mesh::Mesh(Mesh&& Other) NOEXCEPT: mManager{Other.mManager},
-										  mVertexSize{Other.mVertexSize},
-										  mVertexBuffer{Other.mVertexBuffer},
-										  mVertexBufferMemory{Other.mVertexBufferMemory},
-										  mPhysicalDevice{Other.mPhysicalDevice},
-										  mDevice{Other.mDevice}
-{
-	Other.mManager			= nullptr;
-	Other.mVertexSize			= 0;
-	Other.mVertexBuffer		= nullptr;
-	Other.mVertexBufferMemory = nullptr;
-	Other.mPhysicalDevice		= nullptr;
-	Other.mDevice				= nullptr;
-}
-
-INLINE Mesh& Mesh::operator=(Mesh&& Other) NOEXCEPT
-{
-	mManager			= Other.mManager;
-	mVertexSize			= Other.mVertexSize;
-	mVertexBuffer		= Other.mVertexBuffer;
-	mVertexBufferMemory = Other.mVertexBufferMemory;
-	mPhysicalDevice		= Other.mPhysicalDevice;
-	mDevice				= Other.mDevice;
-	Other.mManager			= nullptr;
-	Other.mVertexSize			= 0;
-	Other.mVertexBuffer		= nullptr;
-	Other.mVertexBufferMemory = nullptr;
-	Other.mPhysicalDevice		= nullptr;
-	Other.mDevice				= nullptr;
-	return *this;
-}
-
-INLINE Mesh Mesh::Square(Manager* Manager, const VkPhysicalDevice PhysicalDevice, const VkDevice Device, RESULT_PARAM_IMPL)
-{
-	Mesh lMesh{};
-	eastl::vector<Vertex, default_allocator_t> lVertices
-	{
-		{{0.5f, -0.5f, 0.f}, {1.f, 0.f, 0.f}},
-		{{0.5f, 0.5f, 0.f}, {0.f, 1.f, 0.f}},
-		{{-0.5f, 0.5f, 0.f}, {0.f, 0.f, 1.f}},
-
-		{{-0.5f, 0.5f, 0.f}, {0.f, 0.f, 1.f}},
-		{{-0.5f, -0.5f, 0.f}, {0.f, 1.f, 0.f}},
-		{{0.5f, -0.5f, 0.f}, {1.f, 0.f, 0.f}}
-	};
-	RESULT_ENSURE_CALL(lMesh = Mesh(Manager, PhysicalDevice, Device, lVertices, RESULT_ARG_PASS), lMesh);
-	return lMesh;
-}
-
-INLINE void Mesh::DestroyVertexBuffer(RESULT_PARAM_IMPL)
-{
-	RESULT_ENSURE_LAST();
-	vkDestroyBuffer(mDevice, mVertexBuffer, &mManager->mAllocatorCallbacks);
-	vkFreeMemory(mDevice, mVertexBufferMemory, &mManager->mAllocatorCallbacks);
-	mVertexBuffer		= nullptr;
-	mVertexBufferMemory = nullptr;
-	RESULT_OK();
-}
-
-INLINE uint32_t Mesh::GetVertexSize() const
-{
-	return mVertexSize;
-}
-
-INLINE VkBuffer Mesh::GetVertexBuffer() const
-{
-	return mVertexBuffer;
-}
-
-INLINE void Mesh::CreateVertexBuffer(eastl::vector<Vertex, default_allocator_t>& Vertices, RESULT_PARAM_IMPL)
-{
-	RESULT_ENSURE_LAST();
-
-	VkBufferCreateInfo lBufferCreateInfo{};
-	lBufferCreateInfo.sType		  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	lBufferCreateInfo.size		  = sizeof(Vertex) * mVertexSize;
-	lBufferCreateInfo.usage		  = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	lBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-	RESULT_CONDITION_ENSURE(
-		vkCreateBuffer(mDevice, &lBufferCreateInfo, &mManager->mAllocatorCallbacks, &mVertexBuffer) == VK_SUCCESS,
-		VulkanFailedToCreateBuffer);
-
-	// Get buffer memory requirements
-	VkMemoryRequirements lMemoryRequirements{};
-	vkGetBufferMemoryRequirements(mDevice, mVertexBuffer, &lMemoryRequirements);
-
-	// Allocate memory to buffer
-	VkMemoryAllocateInfo lMemoryAllocateInfo{};
-	lMemoryAllocateInfo.sType		   = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	lMemoryAllocateInfo.allocationSize = lMemoryRequirements.size;
-
-	// Find memory type index
-	RESULT_ENSURE_CALL(lMemoryAllocateInfo.memoryTypeIndex = FindMemoryTypeIndex(
-						   lMemoryRequirements.memoryTypeBits,
-						   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-						   RESULT_ARG_PASS));
-
-	RESULT_CONDITION_ENSURE(vkAllocateMemory(mDevice, &lMemoryAllocateInfo, &mManager->mAllocatorCallbacks,
-											 &mVertexBufferMemory) == VK_SUCCESS,
-							VulkanFailedToAllocateMemory);
-
-	// Bind allocated memory to buffer
-	vkBindBufferMemory(mDevice, mVertexBuffer, mVertexBufferMemory, 0);
-
-	// Map memory to vertex buffer
-	void* lData{}; // 1. Create pointer to RAM
-	vkMapMemory(mDevice, mVertexBufferMemory, 0, lBufferCreateInfo.size, 0,
-				&lData);									// 2. "Map" the device memory to raw pointer in ram.
-	memcpy(lData, Vertices.data(), lBufferCreateInfo.size); // 3. Copy memory from vertices to mapped data pointer.
-	vkUnmapMemory(mDevice, mVertexBufferMemory);			// 4. Unmap device memory.
-
-	RESULT_OK();
-}
-
-INLINE uint32_t Mesh::FindMemoryTypeIndex(const uint32_t AllowedTypes, const VkMemoryPropertyFlags PropertyFlags,
-										  RESULT_PARAM_IMPL) const
-{
-	RESULT_ENSURE_LAST({});
-	RESULT_CONDITION_ENSURE(AllowedTypes && static_cast<uint32_t>(PropertyFlags), ZeroSize, {});
-
-	VkPhysicalDeviceMemoryProperties lMemoryProperties{};
-	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &lMemoryProperties);
-
-	for (uint32_t lI = 0u; lI < lMemoryProperties.memoryTypeCount; ++lI)
-	{
-		if (AllowedTypes & 1 << lI &&
-			(lMemoryProperties.memoryTypes[lI].propertyFlags & PropertyFlags) == PropertyFlags)
-		{
-			return lI;
-		}
-	}
-
-	RESULT_OK();
-	return uint32_t{};
-}
 
 } // namespace Render::Api
 

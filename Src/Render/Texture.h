@@ -10,7 +10,10 @@ namespace Render
 {
 
 #if PLATFORM_WINDOWS
-using texture_handle_t = void*;
+#if D3D12_ENABLED
+#elif VULKAN_ENABLED
+using texture_handle_t = VkImage;
+#endif
 #endif
 
 /**

@@ -5,22 +5,26 @@
 namespace Render
 {
 
-Texture::Texture(const EType Type, eastl::span<uint8_t> Data, RESULT_PARAM_IMPL) : mType{Type}
+Texture::Texture(const EType Type, const eastl::span<uint8_t> Data, RESULT_PARAM_IMPL) : mType{Type}
 {
 	RESULT_ENSURE_LAST();
 	UNUSED(Data);
 	switch (Type)
 	{
-	case e2D: {
+	case e2D:
+	{
 		break;
 	}
-	case e3D: {
+	case e3D:
+	{
 		break;
 	}
-	case eCubeMap: {
+	case eCubeMap:
+	{
 		break;
 	}
-	case eRenderTarget: {
+	case eRenderTarget:
+	{
 		break;
 	}
 	default:;

@@ -7,6 +7,7 @@
 #if EDITOR
 #if PLATFORM_WINDOWS
 #include <imgui_impl_win32.h>
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
 #endif
 
@@ -22,7 +23,7 @@ LRESULT Window::WindowProc(const HWND Hwnd, const UINT Umsg, const WPARAM Wparam
 		Render::Instance().MarkDirtyFramebufferSize();
 	}
 #if EDITOR
-	//ImGui_ImplWin32_WndProcHandler(Hwnd, Umsg, Wparam, Lparam);
+	ImGui_ImplWin32_WndProcHandler(Hwnd, Umsg, Wparam, Lparam);
 #endif
 	return Input::Instance().WindowProc(Hwnd, Umsg, Wparam, Lparam);
 }
@@ -63,7 +64,7 @@ void Window::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 	const int32_t lScreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
 
 	WS_OVERLAPPEDWINDOW;
-	constexpr UINT lStyle = WS_OVERLAPPEDWINDOW;
+	constexpr UINT lStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
 	mState.Rect = {0, 0, static_cast<LONG>(CreateInfo.Width), static_cast<LONG>(CreateInfo.Height)};
 	::AdjustWindowRect(&mState.Rect, lStyle, FALSE);
