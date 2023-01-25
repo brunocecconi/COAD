@@ -71,6 +71,7 @@ private:
 	void		   CreateImageViews(RESULT_PARAM_DEFINE);
 	void		   CreateRenderPass(RESULT_PARAM_DEFINE);
 	void		   CreateDescriptorSetLayout(RESULT_PARAM_DEFINE);
+	void		   CreatePushConstantRange(RESULT_PARAM_DEFINE);
 	void		   CreateGraphicsPipeline(RESULT_PARAM_DEFINE);
 	void		   CreateFramebuffers(RESULT_PARAM_DEFINE);
 	VkShaderModule CreateShaderModule(const shader_compile_data_t& Data, RESULT_PARAM_DEFINE) const;
@@ -78,7 +79,7 @@ private:
 	void		   CreateDescriptorPool(RESULT_PARAM_DEFINE);
 	void		   CreateDescriptorSets(RESULT_PARAM_DEFINE);
 
-	void UpdateUniformBuffer(uint32_t ImageIndex, RESULT_PARAM_DEFINE);
+	void UpdateUniformBuffers(uint32_t ImageIndex, RESULT_PARAM_DEFINE);
 
 	void CreateCommandPool(RESULT_PARAM_DEFINE);
 	void CreateCommandBuffers(RESULT_PARAM_DEFINE);
@@ -89,6 +90,10 @@ private:
 	void DestroySyncObjects(RESULT_PARAM_DEFINE);
 	void RecreateSwapchain(RESULT_PARAM_DEFINE);
 	void RecreateSyncObjects(RESULT_PARAM_DEFINE);
+
+private:
+	void AllocateDynamicBufferTransferSpace(RESULT_PARAM_DEFINE);
+	void UpdateModel(uint32_t Id, glm::mat4 Model, RESULT_PARAM_DEFINE);
 
 private:
 	NODISCARD bool				 IsDeviceSuitable(VkPhysicalDevice Device) const;
@@ -145,15 +150,15 @@ private:
 	VkAllocationCallbacks mAllocationCallbacks{};
 
 private:
-	uint32_t		 mMaxFrames = 3u, mCurrentFrame{};
+	uint32_t		 mMaxObjects = 2u;
+	uint32_t		 mMaxFrames	 = 3u, mCurrentFrame{};
 	VkInstance		 mInstance{};
 	VkPhysicalDevice mPhysicalDevice{};
-	VkSurfaceKHR	 mSurface{};
 	VkDevice		 mDevice{};
 	VkQueue			 mGraphicsQueue{}, mPresentQueue{};
 	Swapchain		 mSwapchain{mAllocator};
 	VkRenderPass	 mRenderPass{};
-	VkPipelineLayout mPipelineLayout{};
+	VkPipelineLayout mGraphicsPipelineLayout{};
 	VkPipeline		 mGraphicsPipeline{};
 
 	VkCommandPool									mCommandPool{};
@@ -162,20 +167,20 @@ private:
 	RawBuffer<VkSemaphore, default_allocator_t>		mRenderFinishedSemaphores{mAllocator};
 	RawBuffer<VkFence, default_allocator_t>			mInFlightFences{mAllocator};
 
-	VkDescriptorSetLayout mDescriptorSetLayout{};
-
+	VkDescriptorSetLayout								mDescriptorSetLayout{};
+	VkPushConstantRange									mPushConstantRange{};
 	VkDescriptorPool									mDescriptorPool{};
 	eastl::vector<VkDescriptorSet, default_allocator_t> mDescriptorSets{};
 
-	eastl::vector<VkBuffer, default_allocator_t>	   mUniformBuffer{};
-	eastl::vector<VkDeviceMemory, default_allocator_t> mUniformBufferMemory{};
+	eastl::vector<VkBuffer, default_allocator_t>	   mScreenPropertiesUniformBuffer{};
+	eastl::vector<VkDeviceMemory, default_allocator_t> mScreenPropertiesUniformBufferMemory{};
+	ScreenProperties								   mScreenProperties{};
 
 private:
 	bool mMarkDirtyFramebufferSize{};
 
 private:
-	eastl::vector<Mesh, default_allocator_t> mMeshes{};
-	eastl::vector<Mvp, default_allocator_t>	 mMeshesMvps{};
+	Mesh mScreenMesh{};
 
 private:
 #if EDITOR
@@ -188,7 +193,6 @@ private:
 #endif
 	eastl::vector<const char*, default_allocator_t> mDeviceExtensions{{VK_KHR_SWAPCHAIN_EXTENSION_NAME}, mAllocator};
 };
-
 
 INLINE Manager::Manager() : mWindow{Engine::Manager::Instance().GetWindow()}
 {
@@ -213,10 +217,12 @@ INLINE void Manager::Initialize(RESULT_PARAM_IMPL)
 	RESULT_ENSURE_CALL(CreateImageViews(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateRenderPass(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateDescriptorSetLayout(RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(CreatePushConstantRange(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateGraphicsPipeline(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateFramebuffers(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateCommandPool(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateCommandBuffers(RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(AllocateDynamicBufferTransferSpace(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(CreateSyncObjects(RESULT_ARG_PASS));
 
 	RESULT_ENSURE_CALL(CreateUniformBuffers(RESULT_ARG_PASS));
@@ -240,55 +246,47 @@ INLINE void Manager::Initialize(RESULT_PARAM_IMPL)
 	lEditorInitInfo.Window		  = &mWindow;
 	lEditorInitInfo.ImguiInitInfo = &lInitInfo;
 	lEditorInitInfo.RenderPass	  = mRenderPass;
-	lEditorInitInfo.Surface		  = mSurface;
+	lEditorInitInfo.Surface		  = mSwapchain.Surface;
 	lEditorInitInfo.Swapchain	  = mSwapchain.Object;
 
 	RESULT_ENSURE_CALL(Editor::Instance().Initialize(lEditorInitInfo, RESULT_ARG_PASS));
 
-	// // Upload Fonts
-	//  {
-	//      // Use any command queue
-	//      const VkCommandBuffer lCommandBuffer = mCommandBuffers[mCurrentFrame++];
+	//// Upload Fonts
+	//{
+	//	// Use any command queue
+	//	const VkCommandBuffer lCommandBuffer = mCommandBuffers[mCurrentFrame++];
 
-	//      vkResetCommandPool(mDevice, mCommandPool, 0);
-	//      VkCommandBufferBeginInfo lBeginInfo = {};
-	//      lBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	//      lBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	//      vkBeginCommandBuffer(lCommandBuffer, &lBeginInfo);
+	//	vkResetCommandPool(mDevice, mCommandPool, 0);
+	//	VkCommandBufferBeginInfo lBeginInfo = {};
+	//	lBeginInfo.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	//	lBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	//	vkBeginCommandBuffer(lCommandBuffer, &lBeginInfo);
 
-	//      ImGui_ImplVulkan_CreateFontsTexture(lCommandBuffer);
+	//	ImGui_ImplVulkan_CreateFontsTexture(lCommandBuffer);
 
-	//      VkSubmitInfo lEndInfo = {};
-	//      lEndInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	//      lEndInfo.commandBufferCount = 1;
-	//      lEndInfo.pCommandBuffers = &lCommandBuffer;
-	// vkEndCommandBuffer(lCommandBuffer);
-	//      vkQueueSubmit(mGraphicsQueue, 1, &lEndInfo, VK_NULL_HANDLE);
+	//	VkSubmitInfo lEndInfo		= {};
+	//	lEndInfo.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	//	lEndInfo.commandBufferCount = 1;
+	//	lEndInfo.pCommandBuffers	= &lCommandBuffer;
+	//	vkEndCommandBuffer(lCommandBuffer);
+	//	vkQueueSubmit(mGraphicsQueue, 1, &lEndInfo, VK_NULL_HANDLE);
 
-	//      vkDeviceWaitIdle(mDevice);
-	//      ImGui_ImplVulkan_DestroyFontUploadObjects();
-	//  }
+	//	vkDeviceWaitIdle(mDevice);
+	//	ImGui_ImplVulkan_DestroyFontUploadObjects();
+	//}
 
 #endif
 
 	Mesh::Info lMeshInfo{};
-	lMeshInfo.PhysicalDevice = mPhysicalDevice;
-	lMeshInfo.Device = mDevice;
+	lMeshInfo.PhysicalDevice	 = mPhysicalDevice;
+	lMeshInfo.Device			 = mDevice;
 	lMeshInfo.AllocatorCallbacks = &mAllocationCallbacks;
-	lMeshInfo.TransferQueue = mGraphicsQueue;
-	lMeshInfo.TransferCmdPool = mCommandPool;
+	lMeshInfo.TransferQueue		 = mGraphicsQueue;
+	lMeshInfo.TransferCmdPool	 = mCommandPool;
+	lMeshInfo.Vertices			 = {{{1.f, -1.f}}, {{1.f, 1.f}}, {{-1.f, 1.f}}, {{-1.f, -1.f}}}; // 0,1,2,2,3,0
+	lMeshInfo.Indices			 = {{2, 1, 0, 0, 3, 2}};
 
-	RESULT_ENSURE_CALL(mMeshes.emplace_back(
-		Mesh::Square(lMeshInfo, glm::vec3{-0.35f, 0.25f, 0.f}, RESULT_ARG_PASS)));
-	RESULT_ENSURE_CALL(
-		mMeshes.emplace_back(Mesh::Square(lMeshInfo, glm::vec3{0.7f, 0.f, 0.f}, RESULT_ARG_PASS)));
-
-	glm::mat4 lProjection = glm::perspective(glm::radians(90.f), 16.f / 9.f, 0.01f, 1000.f);
-	lProjection[1][1] *= -1.f;
-	glm::mat4 lView = glm::lookAt(glm::vec3{0.f, 0.f, 1.f}, glm::vec3{0.f}, glm::vec3{0.f, 1.f, 0.f});
-
-	mMeshesMvps.emplace_back(Mvp{lProjection, lView, glm::translate(glm::mat4{1.f}, glm::vec3{0.f})});
-	mMeshesMvps.emplace_back(Mvp{lProjection, lView, glm::translate(glm::mat4{1.f}, glm::vec3{0.f, 0.f, 0.f})});
+	RESULT_ENSURE_CALL(mScreenMesh = Mesh(lMeshInfo, RESULT_ARG_PASS));
 
 	RESULT_OK();
 }
@@ -300,8 +298,8 @@ INLINE void Manager::Update(RESULT_PARAM_IMPL)
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t lImageIndex{};
-	VkResult lResult = vkAcquireNextImageKHR(mDevice, mSwapchain.Object, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame],
-											 VK_NULL_HANDLE, &lImageIndex);
+	VkResult lResult = vkAcquireNextImageKHR(mDevice, mSwapchain.Object, UINT64_MAX,
+											 mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &lImageIndex);
 
 	if (lResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -314,7 +312,7 @@ INLINE void Manager::Update(RESULT_PARAM_IMPL)
 
 	vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
-	RESULT_ENSURE_CALL(UpdateUniformBuffer(mCurrentFrame, RESULT_ARG_PASS));
+	RESULT_ENSURE_CALL(UpdateUniformBuffers(mCurrentFrame, RESULT_ARG_PASS));
 
 	vkResetCommandBuffer(mCommandBuffers[mCurrentFrame], 0);
 	RESULT_ENSURE_CALL(RecordCommandBuffer(mCommandBuffers[mCurrentFrame], lImageIndex, RESULT_ARG_PASS));
@@ -369,7 +367,7 @@ INLINE void Manager::Finalize(RESULT_PARAM_IMPL)
 	RESULT_ENSURE_LAST();
 
 	RESULT_CONDITION_ENSURE(mInstance, NullPtr);
-	RESULT_CONDITION_ENSURE(mSurface, NullPtr);
+	RESULT_CONDITION_ENSURE(mSwapchain.Surface, NullPtr);
 	RESULT_CONDITION_ENSURE(mSwapchain.Object, NullPtr);
 
 	vkDeviceWaitIdle(mDevice);
@@ -383,13 +381,11 @@ INLINE void Manager::Finalize(RESULT_PARAM_IMPL)
 
 	for (uint32_t lI = 0; lI < mMaxFrames; ++lI)
 	{
-		Utils::DestroyBuffer(mDevice, mUniformBuffer[lI], mUniformBufferMemory[lI], &mAllocationCallbacks);
+		Utils::DestroyBuffer(mDevice, mScreenPropertiesUniformBuffer[lI], mScreenPropertiesUniformBufferMemory[lI],
+							 &mAllocationCallbacks);
 	}
 
-	for (auto& lMesh: mMeshes)
-	{
-		RESULT_ENSURE_CALL(lMesh.DestroyBuffers(RESULT_ARG_PASS));
-	}
+	RESULT_ENSURE_CALL(mScreenMesh.DestroyBuffers(RESULT_ARG_PASS));
 
 	RESULT_ENSURE_CALL(DestroySwapchain(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(DestroySyncObjects(RESULT_ARG_PASS));
@@ -397,7 +393,7 @@ INLINE void Manager::Finalize(RESULT_PARAM_IMPL)
 	vkDestroyCommandPool(mDevice, mCommandPool, &mAllocationCallbacks);
 
 	vkDestroyPipeline(mDevice, mGraphicsPipeline, &mAllocationCallbacks);
-	vkDestroyPipelineLayout(mDevice, mPipelineLayout, &mAllocationCallbacks);
+	vkDestroyPipelineLayout(mDevice, mGraphicsPipelineLayout, &mAllocationCallbacks);
 	vkDestroyRenderPass(mDevice, mRenderPass, &mAllocationCallbacks);
 
 	vkDestroyDevice(mDevice, &mAllocationCallbacks);
@@ -406,7 +402,7 @@ INLINE void Manager::Finalize(RESULT_PARAM_IMPL)
 	DestroyDebugUtilsMessengerExt(mInstance, mDebugMessenger, &mAllocationCallbacks);
 #endif
 
-	vkDestroySurfaceKHR(mInstance, mSurface, &mAllocationCallbacks);
+	vkDestroySurfaceKHR(mInstance, mSwapchain.Surface, &mAllocationCallbacks);
 	vkDestroyInstance(mInstance, &mAllocationCallbacks);
 
 	RESULT_OK();
@@ -510,9 +506,9 @@ INLINE void Manager::CreateSurface(RESULT_PARAM_IMPL)
 	lCreateInfo.sType	  = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 	lCreateInfo.hwnd	  = mWindow.GetHandle();
 	lCreateInfo.hinstance = GetModuleHandle(nullptr);
-	RESULT_CONDITION_ENSURE(vkCreateWin32SurfaceKHR(mInstance, &lCreateInfo, &mAllocationCallbacks, &mSurface) ==
-								VK_SUCCESS,
-							VulkanFailedToCreateSurface);
+	RESULT_CONDITION_ENSURE(
+		vkCreateWin32SurfaceKHR(mInstance, &lCreateInfo, &mAllocationCallbacks, &mSwapchain.Surface) == VK_SUCCESS,
+		VulkanFailedToCreateSurface);
 	RESULT_OK();
 }
 
@@ -538,6 +534,11 @@ INLINE void Manager::PickPhysicalDevice(RESULT_PARAM_IMPL)
 	}
 
 	RESULT_CONDITION_ENSURE(mPhysicalDevice, VulkanFailedToPickPhysicalDevice);
+
+	// VkPhysicalDeviceProperties lDeviceProperties{};
+	// vkGetPhysicalDeviceProperties(mPhysicalDevice, &lDeviceProperties);
+	// mMinUniformBufferOffset			  = lDeviceProperties.limits.minUniformBufferOffsetAlignment;
+	// mScreenPropertiesUniformAlignment = glm::max(sizeof(ScreenProperties), mMinUniformBufferOffset);
 	RESULT_OK();
 }
 
@@ -602,7 +603,7 @@ INLINE void Manager::CreateSwapchain(RESULT_PARAM_IMPL)
 
 	VkSwapchainCreateInfoKHR lCreateInfo{};
 	lCreateInfo.sType	= VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	lCreateInfo.surface = mSurface;
+	lCreateInfo.surface = mSwapchain.Surface;
 
 	lCreateInfo.minImageCount	 = lImageCount;
 	lCreateInfo.imageFormat		 = lSurfaceFormat.format;
@@ -641,7 +642,8 @@ INLINE void Manager::CreateSwapchain(RESULT_PARAM_IMPL)
 	vkGetSwapchainImagesKHR(mDevice, mSwapchain.Object, &lImageCount, mSwapchain.Images.Data());
 
 	mSwapchain.ImageFormat = lSurfaceFormat.format;
-	mSwapchain.Extent	  = lExtent;
+	mSwapchain.Extent	   = lExtent;
+	mScreenProperties.Resolution = {mSwapchain.Extent.width, mSwapchain.Extent.height};
 	RESULT_OK();
 }
 
@@ -727,18 +729,20 @@ INLINE void Manager::CreateDescriptorSetLayout(RESULT_PARAM_IMPL)
 
 	// VkSampler lSamplers[] = {};
 
-	// Mvp binding info
-	VkDescriptorSetLayoutBinding lMvpLayoutBinding{};
-	lMvpLayoutBinding.binding			 = 0;
-	lMvpLayoutBinding.descriptorType	 = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	lMvpLayoutBinding.descriptorCount	 = 1;
-	lMvpLayoutBinding.stageFlags		 = VK_SHADER_STAGE_VERTEX_BIT;
-	lMvpLayoutBinding.pImmutableSamplers = nullptr;
+	// UboModel binding info
+	VkDescriptorSetLayoutBinding lScreenPropertiesLayoutBinding{};
+	lScreenPropertiesLayoutBinding.binding			  = 0;
+	lScreenPropertiesLayoutBinding.descriptorType	  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lScreenPropertiesLayoutBinding.descriptorCount	  = 1;
+	lScreenPropertiesLayoutBinding.stageFlags		  = VK_SHADER_STAGE_FRAGMENT_BIT;
+	lScreenPropertiesLayoutBinding.pImmutableSamplers = nullptr;
+
+	eastl::array lBindings{lScreenPropertiesLayoutBinding};
 
 	VkDescriptorSetLayoutCreateInfo lLayoutCreateInfo{};
 	lLayoutCreateInfo.sType		   = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	lLayoutCreateInfo.bindingCount = 1;
-	lLayoutCreateInfo.pBindings	   = &lMvpLayoutBinding;
+	lLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lBindings.size());
+	lLayoutCreateInfo.pBindings	   = lBindings.data();
 
 	RESULT_CONDITION_ENSURE(vkCreateDescriptorSetLayout(mDevice, &lLayoutCreateInfo, &mAllocationCallbacks,
 														&mDescriptorSetLayout) == VK_SUCCESS,
@@ -747,11 +751,20 @@ INLINE void Manager::CreateDescriptorSetLayout(RESULT_PARAM_IMPL)
 	RESULT_OK();
 }
 
+INLINE void Manager::CreatePushConstantRange(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+	/*mPushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	mPushConstantRange.offset	  = 0;
+	mPushConstantRange.size		  = sizeof(Model);*/
+	RESULT_OK();
+}
+
 INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
-	const auto&									   lAssetPath = Paths::AssetDir(mAllocator) + "/Shaders/Basic.shader";
+	const auto& lAssetPath = Paths::AssetDir(mAllocator) + "/Shaders/NonAccelerationRT.shader";
 	eastl::basic_string<char, default_allocator_t> lShaderBufferData{mAllocator};
 	RESULT_ENSURE_CALL(Io::File::ReadAllText(lShaderBufferData, lAssetPath.c_str(), RESULT_ARG_PASS));
 
@@ -759,9 +772,9 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 	shader_compile_data_t lBasicShaderFragmentData{mAllocator};
 
 	RESULT_ENSURE_CALL(lBasicShaderVertexData = mShaderManager.Compile<EShaderKind::eVertex>(
-						   lShaderBufferData, "Basic vertex shader", RESULT_ARG_PASS));
+						   lShaderBufferData, "Non acceleration ray tracing shader", RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(lBasicShaderFragmentData = mShaderManager.Compile<EShaderKind::eFragment>(
-						   lShaderBufferData, "Basic fragment shader", RESULT_ARG_PASS));
+						   lShaderBufferData, "Non acceleration ray tracing shader", RESULT_ARG_PASS));
 
 	RESULT_ENSURE_CALL(VkShaderModule lBasicVertShaderModule =
 						   CreateShaderModule(lBasicShaderVertexData, RESULT_ARG_PASS));
@@ -780,26 +793,26 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 	lFragShaderStageInfo.module = lBasicFragShaderModule;
 	lFragShaderStageInfo.pName	= "main";
 
-	VkPipelineShaderStageCreateInfo lShaderStages[] = {lVertShaderStageInfo, lFragShaderStageInfo};
+	eastl::array lShaderStages{lVertShaderStageInfo, lFragShaderStageInfo};
 
 	VkVertexInputBindingDescription lVertexInputBindingDesc{};
 	lVertexInputBindingDesc.binding	  = 0;
 	lVertexInputBindingDesc.stride	  = sizeof(Vertex);
 	lVertexInputBindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-	eastl::array<VkVertexInputAttributeDescription, 2> lVertexAttrDescs{};
+	eastl::array<VkVertexInputAttributeDescription, 1> lVertexAttrDescs{};
 
 	// Position attribute
 	lVertexAttrDescs[0].binding	 = 0;
 	lVertexAttrDescs[0].location = 0;
-	lVertexAttrDescs[0].format	 = VK_FORMAT_R32G32B32_SFLOAT; // Format the data will take (helps define size of data)
+	lVertexAttrDescs[0].format	 = VK_FORMAT_R32G32_SFLOAT; // Format the data will take (helps define size of data)
 	lVertexAttrDescs[0].offset	 = offsetof(Vertex, Position);
 
 	// Color attribute
-	lVertexAttrDescs[1].binding	 = 0;
+	/*lVertexAttrDescs[1].binding	 = 0;
 	lVertexAttrDescs[1].location = 1;
 	lVertexAttrDescs[1].format	 = VK_FORMAT_R32G32B32_SFLOAT;
-	lVertexAttrDescs[1].offset	 = offsetof(Vertex, Color);
+	lVertexAttrDescs[1].offset	 = offsetof(Vertex, Color);*/
 
 	VkPipelineVertexInputStateCreateInfo lVertexInputInfo{};
 	lVertexInputInfo.sType							 = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -849,27 +862,27 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 	lColorBlending.blendConstants[2] = 0.0f;
 	lColorBlending.blendConstants[3] = 0.0f;
 
-	VkDynamicState					 lDynamicStates[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	eastl::array					 lDynamicStates{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo lDynamicState{};
 	lDynamicState.sType				= VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	lDynamicState.dynamicStateCount = sizeof lDynamicStates / sizeof(VkDynamicState);
-	lDynamicState.pDynamicStates	= lDynamicStates;
+	lDynamicState.dynamicStateCount = static_cast<uint32_t>(lDynamicStates.size());
+	lDynamicState.pDynamicStates	= lDynamicStates.data();
 
 	VkPipelineLayoutCreateInfo lPipelineLayoutInfo{};
-	lPipelineLayoutInfo.sType				   = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	lPipelineLayoutInfo.setLayoutCount		   = 1;
-	lPipelineLayoutInfo.pSetLayouts			   = &mDescriptorSetLayout;
-	lPipelineLayoutInfo.pushConstantRangeCount = 0;
-	lPipelineLayoutInfo.pPushConstantRanges	   = nullptr;
+	lPipelineLayoutInfo.sType		   = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	lPipelineLayoutInfo.setLayoutCount = 1;
+	lPipelineLayoutInfo.pSetLayouts	   = &mDescriptorSetLayout;
+	// lPipelineLayoutInfo.pushConstantRangeCount = 1;
+	// lPipelineLayoutInfo.pPushConstantRanges	   = &mPushConstantRange;
 
-	RESULT_CONDITION_ENSURE(
-		vkCreatePipelineLayout(mDevice, &lPipelineLayoutInfo, &mAllocationCallbacks, &mPipelineLayout) == VK_SUCCESS,
-		VulkanFailedToCreateGraphicsPipeline);
+	RESULT_CONDITION_ENSURE(vkCreatePipelineLayout(mDevice, &lPipelineLayoutInfo, &mAllocationCallbacks,
+												   &mGraphicsPipelineLayout) == VK_SUCCESS,
+							VulkanFailedToCreateGraphicsPipelineLayout);
 
 	VkGraphicsPipelineCreateInfo lPipelineInfo{};
 	lPipelineInfo.sType				  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	lPipelineInfo.stageCount		  = 2;
-	lPipelineInfo.pStages			  = lShaderStages;
+	lPipelineInfo.stageCount		  = static_cast<uint32_t>(lShaderStages.size());
+	lPipelineInfo.pStages			  = lShaderStages.data();
 	lPipelineInfo.pVertexInputState	  = &lVertexInputInfo;
 	lPipelineInfo.pInputAssemblyState = &lInputAssembly;
 	lPipelineInfo.pViewportState	  = &lViewportState;
@@ -877,7 +890,7 @@ INLINE void Manager::CreateGraphicsPipeline(RESULT_PARAM_IMPL)
 	lPipelineInfo.pMultisampleState	  = &lMultisampling;
 	lPipelineInfo.pColorBlendState	  = &lColorBlending;
 	lPipelineInfo.pDynamicState		  = &lDynamicState;
-	lPipelineInfo.layout			  = mPipelineLayout;
+	lPipelineInfo.layout			  = mGraphicsPipelineLayout;
 	lPipelineInfo.renderPass		  = mRenderPass;
 	lPipelineInfo.subpass			  = 0;
 	lPipelineInfo.basePipelineHandle  = VK_NULL_HANDLE;
@@ -940,20 +953,20 @@ INLINE void Manager::CreateUniformBuffers(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
-	mUniformBuffer.resize(mMaxFrames);
-	mUniformBufferMemory.resize(mMaxFrames);
+	mScreenPropertiesUniformBuffer.resize(mMaxFrames);
+	mScreenPropertiesUniformBufferMemory.resize(mMaxFrames);
 
-	Utils::CreateBufferCreateInfo lMvpBufferInfo{};
-	lMvpBufferInfo.Device			= mDevice;
-	lMvpBufferInfo.PhysicalDevice	= mPhysicalDevice;
-	lMvpBufferInfo.BufferUsage		= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-	lMvpBufferInfo.BufferSize		= sizeof(Mvp);
-	lMvpBufferInfo.BufferProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	Utils::CreateBufferCreateInfo lBufferInfo{};
+	lBufferInfo.Device			 = mDevice;
+	lBufferInfo.PhysicalDevice	 = mPhysicalDevice;
+	lBufferInfo.BufferUsage		 = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	lBufferInfo.BufferProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
 	for (uint32_t lI = 0; lI < mMaxFrames; ++lI)
 	{
-		RESULT_ENSURE_CALL(Utils::CreateBuffer(lMvpBufferInfo, &mAllocationCallbacks, mUniformBuffer[lI],
-											   mUniformBufferMemory[lI], RESULT_ARG_PASS));
+		lBufferInfo.BufferSize = sizeof(ScreenProperties);
+		RESULT_ENSURE_CALL(Utils::CreateBuffer(lBufferInfo, &mAllocationCallbacks, mScreenPropertiesUniformBuffer[lI],
+											   mScreenPropertiesUniformBufferMemory[lI], RESULT_ARG_PASS));
 	}
 
 	RESULT_OK();
@@ -963,15 +976,21 @@ INLINE void Manager::CreateDescriptorPool(RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
 
-	VkDescriptorPoolSize lPoolSize{};
-	lPoolSize.type			  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	lPoolSize.descriptorCount = mMaxFrames;
+	VkDescriptorPoolSize lScreenPropertiesPoolSize{};
+	lScreenPropertiesPoolSize.type			  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lScreenPropertiesPoolSize.descriptorCount = mMaxFrames;
+
+	/*VkDescriptorPoolSize lModelPoolSize{};
+	lModelPoolSize.type			   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	lModelPoolSize.descriptorCount = mMaxFrames;*/
+
+	eastl::array lPoolSizes{lScreenPropertiesPoolSize};
 
 	VkDescriptorPoolCreateInfo lPoolCreateInfo{};
 	lPoolCreateInfo.sType		  = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	lPoolCreateInfo.maxSets		  = mMaxFrames;
-	lPoolCreateInfo.poolSizeCount = 1;
-	lPoolCreateInfo.pPoolSizes	  = &lPoolSize;
+	lPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(lPoolSizes.size());
+	lPoolCreateInfo.pPoolSizes	  = lPoolSizes.data();
 
 	RESULT_CONDITION_ENSURE(
 		vkCreateDescriptorPool(mDevice, &lPoolCreateInfo, &mAllocationCallbacks, &mDescriptorPool) == VK_SUCCESS,
@@ -999,6 +1018,11 @@ INLINE void Manager::CreateDescriptorSets(RESULT_PARAM_IMPL)
 
 	for (uint32_t lI = 0; lI < mMaxFrames; ++lI)
 	{
+		/*VkDescriptorBufferInfo lViewProjectionBufferInfo{};
+		lViewProjectionBufferInfo.buffer = mViewProjectionUniformBuffer[lI];
+		lViewProjectionBufferInfo.offset = 0;
+		lViewProjectionBufferInfo.range	 = sizeof(UboViewProjection);
+
 		VkWriteDescriptorSet lMvpSetWrite{};
 		lMvpSetWrite.sType			 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		lMvpSetWrite.dstSet			 = mDescriptorSets[lI];
@@ -1006,27 +1030,41 @@ INLINE void Manager::CreateDescriptorSets(RESULT_PARAM_IMPL)
 		lMvpSetWrite.dstArrayElement = 0;
 		lMvpSetWrite.descriptorType	 = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		lMvpSetWrite.descriptorCount = 1;
+		lMvpSetWrite.pBufferInfo	 = &lViewProjectionBufferInfo;*/
 
-		VkDescriptorBufferInfo lDstBufferInfo{};
-		lDstBufferInfo.buffer = mUniformBuffer[lI];
-		lDstBufferInfo.offset = 0;
-		lDstBufferInfo.range  = sizeof(Mvp);
+		VkDescriptorBufferInfo lScreenPropertiesBufferInfo{};
+		lScreenPropertiesBufferInfo.buffer = mScreenPropertiesUniformBuffer[lI];
+		lScreenPropertiesBufferInfo.offset = 0;
+		lScreenPropertiesBufferInfo.range  = sizeof(ScreenProperties);
 
-		lMvpSetWrite.pBufferInfo = &lDstBufferInfo;
+		VkWriteDescriptorSet lScreenPropertiesSetWrite{};
+		lScreenPropertiesSetWrite.sType			  = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		lScreenPropertiesSetWrite.dstSet		  = mDescriptorSets[lI];
+		lScreenPropertiesSetWrite.dstBinding	  = 0;
+		lScreenPropertiesSetWrite.dstArrayElement = 0;
+		lScreenPropertiesSetWrite.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		lScreenPropertiesSetWrite.descriptorCount = 1;
+		lScreenPropertiesSetWrite.pBufferInfo	  = &lScreenPropertiesBufferInfo;
 
-		vkUpdateDescriptorSets(mDevice, 1, &lMvpSetWrite, 0, nullptr);
+		eastl::array lWriteDescriptors{lScreenPropertiesSetWrite};
+
+		vkUpdateDescriptorSets(mDevice, static_cast<uint32_t>(lWriteDescriptors.size()), lWriteDescriptors.data(), 0,
+							   nullptr);
 	}
 
 	RESULT_OK();
 }
 
-INLINE void Manager::UpdateUniformBuffer(const uint32_t ImageIndex, RESULT_PARAM_IMPL)
+INLINE void Manager::UpdateUniformBuffers(const uint32_t ImageIndex, RESULT_PARAM_IMPL)
 {
 	RESULT_ENSURE_LAST();
+
+	// Copy vp data
 	void* lData{};
-	vkMapMemory(mDevice, mUniformBufferMemory[ImageIndex], 0, sizeof(Mvp), 0, &lData);
-	memcpy(lData, mMeshesMvps.data(), sizeof(Mvp));
-	vkUnmapMemory(mDevice, mUniformBufferMemory[ImageIndex]);
+	vkMapMemory(mDevice, mScreenPropertiesUniformBufferMemory[ImageIndex], 0, sizeof(ScreenProperties), 0, &lData);
+	memcpy(lData, &mScreenProperties, sizeof(ScreenProperties));
+	vkUnmapMemory(mDevice, mScreenPropertiesUniformBufferMemory[ImageIndex]);
+
 	RESULT_OK();
 }
 
@@ -1103,32 +1141,35 @@ INLINE void Manager::RecordCommandBuffer(const VkCommandBuffer CommandBuffer, co
 
 	vkCmdBindPipeline(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 
-	for (const auto& lMesh: mMeshes)
-	{
-		VkBuffer	 lVertexBuffer = lMesh.GetVertexBuffer();
-		VkDeviceSize lOffset	   = 0;
-		vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &lVertexBuffer, &lOffset);
-		vkCmdBindIndexBuffer(CommandBuffer, lMesh.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdBindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1,
-								&mDescriptorSets[ImageIndex], 0, nullptr);
+	const VkBuffer	   lVertexBuffer = mScreenMesh.GetVertexBuffer();
+	const VkDeviceSize lOffset		 = 0;
+	vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &lVertexBuffer, &lOffset);
+	vkCmdBindIndexBuffer(CommandBuffer, mScreenMesh.GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-		VkViewport lViewport{};
-		lViewport.x		   = 0.0f;
-		lViewport.y		   = 0.0f;
-		lViewport.width	   = static_cast<float>(mSwapchain.Extent.width);
-		lViewport.height   = static_cast<float>(mSwapchain.Extent.height);
-		lViewport.minDepth = 0.0f;
-		lViewport.maxDepth = 1.0f;
-		vkCmdSetViewport(CommandBuffer, 0, 1, &lViewport);
+	// const auto lDynamicOffset = static_cast<uint32_t>(mModelUniformAlignment) * lI;
 
-		VkRect2D lScissor{};
-		lScissor.offset = {0, 0};
-		lScissor.extent = mSwapchain.Extent;
-		vkCmdSetScissor(CommandBuffer, 0, 1, &lScissor);
+	vkCmdBindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipelineLayout, 0, 1,
+		&mDescriptorSets[ImageIndex], 0, nullptr /*1, &lDynamicOffset*/);
 
-		// vkCmdDraw(CommandBuffer, mMesh.GetVertexSize(), 1, 0, 0);
-		vkCmdDrawIndexed(CommandBuffer, lMesh.GetIndexSize(), 1, 0, 0, 0);
-	}
+	// vkCmdPushConstants(CommandBuffer, mGraphicsPipelineLayout, mPushConstantRange.stageFlags,
+	// mPushConstantRange.offset, mPushConstantRange.size, &lMesh.GetModel().ModelMatrix);
+
+	VkViewport lViewport{};
+	lViewport.x		   = 0.0f;
+	lViewport.y		   = 0.0f;
+	lViewport.width	   = static_cast<float>(mSwapchain.Extent.width);
+	lViewport.height   = static_cast<float>(mSwapchain.Extent.height);
+	lViewport.minDepth = 0.0f;
+	lViewport.maxDepth = 1.0f;
+	vkCmdSetViewport(CommandBuffer, 0, 1, &lViewport);
+
+	VkRect2D lScissor{};
+	lScissor.offset = {0, 0};
+	lScissor.extent = mSwapchain.Extent;
+	vkCmdSetScissor(CommandBuffer, 0, 1, &lScissor);
+
+	// vkCmdDraw(CommandBuffer, mMesh.GetVertexSize(), 1, 0, 0);
+	vkCmdDrawIndexed(CommandBuffer, mScreenMesh.GetIndexSize(), 1, 0, 0, 0);
 
 #if EDITOR
 	if (mEditor)
@@ -1238,11 +1279,29 @@ INLINE void Manager::RecreateSyncObjects(RESULT_PARAM_IMPL)
 	RESULT_OK();
 }
 
+INLINE void Manager::AllocateDynamicBufferTransferSpace(RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+
+	// Get min alignment for mode. uniform object
+	/*mScreenPropertiesUniformAlignment = Memory::Align(sizeof(ScreenProperties), mMinUniformBufferOffset);
+
+	mScreenPropertiesTransferSpace = static_cast<ScreenProperties*>(default_allocator_t{}.allocate(
+		mScreenPropertiesUniformAlignment, static_cast<int32_t>(mScreenPropertiesUniformAlignment)));*/
+
+	RESULT_OK();
+}
+
+INLINE void Manager::UpdateModel(const uint32_t Id, const glm::mat4 Model, RESULT_PARAM_IMPL)
+{
+	RESULT_ENSURE_LAST();
+	/*RESULT_CONDITION_ENSURE(Id < mMeshes.size(), InvalidIndex);
+	mMeshes[Id].SetModel(Model);*/
+	RESULT_OK();
+}
+
 INLINE bool Manager::IsDeviceSuitable(const VkPhysicalDevice Device) const
 {
-	VkPhysicalDeviceProperties lDeviceProperties{};
-	vkGetPhysicalDeviceProperties(Device, &lDeviceProperties);
-
 	const QueueFamilyIndices lIndices			  = FindQueueFamilies(Device);
 	const bool				 lExtensionsSupported = CheckDeviceExtensionSupport(Device);
 
@@ -1275,7 +1334,7 @@ INLINE Manager::QueueFamilyIndices Manager::FindQueueFamilies(const VkPhysicalDe
 		}
 
 		VkBool32 lPresentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(Device, lI, mSurface, &lPresentSupport);
+		vkGetPhysicalDeviceSurfaceSupportKHR(Device, lI, mSwapchain.Surface, &lPresentSupport);
 
 		if (lPresentSupport)
 		{
@@ -1316,24 +1375,25 @@ INLINE Swapchain::SupportDetails Manager::QuerySwapchainSupport(const VkPhysical
 {
 	Swapchain::SupportDetails lDetails{default_allocator_t{}};
 
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, mSurface, &lDetails.Capabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device, mSwapchain.Surface, &lDetails.Capabilities);
 
 	uint32_t lFormatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(Device, mSurface, &lFormatCount, nullptr);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(Device, mSwapchain.Surface, &lFormatCount, nullptr);
 
 	if (lFormatCount != 0)
 	{
 		lDetails.Formats.Resize(lFormatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(Device, mSurface, &lFormatCount, lDetails.Formats.Data());
+		vkGetPhysicalDeviceSurfaceFormatsKHR(Device, mSwapchain.Surface, &lFormatCount, lDetails.Formats.Data());
 	}
 
 	uint32_t lPresentModeCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(Device, mSurface, &lPresentModeCount, nullptr);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(Device, mSwapchain.Surface, &lPresentModeCount, nullptr);
 
 	if (lPresentModeCount != 0)
 	{
 		lDetails.PresentModes.Resize(lPresentModeCount);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(Device, mSurface, &lPresentModeCount, lDetails.PresentModes.Data());
+		vkGetPhysicalDeviceSurfacePresentModesKHR(Device, mSwapchain.Surface, &lPresentModeCount,
+												  lDetails.PresentModes.Data());
 	}
 
 	return lDetails;
@@ -1344,7 +1404,7 @@ Manager::ChooseSwapSurfaceFormat(const RawBuffer<VkSurfaceFormatKHR, default_all
 {
 	for (const auto& lAvailableFormat: AvailableFormats)
 	{
-		if (lAvailableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+		if (lAvailableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
 			lAvailableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 		{
 			return lAvailableFormat;
@@ -1365,6 +1425,7 @@ Manager::ChooseSwapPresentMode(const RawBuffer<VkPresentModeKHR, default_allocat
 		}
 	}
 
+	// return VK_PRESENT_MODE_IMMEDIATE_KHR;
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 

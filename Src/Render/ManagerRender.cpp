@@ -61,12 +61,15 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 	ManagerWait<Engine::Manager>{RESULT_ARG_PASS};
 
 	RESULT_ENSURE_LAST();
+
 	if (mRequestedDirtyFramebufferSize)
 	{
 		mRequestedDirtyFramebufferSize = false;
 		RESULT_ENSURE_CALL(mTargetApiManager->MarkDirtyFramebufferSize(RESULT_ARG_PASS));
 	}
+
 	RESULT_ENSURE_CALL(mTargetApiManager->Update(RESULT_ARG_PASS));
+
 	RESULT_OK();
 }
 

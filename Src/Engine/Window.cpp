@@ -64,7 +64,7 @@ void Window::Create(const CreateInfo& CreateInfo, RESULT_PARAM_IMPL)
 	const int32_t lScreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
 
 	WS_OVERLAPPEDWINDOW;
-	constexpr UINT lStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+	constexpr UINT lStyle = WS_OVERLAPPEDWINDOW/*WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX*/;
 
 	mState.Rect = {0, 0, static_cast<LONG>(CreateInfo.Width), static_cast<LONG>(CreateInfo.Height)};
 	::AdjustWindowRect(&mState.Rect, lStyle, FALSE);

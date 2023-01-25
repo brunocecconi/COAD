@@ -9,15 +9,7 @@ namespace Render
 
 struct Vertex
 {
-	glm::vec3 Position;
-	glm::vec3 Color;
-};
-
-struct Mvp
-{
-	glm::mat4 Projection;
-	glm::mat4 View;
-	glm::mat4 Model;
+	glm::vec2 Position;
 };
 
 class Mesh

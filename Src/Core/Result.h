@@ -431,6 +431,7 @@ enum EResult : uint64_t
 	VulkanFailedToCreateSwapchainImageView,
 	VulkanFailedToCreateShaderModule,
 	VulkanFailedToCreateGraphicsPipeline,
+	VulkanFailedToCreateGraphicsPipelineLayout,
 	VulkanFailedToCreateRenderPass,
 	VulkanFailedToCreateFramebuffer,
 	VulkanFailedToCreateCommandPool,
@@ -550,6 +551,7 @@ static constexpr char* ResultString(const EResult Value)
 		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateSwapchainImageView);
 		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateShaderModule);
 		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateGraphicsPipeline);
+		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateGraphicsPipelineLayout);
 		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateRenderPass);
 		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateFramebuffer);
 		RESULT_STRING_CASE_IMPL(VulkanFailedToCreateCommandPool);

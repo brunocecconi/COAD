@@ -26,6 +26,19 @@
 namespace Memory
 {
 
+/**
+ * \brief Align function. Calculates aligned size.
+ *
+ * \param Size : Target size.
+ * \param Alignment : Target alignment.
+ * \return New size aligned.
+ *
+ */
+constexpr size_t Align(const size_t Size, const size_t Alignment = PLATFORM_ALIGNMENT)
+{
+	return (Size + (Alignment-1)) & ~(Alignment-1);
+}
+
 template<uint64_t Index, uint64_t Size>
 void CtClearMemory(uint8_t* data)
 {

@@ -2,6 +2,8 @@
 #ifndef RENDER_MANAGER_H
 #define RENDER_MANAGER_H
 
+#include <EASTL/chrono.h>
+
 #include "Render/Common.h"
 #include "Core/Manager.h"
 

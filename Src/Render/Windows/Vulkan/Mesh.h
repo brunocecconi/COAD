@@ -2,6 +2,11 @@
 namespace Render::Api
 {
 
+struct ScreenProperties
+{
+	glm::vec2 Resolution;
+};
+
 /**
  * \brief Render api mesh class.
  *
@@ -36,14 +41,14 @@ public:
 	Mesh& operator=(Mesh&& Other) NOEXCEPT;
 
 public:
-	NODISCARD static Mesh Square(const Info& Info, glm::vec3 Location, RESULT_PARAM_DEFINE);
+	NODISCARD static Mesh Square(const Info& Info, glm::vec2 Location, RESULT_PARAM_DEFINE);
 
 public:
-	void			   DestroyBuffers(RESULT_PARAM_DEFINE);
-	NODISCARD uint32_t GetVertexSize() const;
-	NODISCARD VkBuffer GetVertexBuffer() const;
-	NODISCARD uint32_t GetIndexSize() const;
-	NODISCARD VkBuffer GetIndexBuffer() const;
+	void					  DestroyBuffers(RESULT_PARAM_DEFINE);
+	NODISCARD uint32_t		  GetVertexSize() const;
+	NODISCARD VkBuffer		  GetVertexBuffer() const;
+	NODISCARD uint32_t		  GetIndexSize() const;
+	NODISCARD VkBuffer		  GetIndexBuffer() const;
 
 private:
 	void CreateVertexBuffer(const eastl::vector<Vertex, default_allocator_t>& Vertices, RESULT_PARAM_DEFINE);
@@ -117,16 +122,16 @@ INLINE Mesh& Mesh::operator=(Mesh&& Other) NOEXCEPT
 	return *this;
 }
 
-INLINE Mesh Mesh::Square(const Info& Info, glm::vec3 Location, RESULT_PARAM_IMPL)
+INLINE Mesh Mesh::Square(const Info& Info, glm::vec2 Location, RESULT_PARAM_IMPL)
 {
 	Mesh lMesh{};
 	auto lInfo	   = Info;
-	lInfo.Vertices = {{{Location.x + 0.5f, Location.y + -0.5f, Location.z}, {1.f, 0.f, 0.f}},
-					  {{Location.x + 0.5f, Location.y + 0.5f, Location.z}, {0.f, 1.f, 0.f}},
-					  {{Location.x + -0.5f, Location.y + 0.5f, Location.z}, {0.f, 0.f, 1.f}},
-					  {{Location.x + -0.5f, Location.y + -0.5f, Location.z}, {0.f, 1.f, 0.f}}}; // 0,1,2,2,3,0
+	lInfo.Vertices = {{{Location.x + 0.5f, Location.y + -0.5f}},
+					  {{Location.x + 0.5f, Location.y + 0.5f}},
+					  {{Location.x + -0.5f, Location.y + 0.5f}},
+					  {{Location.x + -0.5f, Location.y + -0.5f}}}; // 0,1,2,2,3,0
 
-	lInfo.Indices = {{0, 1, 2, 2, 3, 0}};
+	lInfo.Indices = {{2, 1, 0, 0, 3, 2}};
 	RESULT_ENSURE_CALL(lMesh = Mesh(lInfo, RESULT_ARG_PASS), lMesh);
 	return lMesh;
 }

@@ -37,6 +37,8 @@ void Manager::Initialize(const int32_t Argc, char** Argv, RESULT_PARAM_IMPL)
 	RESULT_ENSURE_CALL(Render::Instance().Initialize(RESULT_ARG_PASS));
 	RESULT_ENSURE_CALL(Render::Instance().MarkDirtyFramebufferSize(RESULT_ARG_PASS));
 
+	SetTargetFps(10);
+
 	RESULT_OK();
 }
 
@@ -95,6 +97,29 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 
 	RESULT_ENSURE_LAST();
 
+	const float32_t lTargetDeltaTime = 1.f / static_cast<float32_t>(mTargetFps);
+	mLoopEndTime = eastl::chrono::high_resolution_clock::now();
+	const uint64_t lDeltaTime =
+		eastl::chrono::duration_cast<eastl::chrono::milliseconds>(mLoopEndTime - mLoopBeginTime).count();
+	const float32_t lCurrentDeltaTime = static_cast<float32_t>(lDeltaTime > 0 ? lDeltaTime : 1) / 1000.f;
+	mLoopBeginTime = mLoopEndTime;
+
+	if(lCurrentDeltaTime < lTargetDeltaTime)
+	{
+		mAccDeltaTime += lCurrentDeltaTime;
+	}
+
+	if(mAccDeltaTime >= lTargetDeltaTime)
+	{
+		mAccDeltaTime = 0.f;
+		mDeltaTime = lTargetDeltaTime;
+	}
+	else
+	{
+		RESULT_OK();
+		return;
+	}
+
 	if (mWindow.IsVisible())
 	{
 		RESULT_ENSURE_CALL(mWindow.Update(RESULT_ARG_PASS));
@@ -129,28 +154,26 @@ void Manager::RunInternal(RESULT_PARAM_IMPL)
 	}
 
 	// Update frame info
-	++mFrameCounter;
-	mLoopEndTime = eastl::chrono::high_resolution_clock::now();
-	mElapsedSeconds += static_cast<float32_t>((mLoopEndTime - mLoopBeginTime).count()) * 1e-9f;
-	mDeltaTime	   = static_cast<float32_t>((mLoopEndTime - mLoopBeginTime).count()) * 1e-6f;
-	mLoopBeginTime = mLoopEndTime;
-	// mTotalSeconds += mDeltaSeconds;
-	// mElapsedSeconds += mDeltaSeconds;
+	//++mFrameCounter;
+	//mLoopEndTime = eastl::chrono::high_resolution_clock::now();
+	//mElapsedSeconds += static_cast<float32_t>((mLoopEndTime - mLoopBeginTime).count()) * 1e-9f;
+	//const uint64_t lDeltaTime =
+	//	eastl::chrono::duration_cast<eastl::chrono::milliseconds>(mLoopEndTime - mLoopBeginTime).count();
+	//mDeltaTime = static_cast<float32_t>(lDeltaTime > 0 ? lDeltaTime : 1) / 1000.f;
+	//// mDeltaTime = glm::max(mDeltaTime, 1.f / 120.f);
+	//mLoopBeginTime = mLoopEndTime;
+	//printf("Delta time: %f\n", mDeltaTime);
+	//// printf("Delta time: %f\n", mDeltaTime);
+	//if (mElapsedSeconds > 1.f)
+	//{
+	//	char			lBuffer[500];
+	//	const float64_t lFps = static_cast<float64_t>(mFrameCounter) / static_cast<float64_t>(mElapsedSeconds);
+	//	snprintf(lBuffer, sizeof lBuffer, "FPS: %f\n", lFps);
+	//	printf("%s\n", lBuffer);
+	//	mElapsedSeconds = 0.f;
+	//	mFrameCounter	= 0;
+	//}
 
-	// printf("Delta time: %f\n", mDeltaSeconds);
-
-	/*if (mElapsedSeconds > 1.f)
-	{
-		char			lBuffer[500];
-		const float64_t lFps = static_cast<float64_t>(mFrameCounter) / static_cast<float64_t>(mElapsedSeconds);
-		snprintf(lBuffer, sizeof lBuffer, "FPS: %f\n", lFps);
-		printf("%s\n", lBuffer);
-		mElapsedSeconds = 0.f;
-		mFrameCounter	= 0;
-	}*/
-
-	//printf("engine\n");
-	//RESULT_ENSURE_CALL(Thread::SleepCurrent(1000u, RESULT_ARG_PASS));
 	RESULT_OK();
 }
 
@@ -163,9 +186,29 @@ Manager& Manager::Instance()
 	return *mInstance;
 }
 
+void Manager::SetTargetFps(const uint64_t Fps)
+{
+	mTargetFps = Fps;
+}
+
+uint64_t Manager::GetTargetFps() const
+{
+	return mTargetFps;
+}
+
 NODISCARD float32_t Manager::GetDeltaTime() const
 {
 	return mDeltaTime;
+}
+
+bool Manager::IsDeltaTimeCalculated() const
+{
+	return mDeltaTimeCalculated;
+}
+
+void Manager::ResetDeltaTimeCalculated()
+{
+	mDeltaTimeCalculated = false;
 }
 
 } // namespace Engine

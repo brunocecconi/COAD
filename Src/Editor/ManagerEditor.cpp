@@ -60,8 +60,8 @@ void Manager::Initialize(const InitializeInfo& InitInfo, RESULT_PARAM_IMPL)
 #if OPENGL_ENABLED
 	RESULT_CONDITION_ENSURE(ImGui_ImplOpenGL3_Init(), EditorFailedToInitImguiBackend);
 #elif VULKAN_ENABLED
-	RESULT_CONDITION_ENSURE(ImGui_ImplVulkan_Init(InitInfo.ImguiInitInfo, InitInfo.RenderPass),
-							EditorFailedToInitImguiBackend);
+	//RESULT_CONDITION_ENSURE(ImGui_ImplVulkan_Init(InitInfo.ImguiInitInfo, InitInfo.RenderPass),
+							//EditorFailedToInitImguiBackend);
 
 #endif
 
@@ -94,7 +94,7 @@ void Manager::Finalize(RESULT_PARAM_IMPL)
 #if OPENGL_ENABLED
 	ImGui_ImplOpenGL3_Shutdown();
 #elif VULKAN_ENABLED
-	ImGui_ImplVulkan_Shutdown();
+	//ImGui_ImplVulkan_Shutdown();
 #endif
 #endif
 	ImGui::DestroyContext();

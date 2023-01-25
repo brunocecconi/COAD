@@ -59,14 +59,19 @@ private:
 	Window		mWindow{};
 
 public:
+	void				SetTargetFps(uint64_t Fps);
+	NODISCARD uint64_t	GetTargetFps() const;
 	NODISCARD float32_t GetDeltaTime() const;
-	bool LoopPass{};
+	NODISCARD bool IsDeltaTimeCalculated() const;
+	void ResetDeltaTimeCalculated();
 
 private:
 	uint64_t										 mFrameCounter{};
-	float32_t										 mDeltaTime{}, mTotalSeconds{}, mElapsedSeconds{};
+	uint64_t										 mTargetFps = 120;
+	float32_t										 mDeltaTime{}, mTotalSeconds{}, mElapsedSeconds{}, mAccDeltaTime{};
 	eastl::chrono::high_resolution_clock			 mClock{};
 	eastl::chrono::high_resolution_clock::time_point mLoopBeginTime{}, mLoopEndTime{};
+	bool mDeltaTimeCalculated{};
 };
 
 INLINE Manager& Instance()

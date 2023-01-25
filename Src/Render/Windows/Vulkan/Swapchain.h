@@ -10,6 +10,7 @@ struct Swapchain
 	}
 
 	VkSwapchainKHR								  Object{};
+	VkSurfaceKHR								  Surface{};
 	RawBuffer<VkImage, default_allocator_t>		  Images{};
 	VkFormat									  ImageFormat{};
 	VkExtent2D									  Extent{};
@@ -28,4 +29,4 @@ struct Swapchain
 	};
 };
 
-}
+} // namespace Render::Api
