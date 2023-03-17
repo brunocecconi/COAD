@@ -89,7 +89,7 @@ public:
 	EXPLICIT Dynamic(const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
 	EXPLICIT Dynamic(const void* data, container_t::size_type size,
 					 const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
-	EXPLICIT Dynamic(container_t::size_type		size,
+	EXPLICIT Dynamic(container_t::size_type		  size,
 					 const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"), RESULT_PARAM_DEFINE);
 	EXPLICIT Dynamic(container_t&& container, const Allocators::default_t& allocator = DEBUG_NAME_VAL("Memory::Stream"),
 					 RESULT_PARAM_DEFINE);
