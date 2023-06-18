@@ -18,7 +18,6 @@ LOG_DEFINE(Main);
 int32_t ProcessGame(const int32_t Argc, char** Argv)
 {
 	RESULT_VALUE_VAR(result);
-	LOG_SET_VERBOSITY(Verbose);
 	LOGC(Info, Main, "Preparing to run the game...");
 	auto& lEngine = Engine::Manager::Instance();
 	RESULT_VALUE_ENSURE_CALL(lEngine.Initialize(Argc, Argv, RESULT_ARG_VALUE_PASS), EXIT_FAILURE);
@@ -28,8 +27,10 @@ int32_t ProcessGame(const int32_t Argc, char** Argv)
 
 int32_t main(const int32_t Argc, char** Argv)
 {
-	//LOG_INIT();
-	if (const Engine::ProgramArgs lArgs{Argc, Argv}; lArgs.Has("--Game"))
+	LOG_INIT();
+	LOG_SET_VERBOSITY(Info);
+	const Engine::ProgramArgs lArgs{ Argc, Argv };
+	if (lArgs.Has("--Game"))
 	{
 		return ProcessGame(Argc, Argv);
 	}

@@ -141,9 +141,9 @@ private:
 private:
 	Engine::Window& mWindow;
 	bool			mVsync = true;
-#ifndef RELEASE
+//#ifndef RELEASE
 	ShaderManager mShaderManager{};
-#endif
+//#endif
 
 private:
 	default_allocator_t	  mAllocator{};

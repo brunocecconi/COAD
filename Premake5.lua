@@ -161,3 +161,38 @@ project "COAD-Benchmark-Meta"
 	}
 	
 	SetLibDirs("COAD-Benchmark")
+
+project "COAD-Benchmark-Utils"
+	location "./Int/"
+	kind "ConsoleApp"
+	language "C++"
+	cppdialect "C++20"
+	targetdir("./Bin/" .. OutputDir)
+	objdir("./Int/" .. OutputDir)
+	--staticruntime "On"
+	platforms { "Windows", "Linux", "Mac", "Prospero", "XboxSeriesX" }
+	vectorextensions "SSE2"
+	warnings "Extra"
+	floatingpoint "Fast"
+	flags { "MultiProcessorCompile", "FatalWarnings" }
+	
+	defines { 
+		"_CRT_SECURE_NO_WARNINGS", 
+		"USE_SAFE_PTR=1", 
+		"USE_EXPLICIT=1", 
+		"EASTL_EASTDC_VSNPRINTF=0" 
+	}
+	
+	files { "Src/Benchmark/Utils.cpp", "./Natvis/**.natvis" }
+
+	includedirs
+	{
+		"./Src/",
+		IncludeDir["Windows"],
+		IncludeDir["Linux"],
+		IncludeDir["Mac"],
+		IncludeDir["Prospero"],
+		IncludeDir["XboxSeriesX"]
+	}
+	
+	SetLibDirs("COAD-Benchmark")

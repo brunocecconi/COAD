@@ -95,7 +95,7 @@ public:
 	void	 OpenWrite(const char* FilePath, RESULT_PARAM_DEFINE);
 	void	 OpenReadWrite(const char* FilePath, RESULT_PARAM_DEFINE);
 	void	 Read(void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
-	uint64_t	 ReadText(void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
+	uint64_t ReadText(void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
 	void	 Write(const void* Data, uint64_t Size, RESULT_PARAM_DEFINE) const;
 	void	 Seek(uint64_t Value, ESeekType Origin, RESULT_PARAM_DEFINE) const;
 	uint64_t Tell(RESULT_PARAM_DEFINE) const;
